@@ -1,27 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import Divider from '@mui/material/Divider'
 
-import Loader from '../Layout/Loader'
 import MetaData from '../Layout/MetaData';
 import { errMsg } from '../Utils/helpers'
 import { useDispatch, useSelector } from 'react-redux'
 import { login, clearErrors } from '../../actions/userActions'
 import GoogleLogin from './GoogleLogin'
 
+const loginSchema = Yup.object({
+    email: Yup.string().trim().required('Please enter your email').email('Please enter valid email address'),
+    password: Yup.string().required('Please enter your password'),
+})
+
 const Login = () => {
     const { isAuthenticated, error, loading, } = useSelector(state => state.auth)
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     let navigate = useNavigate()
     let location = useLocation()
     const dispatch = useDispatch()
 
     const redirect = location.search ? new URLSearchParams(location.search).get('redirect') : ''
 
-    const submitHandler = (e) => {
-        e.preventDefault();
-        dispatch(login(email, password))
-    }
+    const formik = useFormik({
+        initialValues: { email: '', password: '' },
+        validationSchema: loginSchema,
+        onSubmit: (values) => {
+            dispatch(login(values.email.trim(), values.password))
+        }
+    })
 
     useEffect(() => {
         if (isAuthenticated && redirect) {
@@ -37,56 +50,48 @@ const Login = () => {
 
     return (
         <>
-            {loading ? <Loader /> : (
-                <>
-                    <MetaData title={'Login'} />
+            <MetaData title={'Login'} />
 
-                    <div className="row wrapper">
-                        <div className="col-10 col-lg-5">
-                            <form className="shadow-lg"
-                                onSubmit={submitHandler}
-                            >
-                                <h1 className="mb-3">Login</h1>
-                                <div className="form-group">
-                                    <label htmlFor="email_field">Email</label>
-                                    <input
-                                        type="email"
-                                        id="email_field"
-                                        className="form-control"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 6 }}>
+                <Paper component="form" noValidate onSubmit={formik.handleSubmit} sx={{ p: { xs: 3, md: 5 }, width: '100%', maxWidth: 480 }}>
+                    <Typography variant="h3" component="h1" sx={{ mb: 1 }}>Login</Typography>
 
-                                <div className="form-group">
-                                    <label htmlFor="password_field">Password</label>
-                                    <input
-                                        type="password"
-                                        id="password_field"
-                                        className="form-control"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                </div>
+                    <TextField
+                        id="email_field"
+                        label="Email"
+                        type="email"
+                        autoComplete="email"
+                        {...formik.getFieldProps('email')}
+                        error={formik.touched.email && Boolean(formik.errors.email)}
+                        helperText={formik.touched.email && formik.errors.email}
+                    />
 
-                                <Link to="/password/forgot" className="float-right mb-4">Forgot Password?</Link>
+                    <TextField
+                        id="password_field"
+                        label="Password"
+                        type="password"
+                        autoComplete="current-password"
+                        {...formik.getFieldProps('password')}
+                        error={formik.touched.password && Boolean(formik.errors.password)}
+                        helperText={formik.touched.password && formik.errors.password}
+                    />
 
-                                <button
-                                    id="login_button"
-                                    type="submit"
-                                    className="btn btn-block py-3"
-                                >
-                                    LOGIN
-                                </button>
+                    <Box sx={{ textAlign: 'right', mb: 2 }}>
+                        <Link to="/password/forgot">Forgot Password?</Link>
+                    </Box>
 
-                                <GoogleLogin />
+                    <Button id="login_button" type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ py: 1.5 }}>
+                        LOGIN
+                    </Button>
 
-                                <Link to="/register" className="float-right mt-3">New User?</Link>
-                            </form>
-                        </div>
-                    </div>
-                </>
-            )}
+                    <Divider sx={{ mt: 3 }}>or</Divider>
+                    <GoogleLogin />
+
+                    <Box sx={{ textAlign: 'right', mt: 3 }}>
+                        <Link to="/register">New User?</Link>
+                    </Box>
+                </Paper>
+            </Box>
         </>
     )
 }

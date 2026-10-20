@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import Loader from '../Layout/Loader'
 import MetaData from '../Layout/MetaData'
 import axios from 'axios';
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Avatar from '@mui/material/Avatar'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
+import Chip from '@mui/material/Chip'
 import { errMsg } from '../Utils/helpers'
 
 const Profile = () => {
@@ -32,38 +39,52 @@ const Profile = () => {
                 <>
                     <MetaData title={'Your Profile'} />
 
-                    <h2 className="mt-5 ml-5">My Profile</h2>
-                    <div className="row justify-content-around mt-5 user-info">
-                        <div className="col-12 col-md-3">
-                            <figure className='avatar avatar-profile'>
-                                <img className="rounded-circle img-fluid" src={user.avatar ? user.avatar.url : null} alt={user.name} />
-                            </figure>
-                            <Link to="/me/update" id="edit_profile" className="btn btn-primary btn-block my-5">
-                                Edit Profile
-                            </Link>
-                        </div>
+                    <Typography variant="h3" component="h2" sx={{ mt: 5, mb: 3 }}>My Profile</Typography>
+                    <Paper sx={{ p: { xs: 3, md: 5 } }}>
+                        <Grid container spacing={5}>
+                            <Grid size={{ xs: 12, md: 4 }}>
+                                <Stack alignItems="center" spacing={3}>
+                                    <Avatar src={user.avatar ? user.avatar.url : null} alt={user.name} sx={{ width: 180, height: 180 }} />
+                                    <Button component={Link} to="/me/update" id="edit_profile" variant="contained" fullWidth>
+                                        Edit Profile
+                                    </Button>
+                                </Stack>
+                            </Grid>
 
-                        <div className="col-12 col-md-5">
-                            <h4>Full Name</h4>
-                            <p>{user.name}</p>
+                            <Grid size={{ xs: 12, md: 8 }}>
+                                <Stack spacing={2}>
+                                    <div>
+                                        <Typography variant="h5" component="h4">Full Name</Typography>
+                                        <Typography>{user.name}</Typography>
+                                    </div>
+                                    <div>
+                                        <Typography variant="h5" component="h4">Email Address</Typography>
+                                        <Typography>{user.email}</Typography>
+                                    </div>
+                                    <div>
+                                        <Typography variant="h5" component="h4">Joined On</Typography>
+                                        <Typography>{String(user.createdAt).substring(0, 10)}</Typography>
+                                    </div>
+                                    <Stack direction="row" spacing={1}>
+                                        <Chip label={user.role} color={user.role === 'admin' ? 'secondary' : 'default'} />
+                                        <Chip label={user.authProvider === 'google' ? 'Google account' : 'Email account'} variant="outlined" />
+                                    </Stack>
 
-                            <h4>Email Address</h4>
-                            <p>{user.email}</p>
+                                    {user.role !== 'admin' && (
+                                        <Button component={Link} to="/orders/me" variant="contained" color="secondary">
+                                            My Orders
+                                        </Button>
+                                    )}
 
-                            <h4>Joined On</h4>
-                            <p>{String(user.createdAt).substring(0, 10)}</p>
-
-                            {user.role !== 'admin' && (
-                                <Link to="/orders/me" className="btn btn-danger btn-block mt-5">
-                                    My Orders
-                                </Link>
-                            )}
-
-                            <Link to="/password/update" className="btn btn-primary btn-block mt-3">
-                                Change Password
-                            </Link>
-                        </div>
-                    </div>
+                                    {user.authProvider !== 'google' && (
+                                        <Button component={Link} to="/password/update" variant="outlined">
+                                            Change Password
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </Paper>
                 </>
             )}
         </>

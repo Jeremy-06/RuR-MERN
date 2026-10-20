@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const crypto = require('crypto')
+const validator = require('validator')
 const cloudinary = require('cloudinary')
 const sendEmail = require('../utils/sendEmail')
 const sendToken = require('../utils/jwtToken');
@@ -12,8 +13,35 @@ const DEFAULT_AVATAR = {
 
 exports.DEFAULT_AVATAR = DEFAULT_AVATAR
 
+// Same rules as the Yup schemas on the frontend; returns the first error message
+const validateUser = ({ name, email, password, avatar }, checkPassword) => {
+    if (!name || !String(name).trim()) return 'Please enter your name'
+    if (String(name).trim().length > 30) return 'Your name cannot exceed 30 characters'
+    if (!email || !String(email).trim()) return 'Please enter your email'
+    if (!validator.isEmail(String(email).trim())) return 'Please enter valid email address'
+    if (checkPassword) {
+        if (!password) return 'Please enter your password'
+        if (String(password).length < 6) return 'Your password must be at least 6 characters'
+    }
+    if (avatar) {
+        // Avatars arrive as base64 data URLs from FileReader
+        if (!/^data:image\/(jpeg|png|webp);base64,/.test(avatar)) return 'Avatar must be a jpg, jpeg, png or webp image'
+        if ((avatar.length - avatar.indexOf(',') - 1) * 0.75 > 5 * 1024 * 1024) return 'Avatar must be 5MB or smaller'
+    }
+    return null
+}
+
 exports.registerUser = async (req, res, next) => {
-    const { name, email, password, } = req.body;
+    const { name, email, password, } = req.body || {};
+
+    // Validate before uploading the avatar so a bad form does not leave files in Cloudinary
+    const errorMessage = validateUser(req.body || {}, true)
+    if (errorMessage) {
+        return res.status(400).json({ message: errorMessage })
+    }
+    if (await User.exists({ email: String(email).trim().toLowerCase() })) {
+        return res.status(400).json({ message: 'Email is already registered' })
+    }
 
     let avatar = DEFAULT_AVATAR
     if (req.body.avatar) {
@@ -28,12 +56,8 @@ exports.registerUser = async (req, res, next) => {
         }
     }
 
-    if (await User.exists({ email: String(email).toLowerCase() })) {
-        return res.status(400).json({ message: 'Email is already registered' })
-    }
-
     const user = await User.create({
-        name,
+        name: String(name).trim(),
         email,
         password,
         avatar,
@@ -49,6 +73,9 @@ exports.loginUser = async (req, res, next) => {
     // Checks if email and password is entered by user
     if (!email || !password) {
         return res.status(400).json({ message: 'Please enter email & password' })
+    }
+    if (!validator.isEmail(String(email).trim())) {
+        return res.status(400).json({ message: 'Please enter valid email address' })
     }
 
     // Finding user in database
@@ -179,9 +206,19 @@ exports.getUserProfile = async (req, res, next) => {
 }
 
 exports.updateProfile = async (req, res, next) => {
+    const errorMessage = validateUser(req.body || {}, false)
+    if (errorMessage) {
+        return res.status(400).json({ message: errorMessage })
+    }
+
     const newUserData = {
-        name: req.body.name,
-        email: req.body.email
+        name: String(req.body.name).trim(),
+        email: String(req.body.email).trim().toLowerCase()
+    }
+
+    // Email must stay unique across accounts
+    if (await User.exists({ email: newUserData.email, _id: { $ne: req.user._id } })) {
+        return res.status(400).json({ message: 'Email is already registered' })
     }
 
     // Update avatar
