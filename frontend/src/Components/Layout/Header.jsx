@@ -1,52 +1,76 @@
-import ArrowIcon from '../Utils/ArrowIcon'
+import '../../App.css'
+import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch, useSelector } from 'react-redux'
+import { logout } from '../../actions/userActions'
 
-export default function Header({ query, onSearch, user, onLogin, onLogout, onAdmin, cartCount }) {
-  return (
-    <>
-      <div className="announcement">
-        <span className="announcement-dot" /> LEVEL UP YOUR SETUP
-        <span className="announcement-divider">/</span> FREE SHIPPING ON ORDERS OVER $100
-        <a href="#featured">SHOP NOW <ArrowIcon /></a>
-      </div>
-      <header className="site-header">
-        <a className="brand" href="#home" aria-label="RuR home">
-          <span className="brand-mark">R<span>u</span>R</span>
-          <span className="brand-caption">READY. UP. REPEAT.</span>
-        </a>
-        <nav className="main-nav" aria-label="Main navigation">
-          <a className="nav-active" href="#featured">Shop all</a>
-          <a href="#categories">Categories</a>
-          <a href="#featured">New arrivals <span className="new-tag">NEW</span></a>
-          <a href="#story">Our story</a>
-        </nav>
-        <div className="header-actions">
-          <label className="search-box">
-            <span aria-hidden="true">⌕</span>
-            <input aria-label="Search gear" placeholder="Search gear..." value={query} onChange={(event) => onSearch(event.target.value)} />
-            <kbd>⌘ K</kbd>
-          </label>
-          {user ? (
-            <>
-              <button className="signed-in-button" onClick={user.role === 'admin' ? onAdmin : onLogout} title={user.role === 'admin' ? 'Open admin console' : 'Sign out'}>
-                {user.role === 'admin' ? 'Admin' : user.name.split(' ')[0]} <span>{user.role === 'admin' ? '↗' : '×'}</span>
-              </button>
-              {user.role === 'admin' && (
-                <button className="icon-button account-button" onClick={onLogout} aria-label="Sign out">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg>
-                </button>
-              )}
-            </>
-          ) : (
-            <button className="icon-button account-button" aria-label="Sign in or create account" onClick={onLogin}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.5-3.4 3-5.3 7-5.3s6.5 1.9 7 5.3" /></svg>
-            </button>
-          )}
-          <button className="cart-button" aria-label={`Shopping cart, ${cartCount} items`}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 11.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.5L21 8H6" /><circle cx="10" cy="20" r="1" /><circle cx="18" cy="20" r="1" /></svg>
-            <span>Cart</span><b>{cartCount}</b>
-          </button>
-        </div>
-      </header>
-    </>
-  )
+import Search from './Search'
+export const Header = ({ cartItems }) => {
+    const dispatch = useDispatch();
+    const { user, loading } = useSelector(state => state.auth)
+
+    const logoutHandler = () => {
+        dispatch(logout());
+        toast.success('log out', {
+            position: 'bottom-right'
+        });
+    }
+
+    return (
+        <>
+            <div className="announcement">
+                LEVEL UP YOUR SETUP <span>/</span> FREE SHIPPING ON ORDERS OVER $200
+            </div>
+            <nav className="navbar row">
+                <div className="col-12 col-md-3">
+                    <div className="navbar-brand">
+                        <Link to="/" className="brand-logo" aria-label="RuR home">
+                            <span className="brand-mark">R<span>u</span>R</span>
+                            <span className="brand-caption">READY. UP.<br />REPEAT.</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="col-12 col-md-5 mt-2 mt-md-0">
+                    <Search />
+                </div>
+
+                <div className="col-12 col-md-4 mt-4 mt-md-0 text-center text-nowrap">
+                    {user ? (<div className="ml-4 dropdown d-inline">
+                        <Link to="#!" className="btn dropdown-toggle text-white mr-4" type="button" id="dropDownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <figure className="avatar avatar-nav">
+                                <img
+                                    src={user.avatar && user.avatar.url}
+                                    alt={user && user.name}
+                                    className="rounded-circle"
+                                />
+                            </figure>
+                            <span>{user && user.name}</span>
+                        </Link>
+
+                        <div className="dropdown-menu" aria-labelledby="dropDownMenuButton">
+                            {user && user.role === 'admin' && (
+                                <Link className="dropdown-item" to="/dashboard">Dashboard</Link>
+                            )}
+                            <Link className="dropdown-item" to="/orders/me">Orders</Link>
+                            <Link className="dropdown-item" to="/me">Profile</Link>
+
+                            <Link
+                                className="dropdown-item text-danger" to="/"
+                                onClick={logoutHandler}
+                            >
+                                Logout
+                            </Link>
+                        </div>
+                    </div>) : !loading && <Link to="/login" className="btn ml-4" id="login_btn">Login</Link>}
+
+                    <Link to="/cart" style={{ textDecoration: 'none' }} >
+                        <span id="cart" className="ml-3">Cart</span>
+                        <span className="ml-1" id="cart_count">{cartItems ? cartItems.length : null}</span>
+                    </Link>
+                </div>
+            </nav>
+        </>
+    )
 }

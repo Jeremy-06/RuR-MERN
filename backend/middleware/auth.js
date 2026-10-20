@@ -1,30 +1,33 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const User = require('../models/user')
+const jwt = require("jsonwebtoken")
 
-async function requireAuth(req, res, next) {
+exports.isAuthenticatedUser = async (req, res, next) => {
+    const { token } = req.cookies
+
+    if (!token) {
+        return res.status(401).json({ message: 'Login first to access this resource' })
+    }
+
+    let decoded
     try {
-        const token = req.cookies?.rur_token;
-        if (!token) {
-            return res.status(401).json({ message: 'Please sign in to continue.' });
-        }
+        decoded = jwt.verify(token, process.env.JWT_SECRET)
+    } catch (error) {
+        return res.status(401).json({ message: 'Session expired, please login again' })
+    }
 
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(payload.sub);
-        if (!user) {
-            return res.status(401).json({ message: 'This account is no longer available.' });
+    req.user = await User.findById(decoded.id);
+    if (!req.user) {
+        return res.status(401).json({ message: 'Login first to access this resource' })
+    }
+
+    next()
+};
+
+exports.authorizeRoles = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: `Role (${req.user.role}) is not allowed to acccess this resource` })
         }
-        req.user = user;
-        return next();
-    } catch {
-        return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+        next()
     }
 }
-
-function requireAdmin(req, res, next) {
-    if (req.user?.role !== 'admin') {
-        return res.status(403).json({ message: 'Administrator access is required.' });
-    }
-    return next();
-}
-
-module.exports = { requireAuth, requireAdmin };

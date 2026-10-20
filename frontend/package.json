@@ -10,8 +10,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.5.0",
+    "@mui/x-data-grid": "^9.16.0",
+    "axios": "^1.20.0",
+    "countries-list": "^3.4.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.2.8",
+    "react-helmet": "^6.1.0",
+    "react-redux": "^9.3.0",
+    "react-router-dom": "^7.18.4",
+    "react-toastify": "^11.1.0",
+    "recharts": "^3.10.1",
+    "redux": "^5.0.1",
+    "redux-thunk": "^3.1.0",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
