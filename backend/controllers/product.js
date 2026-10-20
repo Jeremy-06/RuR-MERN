@@ -50,6 +50,12 @@ exports.newProduct = async (req, res, next) => {
 
     // Validate before uploading so a bad form does not leave images in Cloudinary
     await product.validate()
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Please upload at least one product image'
+        })
+    }
     product.images = await uploadImages(req.files)
 
     try {
@@ -121,6 +127,12 @@ exports.updateProduct = async (req, res, next) => {
     delete req.body.images
     product.set(req.body)
     await product.validate()
+    if (keptImages.length + (req.files ? req.files.length : 0) === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'A product needs at least one image'
+        })
+    }
 
     // New images are added to the ones that were kept
     const newImages = await uploadImages(req.files)

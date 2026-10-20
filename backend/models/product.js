@@ -54,14 +54,19 @@ const productSchema = new mongoose.Schema({
             message: 'Please select correct category for product'
         }
     },
+    // Optional: the admin form only asks for the fields in the product spec
     seller: {
         type: String,
-        required: [true, 'Please enter product seller']
+        default: 'RuR Gear'
     },
     stock: {
         type: Number,
         required: [true, 'Please enter product stock'],
         min: [0, 'Product stock cannot be negative'],
+        validate: {
+            validator: Number.isInteger,
+            message: 'Product stock must be a whole number'
+        },
         default: 0
     },
     numOfReviews: {
