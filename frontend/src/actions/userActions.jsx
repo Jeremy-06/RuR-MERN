@@ -60,6 +60,30 @@ export const login = (email, password) => async (dispatch) => {
     }
 }
 
+// Sends the Firebase ID token; the backend answers with the same cookie as normal login
+export const googleLogin = (idToken) => async (dispatch) => {
+    try {
+        dispatch({ type: LOGIN_REQUEST })
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true,
+        }
+
+        const { data } = await axios.post(`${import.meta.env.VITE_API}/login/google`, { idToken }, config)
+        dispatch({
+            type: LOGIN_SUCCESS,
+            payload: data.user
+        })
+    } catch (error) {
+        dispatch({
+            type: LOGIN_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
 export const loadUser = () => async (dispatch) => {
     try {
         dispatch({ type: LOAD_USER_REQUEST })

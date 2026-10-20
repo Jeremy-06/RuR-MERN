@@ -135,7 +135,7 @@ The closest server-side processing in the reference is `utils/apiFeatures.js` fo
 - **Confirm dialogs**: SweetAlert2 —
   `Swal.fire({ title, icon: 'info', text, confirmButtonText: 'Delete', showCancelButton: true }).then(result => { if (result.isConfirmed) ... })`
   (used in `ProductReviews`).
-- **Env/config**: backend `dotenv.config({ path: './config/.env' })` in `server.js`; keys `PORT, NODE_ENV,
+- **Env/config** (RuR keeps this location: secrets go in `backend/config/.env`, template in `backend/config/.env.example`; frontend `frontend/.env` with `VITE_` keys read via `import.meta.env`): backend `dotenv.config({ path: './config/.env' })` in `server.js`; keys `PORT, NODE_ENV,
   DB_URI, CLOUDINARY_*, JWT_SECRET, JWT_EXPIRES_TIME, COOKIE_EXPIRES_TIME, SMTP_*`. Frontend `.env`
   `VITE_API`. CORS: `origin: "http://localhost:5173", credentials: true`.
 - **Categories**: hard-coded `enum` in the product model **and** the same array duplicated in
@@ -165,3 +165,11 @@ Planned, because Tasks 1–4 require things the reference does not have:
 | Cookie-only auth on the frontend (no sessionStorage Bearer token) | Reference's Bearer path never works (backend ignores the header). |
 | Global error handler in `app.js` returning `{ message }` | Reference returns HTML 500s on validation/cast errors, which the frontend can't display. |
 | `config/seed.js` (default admin + gaming catalog) | Needed to have an admin account without editing the DB by hand. |
+| Product images sent as real files (`multipart/form-data`, field `images`) instead of base64 strings; `utils/multer.js` uses `memoryStorage` with `fileSize: 5MB`, `files: 10`, jpg/jpeg/png/webp filter, and the controller streams each buffer to Cloudinary with `upload_stream` | Cloudinary integration requires real type/size validation. `multer-storage-cloudinary@4` only supports `cloudinary@^1` (project uses `^2`), so the reference's multer + cloudinary approach was adapted instead. |
+| Product update keeps existing images and takes `removeImages` (public_ids) + new `images`; removed, deleted and bulk-deleted images are destroyed in Cloudinary (only `rur/products/*`, never seed images); uploads are rolled back if the save fails | Cloudinary integration / Task 3. Reference replaces all images and never destroys product images. |
+| `DELETE /admin/products` with `{ ids: [...] }` (bulk delete) | Task 3. Shares the `router.route('/admin/products')` path with the admin list. |
+| `config/cloudinary.js` (`connectCloudinary`) and `config/firebase.js` (`connectFirebase`, `getFirebaseAuth`) called from `server.js`, same style as `config/database.js` | Reference configures cloudinary inline in `server.js`. |
+| Startup check in `server.js` that names each missing required env var and exits | Requested: clear error on missing env vars. |
+| Google login: `firebase` on the frontend (`src/firebase.js`, `GoogleLogin.jsx` MUI button on Login/Register), `firebase-admin` on the backend, `POST /login/google` verifies the ID token and calls the same `sendToken` cookie JWT. User model gains `authProvider` (`local`/`google`); password is required only for `local`. Password login and change password are refused for Google-only accounts | Task 2. If `FIREBASE_SERVICE_ACCOUNT_PATH` is missing the server still starts, logs a warning, and the endpoint returns 503. |
+| Avatars are only destroyed in Cloudinary when their public_id starts with `rur/avatars/` | Google avatars are external URLs with `public_id: 'google'`. |
+| Global error handler maps multer errors to 400 and only logs stack traces for 5xx | Upload validation messages must reach the frontend toast. |

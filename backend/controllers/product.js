@@ -1,44 +1,63 @@
+const mongoose = require('mongoose')
 const Product = require('../models/product')
 const Order = require('../models/order')
 const cloudinary = require('cloudinary')
 const APIFeatures = require('../utils/apiFeatures');
 
-const uploadImages = async (images) => {
+const PRODUCTS_FOLDER = 'rur/products'
+
+// Streams one multer memory file to Cloudinary
+const uploadImage = (file) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.v2.uploader.upload_stream({
+            folder: PRODUCTS_FOLDER,
+            width: 1000,
+            crop: "limit",
+        }, (error, result) => {
+            if (error) return reject(error)
+            resolve({
+                public_id: result.public_id,
+                url: result.secure_url
+            })
+        })
+        stream.end(file.buffer)
+    })
+}
+
+// Seed and legacy images are not stored in Cloudinary, so only our folder is destroyed
+const destroyImages = async (images = []) => {
+    const cloudinaryImages = images.filter(image => image.public_id && image.public_id.startsWith(`${PRODUCTS_FOLDER}/`))
+    await Promise.all(cloudinaryImages.map(image => cloudinary.v2.uploader.destroy(image.public_id)))
+}
+
+const uploadImages = async (files = []) => {
     let imagesLinks = [];
 
-    for (let i = 0; i < images.length; i++) {
-        const result = await cloudinary.v2.uploader.upload(images[i], {
-            folder: 'rur/products',
-            width: 500,
-            crop: "scale",
-        });
-
-        imagesLinks.push({
-            public_id: result.public_id,
-            url: result.secure_url
-        })
+    try {
+        for (const file of files) {
+            imagesLinks.push(await uploadImage(file))
+        }
+    } catch (error) {
+        // Remove the images that already went up before the failure
+        await destroyImages(imagesLinks)
+        throw error
     }
     return imagesLinks
 }
 
 exports.newProduct = async (req, res, next) => {
-    let images = []
-    if (typeof req.body.images === 'string') {
-        images.push(req.body.images)
-    } else {
-        images = req.body.images || []
+    const product = new Product({ ...req.body, images: [], user: req.user.id })
+
+    // Validate before uploading so a bad form does not leave images in Cloudinary
+    await product.validate()
+    product.images = await uploadImages(req.files)
+
+    try {
+        await product.save()
+    } catch (error) {
+        await destroyImages(product.images)
+        return next(error)
     }
-
-    req.body.images = await uploadImages(images)
-    req.body.user = req.user.id;
-
-    const product = await Product.create(req.body);
-
-    if (!product)
-        return res.status(400).json({
-            success: false,
-            message: 'Product not created'
-        })
 
     return res.status(201).json({
         success: true,
@@ -90,29 +109,31 @@ exports.updateProduct = async (req, res, next) => {
         })
     }
 
-    let images = []
-    if (typeof req.body.images === 'string') {
-        images.push(req.body.images)
-    } else {
-        images = req.body.images || []
+    // public_ids of existing images the admin removed
+    let removeImages = req.body.removeImages || []
+    if (typeof removeImages === 'string') {
+        removeImages = [removeImages]
     }
+    const removedImages = product.images.filter(image => removeImages.includes(image.public_id))
+    const keptImages = product.images.filter(image => !removeImages.includes(image.public_id))
 
-    // Replace images only when new ones were chosen
-    if (images.length > 0) {
-        for (const image of product.images) {
-            if (image.public_id.startsWith('rur/products')) {
-                await cloudinary.v2.uploader.destroy(image.public_id)
-            }
-        }
-        req.body.images = await uploadImages(images)
-    } else {
-        delete req.body.images
+    delete req.body.removeImages
+    delete req.body.images
+    product.set(req.body)
+    await product.validate()
+
+    // New images are added to the ones that were kept
+    const newImages = await uploadImages(req.files)
+    product.images = [...keptImages, ...newImages]
+
+    try {
+        await product.save()
+    } catch (error) {
+        await destroyImages(newImages)
+        return next(error)
     }
+    await destroyImages(removedImages)
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-        returnDocument: 'after',
-        runValidators: true,
-    })
     return res.status(200).json({
         success: true,
         product
@@ -127,10 +148,45 @@ exports.deleteProduct = async (req, res, next) => {
             message: 'Product not found'
         })
     }
+    await destroyImages(product.images)
 
     return res.status(200).json({
         success: true,
         message: 'Product deleted'
+    })
+}
+
+exports.deleteProducts = async (req, res, next) => {
+    const { ids } = req.body || {}
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Please select at least one product'
+        })
+    }
+    if (!ids.every(id => mongoose.isValidObjectId(id))) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid product id in the selection'
+        })
+    }
+
+    const products = await Product.find({ _id: { $in: ids } })
+    if (products.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: 'Products not found'
+        })
+    }
+
+    const { deletedCount } = await Product.deleteMany({ _id: { $in: products.map(product => product._id) } })
+    await destroyImages(products.flatMap(product => product.images))
+
+    return res.status(200).json({
+        success: true,
+        deletedCount,
+        message: `${deletedCount} product(s) deleted`
     })
 }
 

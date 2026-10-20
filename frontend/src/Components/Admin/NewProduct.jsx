@@ -21,29 +21,27 @@ const NewProduct = () => {
     const submitHandler = (e) => {
         e.preventDefault();
 
-        const productData = {
-            name,
-            price,
-            description,
-            category,
-            stock,
-            seller,
-            images
-        }
+        const formData = new FormData();
+        formData.set('name', name);
+        formData.set('price', price);
+        formData.set('description', description);
+        formData.set('category', category);
+        formData.set('stock', stock);
+        formData.set('seller', seller);
+        images.forEach(image => formData.append('images', image))
 
-        newProduct(productData)
+        newProduct(formData)
     }
 
     const onChange = e => {
         const files = Array.from(e.target.files)
         setImagesPreview([]);
-        setImages([])
+        setImages(files)
         files.forEach(file => {
             const reader = new FileReader();
             reader.onload = () => {
                 if (reader.readyState === 2) {
                     setImagesPreview(oldArray => [...oldArray, reader.result])
-                    setImages(oldArray => [...oldArray, reader.result])
                 }
             }
 
@@ -55,7 +53,7 @@ const NewProduct = () => {
         try {
             const config = {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                 },
                 withCredentials: true
             }
@@ -153,7 +151,7 @@ const NewProduct = () => {
                                             name='images'
                                             className='custom-file-input'
                                             id='customFile'
-                                            accept='image/*'
+                                            accept='.jpg,.jpeg,.png,.webp'
                                             onChange={onChange}
                                             multiple
                                         />

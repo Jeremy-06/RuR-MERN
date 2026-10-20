@@ -6,6 +6,7 @@ import MetaData from '../Layout/MetaData';
 import { errMsg } from '../Utils/helpers'
 import { useDispatch, useSelector } from 'react-redux'
 import { login, clearErrors } from '../../actions/userActions'
+import GoogleLogin from './GoogleLogin'
 
 const Login = () => {
     const { isAuthenticated, error, loading, } = useSelector(state => state.auth)
@@ -77,6 +78,8 @@ const Login = () => {
                                 >
                                     LOGIN
                                 </button>
+
+                                <GoogleLogin />
 
                                 <Link to="/register" className="float-right mt-3">New User?</Link>
                             </form>

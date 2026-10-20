@@ -24,6 +24,7 @@
 *.local
 *.pem
 *.key
+backend/config/firebase-service-account.json
 
 # Logs and runtime data
 logs/

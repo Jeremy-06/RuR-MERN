@@ -3,6 +3,7 @@ const crypto = require('crypto')
 const cloudinary = require('cloudinary')
 const sendEmail = require('../utils/sendEmail')
 const sendToken = require('../utils/jwtToken');
+const { getFirebaseAuth } = require('../config/firebase')
 
 const DEFAULT_AVATAR = {
     public_id: 'default_avatar',
@@ -56,6 +57,11 @@ exports.loginUser = async (req, res, next) => {
         return res.status(401).json({ message: 'Invalid Email or Password' })
     }
 
+    // Google-only accounts have no password to check
+    if (!user.password) {
+        return res.status(400).json({ message: 'This account uses Google sign-in. Please continue with Google.' })
+    }
+
     // Checks if password is correct or not
     const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
@@ -63,6 +69,44 @@ exports.loginUser = async (req, res, next) => {
     }
 
     user = await User.findById(user._id)
+    sendToken(user, 200, res)
+}
+
+exports.googleLogin = async (req, res, next) => {
+    const firebaseAuth = getFirebaseAuth()
+    if (!firebaseAuth) {
+        return res.status(503).json({ message: 'Google login is disabled: the Firebase service account is not configured on the server' })
+    }
+
+    const { idToken } = req.body || {};
+    if (!idToken) {
+        return res.status(400).json({ message: 'Google ID token is required' })
+    }
+
+    // Verify the Firebase ID token sent by the frontend
+    let decoded
+    try {
+        decoded = await firebaseAuth.verifyIdToken(idToken)
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid or expired Google sign-in, please try again' })
+    }
+    if (!decoded.email || decoded.email_verified === false) {
+        return res.status(400).json({ message: 'Your Google account has no verified email address' })
+    }
+
+    // Find the user by email or create a Google-only account
+    const email = decoded.email.toLowerCase()
+    let user = await User.findOne({ email })
+    if (!user) {
+        user = await User.create({
+            name: (decoded.name || email.split('@')[0]).substring(0, 30),
+            email,
+            avatar: decoded.picture ? { public_id: 'google', url: decoded.picture } : DEFAULT_AVATAR,
+            authProvider: 'google',
+            role: 'user',
+        })
+    }
+
     sendToken(user, 200, res)
 }
 
@@ -143,7 +187,7 @@ exports.updateProfile = async (req, res, next) => {
     // Update avatar
     if (req.body.avatar) {
         const user = await User.findById(req.user.id)
-        if (user.avatar && user.avatar.public_id !== DEFAULT_AVATAR.public_id) {
+        if (user.avatar && user.avatar.public_id.startsWith('rur/avatars/')) {
             await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         }
         const result = await cloudinary.v2.uploader.upload(req.body.avatar, {
@@ -173,6 +217,9 @@ exports.updateProfile = async (req, res, next) => {
 
 exports.updatePassword = async (req, res, next) => {
     const user = await User.findById(req.user.id).select('+password');
+    if (!user.password) {
+        return res.status(400).json({ message: 'This account uses Google sign-in and has no password to change' })
+    }
 
     // Check previous user password
     const isMatched = await user.comparePassword(req.body.oldPassword)
@@ -238,7 +285,7 @@ exports.deleteUser = async (req, res, next) => {
     }
 
     // Remove avatar from cloudinary
-    if (user.avatar && user.avatar.public_id !== DEFAULT_AVATAR.public_id) {
+    if (user.avatar && user.avatar.public_id.startsWith('rur/avatars/')) {
         await cloudinary.v2.uploader.destroy(user.avatar.public_id);
     }
     await User.findByIdAndDelete(req.params.id);

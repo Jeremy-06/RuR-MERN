@@ -2,17 +2,30 @@ const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, 'config', '.env') })
 
+// Stop early with a clear message when a required env variable is missing
+const requiredEnv = [
+    'PORT',
+    'DB_URI',
+    'JWT_SECRET',
+    'CLOUDINARY_CLOUD_NAME',
+    'CLOUDINARY_API_KEY',
+    'CLOUDINARY_API_SECRET',
+]
+const missingEnv = requiredEnv.filter(key => !process.env[key])
+if (missingEnv.length > 0) {
+    missingEnv.forEach(key => console.log(`ERROR: Missing required environment variable ${key} in backend/config/.env`))
+    process.exit(1);
+}
+
 const app = require('./app');
 const connectDatabase = require('./config/database')
+const connectCloudinary = require('./config/cloudinary')
+const { connectFirebase } = require('./config/firebase')
 const seedDatabase = require('./config/seed')
-const cloudinary = require('cloudinary');
 
 connectDatabase().then(seedDatabase).catch(error => console.log(error.message));
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-})
+connectCloudinary()
+connectFirebase()
 
 app.listen(process.env.PORT, (error) => {
     if (error) {

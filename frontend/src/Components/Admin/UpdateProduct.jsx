@@ -16,6 +16,7 @@ const UpdateProduct = () => {
     const [seller, setSeller] = useState('');
     const [images, setImages] = useState([]);
     const [oldImages, setOldImages] = useState([]);
+    const [removeImages, setRemoveImages] = useState([]);
     const [imagesPreview, setImagesPreview] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -43,7 +44,7 @@ const UpdateProduct = () => {
         try {
             const config = {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                 },
                 withCredentials: true
             }
@@ -63,33 +64,37 @@ const UpdateProduct = () => {
 
     const submitHandler = (e) => {
         e.preventDefault();
-        const productData = {
-            name,
-            price,
-            description,
-            category,
-            stock,
-            seller,
-            images
-        }
-        updateProduct(id, productData)
+        const formData = new FormData();
+        formData.set('name', name);
+        formData.set('price', price);
+        formData.set('description', description);
+        formData.set('category', category);
+        formData.set('stock', stock);
+        formData.set('seller', seller);
+        removeImages.forEach(publicId => formData.append('removeImages', publicId))
+        images.forEach(image => formData.append('images', image))
+        updateProduct(id, formData)
     }
 
+    // New files are added on top of the existing images that were kept
     const onChange = e => {
         const files = Array.from(e.target.files)
         setImagesPreview([]);
-        setImages([])
-        setOldImages([])
+        setImages(files)
         files.forEach(file => {
             const reader = new FileReader();
             reader.onload = () => {
                 if (reader.readyState === 2) {
                     setImagesPreview(oldArray => [...oldArray, reader.result])
-                    setImages(oldArray => [...oldArray, reader.result])
                 }
             }
             reader.readAsDataURL(file)
         })
+    }
+
+    const removeOldImage = (publicId) => {
+        setOldImages(oldArray => oldArray.filter(img => img.public_id !== publicId))
+        setRemoveImages(oldArray => [...oldArray, publicId])
     }
 
     return (
@@ -164,16 +169,27 @@ const UpdateProduct = () => {
                                             name='images'
                                             className='custom-file-input'
                                             id='customFile'
-                                            accept='image/*'
+                                            accept='.jpg,.jpeg,.png,.webp'
                                             onChange={onChange}
                                             multiple
                                         />
                                         <label className='custom-file-label' htmlFor='customFile'>
-                                            Choose Images
+                                            Add Images
                                         </label>
                                     </div>
                                     {oldImages && oldImages.map(img => (
-                                        <img key={img.url} src={img.url} alt={img.url} className="mt-3 mr-2" width="55" height="52" />
+                                        <span key={img.public_id + img.url} className="d-inline-block position-relative mt-3 mr-2">
+                                            <img src={img.url} alt={name} width="55" height="52" />
+                                            <button
+                                                type="button"
+                                                className="btn btn-danger btn-sm position-absolute py-0 px-1"
+                                                style={{ top: -8, right: -8 }}
+                                                aria-label="Remove image"
+                                                onClick={() => removeOldImage(img.public_id)}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
                                     ))}
                                     {imagesPreview.map(img => (
                                         <img src={img} key={img} alt="Images Preview" className="mt-3 mr-2" width="55" height="52" />

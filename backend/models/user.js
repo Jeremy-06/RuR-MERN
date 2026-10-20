@@ -18,9 +18,18 @@ const userSchema = new mongoose.Schema({
         trim: true,
         validate: [validator.isEmail, 'Please enter valid email address']
     },
+    // Google accounts sign in through Firebase and have no password
+    authProvider: {
+        type: String,
+        enum: {
+            values: ['local', 'google'],
+            message: 'Please select correct auth provider'
+        },
+        default: 'local'
+    },
     password: {
         type: String,
-        required: [true, 'Please enter your password'],
+        required: [function () { return this.authProvider === 'local' }, 'Please enter your password'],
         minlength: [6, 'Your password must be longer than 6 characters'],
         select: false
     },

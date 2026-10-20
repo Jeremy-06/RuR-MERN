@@ -4,6 +4,7 @@ import MetaData from '../Layout/MetaData'
 import { errMsg } from '../Utils/helpers'
 import { useDispatch, useSelector } from 'react-redux'
 import { register, clearErrors } from '../../actions/userActions'
+import GoogleLogin from './GoogleLogin'
 
 const Register = () => {
     const [user, setUser] = useState({
@@ -142,6 +143,8 @@ const Register = () => {
                         >
                             REGISTER
                         </button>
+
+                        <GoogleLogin label="Sign up with Google" />
                     </form>
                 </div>
             </div>

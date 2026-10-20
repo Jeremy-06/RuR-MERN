@@ -8,6 +8,7 @@ const {
     getProducts,
     updateProduct,
     deleteProduct,
+    deleteProducts,
     getAdminProducts,
     createProductReview,
     getProductReviews,
@@ -21,7 +22,9 @@ router.get('/product/:id', getSingleProduct)
 router.get('/products', getProducts)
 router.put('/admin/product/:id', isAuthenticatedUser, authorizeRoles('admin'), upload.array('images', 10), updateProduct);
 router.delete('/admin/product/:id', isAuthenticatedUser, authorizeRoles('admin'), deleteProduct);
-router.get('/admin/products', isAuthenticatedUser, authorizeRoles('admin'), getAdminProducts)
+router.route('/admin/products')
+    .get(isAuthenticatedUser, authorizeRoles('admin'), getAdminProducts)
+    .delete(isAuthenticatedUser, authorizeRoles('admin'), deleteProducts)
 router.put('/review', isAuthenticatedUser, createProductReview);
 router.get('/reviews', isAuthenticatedUser, getProductReviews)
 router.delete('/reviews', isAuthenticatedUser, authorizeRoles('admin'), deleteReview)
