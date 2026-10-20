@@ -1,42 +1,47 @@
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import Paper from '@mui/material/Paper'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
+
+const links = [
+    { to: '/dashboard', icon: 'fa-tachometer', label: 'Dashboard' },
+    { to: '/admin/products', icon: 'fa-gamepad', label: 'Products' },
+    { to: '/admin/orders', icon: 'fa-shopping-basket', label: 'Orders' },
+    { to: '/admin/users', icon: 'fa-users', label: 'Users' },
+    { to: '/admin/reviews', icon: 'fa-star', label: 'Reviews' },
+]
 
 const Sidebar = () => {
     return (
-        <div className="sidebar-wrapper">
-            <nav id="sidebar">
-                <ul className="list-unstyled components">
-                    <li>
-                        <Link to="/dashboard"><i className="fa fa-tachometer"></i> Dashboard</Link>
-                    </li>
-
-                    <li>
-                        <a href="#productSubmenu" data-toggle="collapse" aria-expanded="false" className="dropdown-toggle"><i
-                            className="fa fa-gamepad"></i> Products</a>
-                        <ul className="collapse list-unstyled" id="productSubmenu">
-                            <li>
-                                <Link to="/admin/products"><i className="fa fa-clipboard"></i> All</Link>
-                            </li>
-
-                            <li>
-                                <Link to="/admin/product"><i className="fa fa-plus"></i> Create</Link>
-                            </li>
-                        </ul>
-                    </li>
-
-                    <li>
-                        <Link to="/admin/orders"><i className="fa fa-shopping-basket"></i> Orders</Link>
-                    </li>
-
-                    <li>
-                        <Link to="/admin/users"><i className="fa fa-users"></i> Users</Link>
-                    </li>
-
-                    <li>
-                        <Link to="/admin/reviews"><i className="fa fa-star"></i> Reviews</Link>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+        <Paper
+            component="nav"
+            elevation={0}
+            square
+            sx={{ bgcolor: 'rur.black', color: '#fff', minHeight: { md: 'calc(100vh - 110px)' }, py: 2, borderRadius: { xs: 2, md: 0 } }}
+        >
+            <List>
+                {links.map(link => (
+                    <ListItemButton
+                        key={link.to}
+                        component={NavLink}
+                        to={link.to}
+                        sx={{
+                            py: 1.5,
+                            color: '#fff',
+                            '&:hover': { bgcolor: 'rur.panel', color: '#fff' },
+                            '&.active': { bgcolor: 'primary.main', color: '#fff' },
+                        }}
+                    >
+                        <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>
+                            <i className={`fa ${link.icon}`}></i>
+                        </ListItemIcon>
+                        <ListItemText primary={link.label} />
+                    </ListItemButton>
+                ))}
+            </List>
+        </Paper>
     )
 }
 
