@@ -5,6 +5,7 @@ import * as Yup from 'yup'
 // Same limits as backend/utils/multer.js
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+export const MAX_IMAGES = 10
 
 export const isAllowedImage = (file) => IMAGE_TYPES.includes(file.type)
 export const isAllowedSize = (file) => file.size <= MAX_IMAGE_SIZE

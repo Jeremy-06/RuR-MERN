@@ -16,6 +16,7 @@
     "@mui/x-data-grid": "^9.16.0",
     "axios": "^1.20.0",
     "countries-list": "^3.4.1",
+    "datatables.net-dt": "^2.3.8",
     "firebase": "^13.0.0",
     "formik": "^2.4.9",
     "react": "^19.2.8",

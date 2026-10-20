@@ -202,8 +202,16 @@ exports.deleteProducts = async (req, res, next) => {
     })
 }
 
+// Serves the DataTables admin table; without DataTables params it returns every product (dashboard)
 exports.getAdminProducts = async (req, res, next) => {
-    const products = await Product.find();
+    const productsCount = await Product.countDocuments();
+
+    const apiFeatures = new APIFeatures(Product.find(), req.query).dataTableSearch(['name', 'category'])
+    const filteredProductsCount = await apiFeatures.query.clone().countDocuments();
+
+    apiFeatures.dataTableSort(['name', 'category', 'price', 'stock', 'createdAt']).dataTablePagination()
+    const products = await apiFeatures.query;
+
     if (!products) {
         return res.status(404).json({
             success: false,
@@ -212,7 +220,10 @@ exports.getAdminProducts = async (req, res, next) => {
     }
     return res.status(200).json({
         success: true,
-        products
+        draw: Number(req.query.draw) || 0,
+        products,
+        productsCount,
+        filteredProductsCount,
     })
 }
 

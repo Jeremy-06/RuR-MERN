@@ -770,3 +770,29 @@ ul ul a {
   font-size: 0.8rem;
   color: grey;
 }
+
+/* Admin products DataTable */
+
+.products-table .dt-thumb {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e3e7ee;
+}
+
+.products-table .dt-thumb-empty {
+  background-color: #eef1f5;
+}
+
+.products-table td,
+.products-table th {
+  vertical-align: middle;
+}
+
+.products-table input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
