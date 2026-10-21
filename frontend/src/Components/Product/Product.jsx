@@ -1,30 +1,28 @@
 import { Link } from 'react-router-dom';
+import Card from '@mui/material/Card'
+import CardActionArea from '@mui/material/CardActionArea'
+import CardMedia from '@mui/material/CardMedia'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
 
 const Product = ({ product }) => {
     return (
-        <div className="col-sm-12 col-md-6 col-lg-4 my-3">
-            <div className="card p-3 rounded">
-                <img
-                    className="card-img-top mx-auto"
-                    src={product.images[0] ? product.images[0].url : null}
+        <Card sx={{ height: '100%' }}>
+            <CardActionArea component={Link} to={`/product/${product._id}`} sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+                <CardMedia
+                    component="img"
+                    image={product.images[0] ? product.images[0].url : '/images/default_avatar.svg'}
                     alt={product.name}
+                    loading="lazy"
+                    sx={{ aspectRatio: '4 / 3', objectFit: 'cover', bgcolor: 'background.default' }}
                 />
-                <div className="card-body d-flex flex-column">
-                    <span className="card-category">{product.category}</span>
-                    <h5 className="card-title">
-                        <Link to={`/product/${product._id}`} >{product.name}</Link>
-                    </h5>
-                    <div className="ratings mt-auto">
-                        <div className="rating-outer">
-                            <div className="rating-inner" style={{ width: `${(product.ratings / 5) * 100}%` }}></div>
-                        </div>
-                        <span id="no_of_reviews">({product.numOfReviews} reviews)</span>
-                    </div>
-                    <p className="card-text">${product.price}</p>
-                    <Link to={`/product/${product._id}`} id="view_btn" className="btn btn-block">View Details</Link>
-                </div>
-            </div>
-        </div>
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant="overline" color="primary" sx={{ lineHeight: 1.5 }}>{product.category}</Typography>
+                    <Typography variant="subtitle1" component="h5" sx={{ fontWeight: 700, lineHeight: 1.3 }}>{product.name}</Typography>
+                    <Typography variant="h5" component="p" sx={{ mt: 'auto', pt: 1 }}>{`$${Number(product.price).toFixed(2)}`}</Typography>
+                </CardContent>
+            </CardActionArea>
+        </Card>
     )
 }
 

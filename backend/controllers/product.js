@@ -85,14 +85,35 @@ exports.getSingleProduct = async (req, res, next) => {
     })
 }
 
+// Categories come from the model enum, same list the admin form uses
+const productCategories = () => Product.schema.path('category').enumValues
+
+exports.getCategories = async (req, res, next) => {
+    return res.status(200).json({
+        success: true,
+        categories: productCategories()
+    })
+}
+
+// http://localhost:4002/api/v1/products?page=2&limit=12&minPrice=10&maxPrice=200&category=Mice&category=Headsets
 exports.getProducts = async (req, res) => {
-    const resPerPage = 8;
+    const errorMessage = APIFeatures.validateShopQuery(req.query, productCategories())
+    if (errorMessage) {
+        return res.status(400).json({
+            success: false,
+            message: errorMessage
+        })
+    }
+
+    const resPerPage = Number(req.query.limit) || 12;
+    const currentPage = Number(req.query.page) || 1;
     const productsCount = await Product.countDocuments();
 
+    // One query: search + filters, counted before paging so the total matches the filters
     const apiFeatures = new APIFeatures(Product.find(), req.query).search().filter()
     const filteredProductsCount = await apiFeatures.query.clone().countDocuments();
 
-    apiFeatures.pagination(resPerPage);
+    apiFeatures.sort().pagination(resPerPage);
     const products = await apiFeatures.query;
 
     if (!products)
@@ -103,6 +124,8 @@ exports.getProducts = async (req, res) => {
         filteredProductsCount,
         resPerPage,
         productsCount,
+        currentPage,
+        hasMore: currentPage * resPerPage < filteredProductsCount,
     })
 }
 

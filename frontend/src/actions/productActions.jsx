@@ -9,26 +9,47 @@ import {
     CLEAR_ERRORS
 } from '../constants/productConstants';
 
-export const getProducts = (currentPage = 1, keyword = '', price, category = '') => async (dispatch) => {
+export const RES_PER_PAGE = 12
+
+// Same filters always give the same key, so old answers can be told apart
+export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [] }) =>
+    JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort()])
+
+// Loads one page of the shop list; page 1 starts a new list for these filters
+export const getProducts = (filters, currentPage = 1) => async (dispatch, getState) => {
+    const key = productsKey(filters)
+    const { products: state } = getState()
+
+    // Only one request for the same page at a time, and only the next page
+    if (state.loading && state.key === key && state.requestedPage === currentPage) return
+    if (currentPage > 1 && (state.loading || state.key !== key || !state.hasMore || currentPage !== state.page + 1)) return
+
     try {
         dispatch({
-            type: ALL_PRODUCTS_REQUEST
+            type: ALL_PRODUCTS_REQUEST,
+            key,
+            page: currentPage
         })
 
-        let link = `${import.meta.env.VITE_API}/products?page=${currentPage}&keyword=${encodeURIComponent(keyword)}&price[lte]=${price[1]}&price[gte]=${price[0]}`
+        const params = new URLSearchParams()
+        params.set('page', currentPage)
+        params.set('limit', RES_PER_PAGE)
+        if (filters.keyword) params.set('keyword', filters.keyword)
+        if (filters.minPrice !== '') params.set('minPrice', filters.minPrice)
+        if (filters.maxPrice !== '') params.set('maxPrice', filters.maxPrice)
+        filters.categories.forEach(category => params.append('category', category))
 
-        if (category) {
-            link = `${link}&category=${encodeURIComponent(category)}`
-        }
-        const { data } = await axios.get(link)
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products?${params.toString()}`)
         dispatch({
             type: ALL_PRODUCTS_SUCCESS,
+            key,
             payload: data
         })
 
     } catch (error) {
         dispatch({
             type: ALL_PRODUCTS_FAIL,
+            key,
             payload: error.response ? error.response.data.message : error.message
         })
     }
