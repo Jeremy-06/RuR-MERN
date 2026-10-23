@@ -1,7 +1,5 @@
 const mongoose = require('mongoose')
-const { Filter } = require('bad-words')
-
-const profanityFilter = new Filter()
+const { isProfane } = require('../utils/profanity')
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -31,7 +29,7 @@ const reviewSchema = new mongoose.Schema({
         maxLength: [1000, 'Comment cannot exceed 1000 characters'],
         validate: {
             // Blocked instead of masked so the customer can reword it
-            validator: value => !profanityFilter.isProfane(value),
+            validator: value => !isProfane(value),
             message: 'Please remove offensive language from your review'
         }
     },
