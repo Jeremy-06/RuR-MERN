@@ -49,6 +49,7 @@ const productSchema = new mongoose.Schema({
                 'Microphones',
                 'Webcams',
                 'Lighting',
+                'Components',
                 'Accessories'
             ],
             message: 'Please select correct category for product'

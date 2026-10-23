@@ -25,6 +25,7 @@ const imagesByCategory = {
     Microphones: 'photo-1590602847861-f357a9332bbc',
     Webcams: 'photo-1587826080692-f439cd0b70da',
     Lighting: 'photo-1593305841991-05c297ba4575',
+    Components: 'photo-1591799264318-7e6ef8ddb7ea',
     Accessories: 'photo-1616763355548-1b606f439f86',
 }
 

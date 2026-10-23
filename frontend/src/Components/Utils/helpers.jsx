@@ -34,6 +34,7 @@ export const categories = [
     'Microphones',
     'Webcams',
     'Lighting',
+    'Components',
     'Accessories'
 ]
 
