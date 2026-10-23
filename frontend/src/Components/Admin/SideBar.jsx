@@ -7,6 +7,7 @@ import ListItemText from '@mui/material/ListItemText'
 
 const links = [
     { to: '/dashboard', icon: 'fa-tachometer', label: 'Dashboard' },
+    { to: '/admin/sales', icon: 'fa-line-chart', label: 'Sales' },
     { to: '/admin/products', icon: 'fa-gamepad', label: 'Products' },
     { to: '/admin/orders', icon: 'fa-shopping-basket', label: 'Orders' },
     { to: '/admin/users', icon: 'fa-users', label: 'Users' },

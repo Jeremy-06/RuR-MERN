@@ -12,6 +12,7 @@ const {
 	totalSales,
 	customerSales,
 	salesPerMonth,
+	salesByDate,
 } = require('../controllers/order')
 const { isAuthenticatedUser, authorizeRoles } = require('../middleware/auth')
 
@@ -24,4 +25,5 @@ router.get('/admin/total-orders', isAuthenticatedUser, authorizeRoles('admin'), 
 router.get('/admin/total-sales', isAuthenticatedUser, authorizeRoles('admin'), totalSales);
 router.get('/admin/customer-sales', isAuthenticatedUser, authorizeRoles('admin'), customerSales);
 router.get('/admin/sales-per-month', isAuthenticatedUser, authorizeRoles('admin'), salesPerMonth);
+router.get('/admin/sales-by-date', isAuthenticatedUser, authorizeRoles('admin'), salesByDate);
 module.exports = router;

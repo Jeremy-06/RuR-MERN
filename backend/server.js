@@ -17,13 +17,6 @@ if (missingEnv.length > 0) {
     process.exit(1);
 }
 
-// Node can pick up 127.0.0.1 as its only DNS server on Windows, which breaks the
-// SRV lookup for mongodb+srv:// URIs (querySrv ECONNREFUSED); fall back to public DNS
-const dns = require('dns');
-if (dns.getServers().every(server => ['127.0.0.1', '::1'].includes(server))) {
-    dns.setServers((process.env.DNS_SERVERS || '8.8.8.8,1.1.1.1').split(',').map(server => server.trim()))
-}
-
 const app = require('./app');
 const connectDatabase = require('./config/database')
 const connectCloudinary = require('./config/cloudinary')

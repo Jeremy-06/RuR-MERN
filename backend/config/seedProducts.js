@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '.env'), quiet: true })
 
 const mongoose = require('mongoose');
+const connectDatabase = require('./database');
 const Product = require('../models/product');
 
 // Marks the demo rows so --remove only deletes these
@@ -55,7 +56,7 @@ const demoProducts = () => {
 }
 
 const seedProducts = async () => {
-    await mongoose.connect(process.env.DB_URI)
+    await connectDatabase()
 
     if (process.argv.includes('--remove')) {
         const { deletedCount } = await Product.deleteMany({ seller: DEMO_SELLER })

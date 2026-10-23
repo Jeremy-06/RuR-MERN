@@ -1,6 +1,7 @@
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import * as Yup from 'yup'
+import dayjs from 'dayjs'
 
 // Same limits as backend/utils/multer.js
 export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -38,6 +39,17 @@ export const categories = [
     'Components',
     'Accessories'
 ]
+
+// $1,234.50
+export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+
+// Oct 24, 2026 for one day, Oct 20 – Oct 26, 2026 for a longer period
+export const formatPeriod = ({ start, end }) => {
+    const from = dayjs(start)
+    const to = dayjs(end)
+    if (start === end) return to.format('MMM D, YYYY')
+    return `${from.format(from.year() === to.year() ? 'MMM D' : 'MMM D, YYYY')} – ${to.format('MMM D, YYYY')}`
+}
 
 export const errMsg = (message = '') => toast.error(message, {
     position: 'bottom-center'

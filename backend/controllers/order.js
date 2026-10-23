@@ -1,6 +1,7 @@
 const Order = require('../models/order');
 const Product = require('../models/product');
 const { orderEvents, ORDER_CREATED, ORDER_STATUS_UPDATED } = require('../events/orderEvents');
+const { parseSalesRange } = require('../utils/salesRange');
 
 // Create a new order   =>  /api/v1/order/new
 exports.newOrder = async (req, res, next) => {
@@ -246,5 +247,74 @@ exports.salesPerMonth = async (req, res, next) => {
     res.status(200).json({
         success: true,
         salesPerMonth
+    })
+}
+
+// Sales per day, week or month in a date range   =>  /api/v1/admin/sales-by-date?startDate=2026-10-01&endDate=2026-10-24&groupBy=day&timezone=Asia/Manila
+exports.salesByDate = async (req, res, next) => {
+    const range = parseSalesRange(req.query)
+    if (range.error) {
+        return res.status(400).json({
+            success: false,
+            message: range.error
+        })
+    }
+    const { startDate, endDate, groupBy, timezone, periods } = range
+
+    // An order counts on the day it was paid, in the admin's time zone (createdAt if paidAt is missing)
+    const soldAt = { $ifNull: ['$paidAt', '$createdAt'] }
+    const periodStart = {
+        $dateTrunc: { date: soldAt, unit: groupBy, timezone, ...(groupBy === 'week' && { startOfWeek: 'monday' }) }
+    }
+
+    const sales = await Order.aggregate([
+        {
+            $addFields: {
+                soldOn: { $dateToString: { format: '%Y-%m-%d', date: soldAt, timezone } }
+            }
+        },
+        { $match: { soldOn: { $gte: startDate, $lte: endDate } } },
+        {
+            $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: periodStart, timezone } },
+                total: { $sum: '$totalPrice' },
+                orders: { $sum: 1 },
+                items: { $sum: { $sum: '$orderItems.quantity' } },
+            }
+        },
+    ])
+
+    // Periods without orders are filled in with 0 so the chart has no gaps
+    const salesByPeriod = new Map(sales.map(period => [period._id, period]))
+    const salesByDate = periods.map(({ key, start, end }) => {
+        const period = salesByPeriod.get(key)
+        return {
+            start,
+            end,
+            total: period ? Math.round(period.total * 100) / 100 : 0,
+            orders: period ? period.orders : 0,
+            items: period ? period.items : 0,
+        }
+    })
+
+    let totalSales = 0
+    let totalOrders = 0
+    let totalItems = 0
+    salesByDate.forEach(period => {
+        totalSales += period.total
+        totalOrders += period.orders
+        totalItems += period.items
+    })
+
+    res.status(200).json({
+        success: true,
+        startDate,
+        endDate,
+        groupBy,
+        timezone,
+        totalSales: Math.round(totalSales * 100) / 100,
+        totalOrders,
+        totalItems,
+        sales: salesByDate
     })
 }

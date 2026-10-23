@@ -29,6 +29,7 @@ import ListOrders from './Components/Order/ListOrders';
 import OrderDetails from './Components/Order/OrderDetails';
 
 import Dashboard from './Components/Admin/Dashboard';
+import SalesDashboard from './Components/Admin/SalesDashboard';
 import ProductsList from './Components/Admin/ProductsList';
 import OrdersList from './Components/Admin/OrdersList';
 import ProcessOrder from './Components/Admin/ProcessOrder';
@@ -180,6 +181,7 @@ function App() {
 
             {/* Admin routes (admin role required) */}
             <Route path="/dashboard" element={<ProtectedRoute isAdmin={true}><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin/sales" element={<ProtectedRoute isAdmin={true}><SalesDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute isAdmin={true}><ProductsList /></ProtectedRoute>} />
             <Route path="/admin/orders" element={<ProtectedRoute isAdmin={true}><OrdersList /></ProtectedRoute>} />
             <Route path="/admin/order/:id" element={<ProtectedRoute isAdmin={true}><ProcessOrder /></ProtectedRoute>} />
