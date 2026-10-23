@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import Container from '@mui/material/Container'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { loadUser } from './actions/userActions'
 
 import { Header } from './Components/Layout/Header'
@@ -37,26 +37,63 @@ import UpdateUser from './Components/Admin/UpdateUser';
 import ProductReviews from './Components/Admin/ProductReviews';
 import ProtectedRoute from './Components/Route/ProtectedRoute';
 
+// Reads a JSON value from localStorage, falling back when it is missing or broken
+const readStorage = (key, fallback) => {
+  try {
+    const value = localStorage.getItem(key)
+    return value ? JSON.parse(value) : fallback
+  } catch {
+    return fallback
+  }
+}
+
 function App() {
   const dispatch = useDispatch()
 
-  const [state, setState] = useState({
-    cartItems: localStorage.getItem('cartItems')
-      ? JSON.parse(localStorage.getItem('cartItems'))
-      : [],
+  const { user } = useSelector(state => state.auth)
 
-    shippingInfo: localStorage.getItem('shippingInfo')
-      ? JSON.parse(localStorage.getItem('shippingInfo'))
-      : {},
+  // Each account keeps its own cart; owner is undefined while the user is still loading
+  const owner = user ? user._id : 'guest'
+
+  const [state, setState] = useState({
+    owner: undefined,
+    cartItems: [],
+    shippingInfo: {},
   })
 
   useEffect(() => {
     dispatch(loadUser())
   }, [dispatch])
 
+  // Switch to the cart and shipping info of whoever is logged in
+  if (owner && owner !== state.owner) {
+    const cartItems = readStorage(`cartItems_${owner}`, [])
+
+    // Items added before logging in move into the account's cart
+    if (owner !== 'guest') {
+      readStorage('cartItems_guest', []).forEach(item => {
+        if (!cartItems.find(i => i.product === item.product)) cartItems.push(item)
+      })
+    }
+
+    setState({
+      owner,
+      cartItems,
+      shippingInfo: readStorage(`shippingInfo_${owner}`, {}),
+    })
+  }
+
   useEffect(() => {
-    localStorage.setItem('cartItems', JSON.stringify(state.cartItems))
-  }, [state.cartItems])
+    if (!state.owner) return
+    localStorage.setItem(`cartItems_${state.owner}`, JSON.stringify(state.cartItems))
+
+    // Guest items now live in the account's cart
+    if (state.owner !== 'guest') localStorage.removeItem('cartItems_guest')
+
+    // Old shared keys from before carts were per account
+    localStorage.removeItem('cartItems')
+    localStorage.removeItem('shippingInfo')
+  }, [state.owner, state.cartItems])
 
   const addItemToCart = async (id, quantity) => {
     try {
@@ -104,7 +141,7 @@ function App() {
       ...prevState,
       shippingInfo: data
     }))
-    localStorage.setItem('shippingInfo', JSON.stringify(data))
+    localStorage.setItem(`shippingInfo_${owner}`, JSON.stringify(data))
   }
 
   const clearCart = () => {

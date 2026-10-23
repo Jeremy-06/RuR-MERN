@@ -6,7 +6,6 @@ const OrderSuccess = ({ clearCart }) => {
     useEffect(() => {
         clearCart()
         sessionStorage.removeItem('orderInfo')
-        localStorage.removeItem('cartItems');
     }, [])
 
     return (
