@@ -174,7 +174,17 @@ const Home = () => {
             <Grid container spacing={3} id="products">
                 {!isMobile && (
                     <Grid size={{ md: 3 }}>
-                        <Paper sx={{ p: 3, position: 'sticky', top: 96 }}>
+                        {/* Stays below the sticky header and scrolls on its own, so reaching the
+                            last filters never scrolls the page and triggers infinite scroll */}
+                        <Paper sx={{
+                            p: 3,
+                            position: 'sticky',
+                            top: 96,
+                            maxHeight: 'calc(100vh - 96px - 24px)',
+                            overflowY: 'auto',
+                            overscrollBehavior: 'contain',
+                            scrollbarWidth: 'thin',
+                        }}>
                             {filterPanel}
                         </Paper>
                     </Grid>
