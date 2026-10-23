@@ -26,6 +26,7 @@ export const categories = [
     'Keyboards',
     'Mice',
     'Headsets',
+    'Speakers',
     'Monitors',
     'Controllers',
     'Chairs',

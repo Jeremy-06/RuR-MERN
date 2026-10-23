@@ -41,6 +41,7 @@ const productSchema = new mongoose.Schema({
                 'Keyboards',
                 'Mice',
                 'Headsets',
+                'Speakers',
                 'Monitors',
                 'Controllers',
                 'Chairs',

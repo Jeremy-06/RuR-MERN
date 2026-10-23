@@ -17,6 +17,7 @@ const imagesByCategory = {
     Keyboards: 'photo-1595225476474-87563907a212',
     Mice: 'photo-1527814050087-3793815479db',
     Headsets: 'photo-1599669454699-248893623440',
+    Speakers: 'photo-1545454675-3531b543be5d',
     Monitors: 'photo-1625842268584-8f3296236761',
     Controllers: 'photo-1592840496694-26d035b52b48',
     Chairs: 'photo-1616588589676-62b3bd4ff6d2',
