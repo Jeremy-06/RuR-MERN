@@ -17,7 +17,12 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter product description'],
     },
-    ratings: {
+    // Kept up to date by the Review model hooks
+    averageRating: {
+        type: Number,
+        default: 0
+    },
+    reviewCount: {
         type: Number,
         default: 0
     },
@@ -71,31 +76,6 @@ const productSchema = new mongoose.Schema({
         },
         default: 0
     },
-    numOfReviews: {
-        type: Number,
-        default: 0
-    },
-    reviews: [
-        {
-            user: {
-                type: mongoose.Schema.ObjectId,
-                ref: 'User',
-                required: true
-            },
-            name: {
-                type: String,
-                required: true
-            },
-            rating: {
-                type: Number,
-                required: true
-            },
-            comment: {
-                type: String,
-                required: true
-            }
-        }
-    ],
     user: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
@@ -105,5 +85,8 @@ const productSchema = new mongoose.Schema({
         default: Date.now
     }
 })
+
+// Shop list filters on rating and review count
+productSchema.index({ averageRating: -1, reviewCount: -1 })
 
 module.exports = mongoose.model('Product', productSchema);

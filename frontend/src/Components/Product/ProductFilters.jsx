@@ -10,9 +10,13 @@ import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Skeleton from '@mui/material/Skeleton'
 import FormHelperText from '@mui/material/FormHelperText'
+import RadioGroup from '@mui/material/RadioGroup'
+import Radio from '@mui/material/Radio'
+import Rating from '@mui/material/Rating'
 
 export const PRICE_MAX = 1000
 const PRICE_DEBOUNCE = 500
+const RATING_OPTIONS = ['4', '3', '2', '1']
 
 // Returns an error message for the typed prices, or ''
 const priceError = (min, max) => {
@@ -26,7 +30,7 @@ const priceError = (min, max) => {
     return ''
 }
 
-const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPrice, maxPrice, selectedCategories, onPriceChange, onCategoryToggle, onClear }) => {
+const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPrice, maxPrice, selectedCategories, onPriceChange, onCategoryToggle, minRating, onRatingChange, onClear }) => {
     // Typed values; they reach the URL after a short pause
     const [price, setPrice] = useState({ min: minPrice, max: maxPrice })
     const [urlPrice, setUrlPrice] = useState({ min: minPrice, max: maxPrice })
@@ -59,7 +63,7 @@ const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPri
         })
     }
 
-    const hasFilters = minPrice !== '' || maxPrice !== '' || price.min !== '' || price.max !== '' || selectedCategories.length > 0
+    const hasFilters = minPrice !== '' || maxPrice !== '' || price.min !== '' || price.max !== '' || selectedCategories.length > 0 || minRating !== ''
 
     // Also drops prices that were typed but not applied yet
     const clearHandler = () => {
@@ -132,6 +136,26 @@ const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPri
                     />
                 ))}
             </FormGroup>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="h5" component="h3" id="rating-filter-label">Customer rating</Typography>
+            <RadioGroup aria-labelledby="rating-filter-label" value={minRating} onChange={(e) => onRatingChange(e.target.value)}>
+                <FormControlLabel value="" control={<Radio size="small" />} label="Any rating" />
+                {RATING_OPTIONS.map(rating => (
+                    <FormControlLabel
+                        key={rating}
+                        value={rating}
+                        control={<Radio size="small" />}
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Rating value={Number(rating)} size="small" readOnly aria-hidden="true" />
+                                <span>{`${rating} & up`}</span>
+                            </Box>
+                        }
+                    />
+                ))}
+            </RadioGroup>
 
             <Button variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} disabled={!hasFilters} onClick={clearHandler}>
                 Clear filters

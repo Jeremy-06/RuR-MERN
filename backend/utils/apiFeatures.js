@@ -16,7 +16,7 @@ class APIFeatures {
 
     // Checks the shop list params; returns the first error message or null
     static validateShopQuery(queryStr, categories) {
-        const { minPrice, maxPrice, page, limit } = queryStr
+        const { minPrice, maxPrice, minRating, minReviews, page, limit } = queryStr
 
         for (const [name, value] of Object.entries({ minPrice, maxPrice })) {
             if (!hasValue(value)) continue
@@ -26,6 +26,13 @@ class APIFeatures {
         }
         if (hasValue(minPrice) && hasValue(maxPrice) && Number(minPrice) > Number(maxPrice)) {
             return 'minPrice cannot be greater than maxPrice'
+        }
+
+        if (hasValue(minRating) && (Array.isArray(minRating) || !Number.isFinite(Number(minRating)) || Number(minRating) < 0 || Number(minRating) > 5)) {
+            return 'minRating must be a number from 0 to 5'
+        }
+        if (hasValue(minReviews) && (Array.isArray(minReviews) || !Number.isInteger(Number(minReviews)) || Number(minReviews) < 0)) {
+            return 'minReviews must be a whole number of 0 or more'
         }
 
         if (hasValue(page) && (Array.isArray(page) || !Number.isInteger(Number(page)) || Number(page) < 1)) {
@@ -56,11 +63,12 @@ class APIFeatures {
     }
 
     filter() {
-        // { minPrice: '10', maxPrice: '200', category: ['Mice', 'Headsets'] }
-        // Each filter adds its own conditions, so more filters (e.g. ratings) plug in here
+        // { minPrice: '10', maxPrice: '200', category: ['Mice', 'Headsets'], minRating: '4', minReviews: '1' }
+        // Each filter adds its own conditions, so more filters plug in here
         const conditions = {
             ...this.priceFilter(),
             ...this.categoryFilter(),
+            ...this.ratingFilter(),
         }
 
         this.query = this.query.find(conditions);
@@ -84,6 +92,20 @@ class APIFeatures {
     categoryFilter() {
         const categories = APIFeatures.categoryList(this.queryStr)
         return categories.length > 0 ? { category: { $in: categories } } : {}
+    }
+
+    // averageRating and reviewCount are kept up to date by the Review model
+    ratingFilter() {
+        const { minRating, minReviews } = this.queryStr
+        const conditions = {}
+
+        if (hasValue(minRating) && Number(minRating) > 0) {
+            conditions.averageRating = { $gte: Number(minRating) }
+        }
+        if (hasValue(minReviews) && Number(minReviews) > 0) {
+            conditions.reviewCount = { $gte: Number(minReviews) }
+        }
+        return conditions
     }
 
     sort() {

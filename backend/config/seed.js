@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const Product = require('../models/product');
+const Review = require('../models/review');
 const { DEFAULT_AVATAR } = require('../controllers/auth');
 
 const unsplash = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=700&q=85`
@@ -29,7 +30,30 @@ const legacyCategories = {
     'Desk setup': 'Mousepads',
 }
 
+// Reviews used to live inside each product (reviews, ratings, numOfReviews); move them to the reviews collection
+async function migrateEmbeddedReviews() {
+    const products = await Product.collection.find({
+        $or: [{ reviews: { $exists: true } }, { ratings: { $exists: true } }, { numOfReviews: { $exists: true } }]
+    }).toArray()
+
+    for (const product of products) {
+        for (const review of product.reviews || []) {
+            // Copied as they were; the bad-words check only applies to new and edited reviews
+            await Review.collection.updateOne(
+                { product: product._id, user: review.user },
+                { $setOnInsert: { rating: review.rating, comment: review.comment, createdAt: review._id.getTimestamp() } },
+                { upsert: true }
+            )
+        }
+        await Product.collection.updateOne({ _id: product._id }, { $unset: { reviews: '', ratings: '', numOfReviews: '' } })
+        await Review.updateProductRating(product._id)
+    }
+    if (products.length > 0) console.log(`Moved reviews of ${products.length} product(s) to the reviews collection.`);
+}
+
 async function seedDatabase() {
+    await migrateEmbeddedReviews()
+
     // Older RuR records stored a single `image` string; convert them to the `images` array format
     const legacyProducts = await Product.collection.find({ images: { $exists: false } }).toArray()
     for (const legacy of legacyProducts) {
@@ -39,9 +63,8 @@ async function seedDatabase() {
                 seller: legacy.seller || 'RuR Gear',
                 description: legacy.description || legacy.name,
                 category: legacyCategories[legacy.category] || legacy.category,
-                ratings: 0,
-                numOfReviews: 0,
-                reviews: [],
+                averageRating: 0,
+                reviewCount: 0,
             },
             $unset: { image: '', featured: '' },
         })

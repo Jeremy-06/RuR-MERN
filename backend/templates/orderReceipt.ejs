@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>RuR Receipt #<%= order._id %></title>
+</head>
+<%# Styles are inline so email clients that drop <style> still render the receipt %>
+<body style="margin:0; padding:24px; background:#ffffff; font-family:Arial, Helvetica, sans-serif; color:#222222; font-size:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px; margin:0 auto; border-collapse:collapse;">
+        <tr>
+            <td style="padding-bottom:16px; border-bottom:2px solid #222222;">
+                <h1 style="margin:0; font-size:24px;">RuR</h1>
+                <p style="margin:4px 0 0; color:#666666;">Order receipt</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:16px 0;">
+                <p style="margin:0 0 8px;">Hi <%= order.user.name %>,</p>
+                <% if (isNewOrder) { %>
+                    <p style="margin:0 0 8px;">Thank you for your order! It is now <b><%= order.orderStatus %></b>.</p>
+                <% } else { %>
+                    <p style="margin:0 0 8px;">Your order status is now <b><%= order.orderStatus %></b>.</p>
+                <% } %>
+                <% if (isEmail) { %>
+                    <p style="margin:0;">A PDF copy of this receipt is attached to this email.</p>
+                <% } %>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-bottom:16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:2px 0; color:#666666;">Order ID</td>
+                        <td style="padding:2px 0; text-align:right;"><%= order._id %></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:2px 0; color:#666666;">Order date</td>
+                        <td style="padding:2px 0; text-align:right;"><%= new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:2px 0; color:#666666;">Ship to</td>
+                        <td style="padding:2px 0; text-align:right;"><%= order.shippingInfo.address %>, <%= order.shippingInfo.city %> <%= order.shippingInfo.postalCode %>, <%= order.shippingInfo.country %></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding:8px; text-align:left; border-bottom:1px solid #cccccc; background:#f4f4f4;">Item</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #cccccc; background:#f4f4f4;">Qty</th>
+                            <th style="padding:8px; text-align:right; border-bottom:1px solid #cccccc; background:#f4f4f4;">Price</th>
+                            <th style="padding:8px; text-align:right; border-bottom:1px solid #cccccc; background:#f4f4f4;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% items.forEach(item => { %>
+                            <tr>
+                                <td style="padding:8px; border-bottom:1px solid #eeeeee;"><%= item.name %></td>
+                                <td style="padding:8px; text-align:center; border-bottom:1px solid #eeeeee;"><%= item.quantity %></td>
+                                <td style="padding:8px; text-align:right; border-bottom:1px solid #eeeeee;"><%= formatMoney(item.price) %></td>
+                                <td style="padding:8px; text-align:right; border-bottom:1px solid #eeeeee;"><%= formatMoney(item.price * item.quantity) %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-top:16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:4px 8px; text-align:right; color:#666666;">Subtotal</td>
+                        <td style="padding:4px 8px; text-align:right; width:120px;"><%= formatMoney(subtotal) %></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:4px 8px; text-align:right; color:#666666;">Shipping</td>
+                        <td style="padding:4px 8px; text-align:right;"><%= formatMoney(order.shippingPrice) %></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:4px 8px; text-align:right; color:#666666;">Tax</td>
+                        <td style="padding:4px 8px; text-align:right;"><%= formatMoney(order.taxPrice) %></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; text-align:right; font-size:16px; border-top:2px solid #222222;"><b>Grand total</b></td>
+                        <td style="padding:8px; text-align:right; font-size:16px; border-top:2px solid #222222;"><b><%= formatMoney(grandTotal) %></b></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-top:24px; color:#999999; font-size:12px; text-align:center;">Thank you for shopping with RuR.</td>
+        </tr>
+    </table>
+</body>
+</html>

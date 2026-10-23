@@ -29,10 +29,12 @@ const connectDatabase = require('./config/database')
 const connectCloudinary = require('./config/cloudinary')
 const { connectFirebase } = require('./config/firebase')
 const seedDatabase = require('./config/seed')
+const { registerOrderListeners } = require('./listeners/orderListener')
 
 connectDatabase().then(seedDatabase).catch(error => console.log(error.message));
 connectCloudinary()
 connectFirebase()
+registerOrderListeners()
 
 app.listen(process.env.PORT, (error) => {
     if (error) {

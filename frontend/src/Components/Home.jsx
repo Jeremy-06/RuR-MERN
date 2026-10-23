@@ -31,16 +31,18 @@ const Home = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const sentinelRef = useRef(null)
 
-    // Active filters live in the URL: /?minPrice=10&maxPrice=200&category=Mice&category=Headsets
+    // Active filters live in the URL: /?minPrice=10&maxPrice=200&category=Mice&category=Headsets&minRating=4
     const minPrice = searchParams.get('minPrice') || ''
     const maxPrice = searchParams.get('maxPrice') || ''
     const categoryParam = searchParams.getAll('category').join(',')
+    const minRating = searchParams.get('minRating') || ''
     const filters = useMemo(() => ({
         keyword: keyword || '',
         minPrice,
         maxPrice,
         categories: categoryParam ? categoryParam.split(',') : [],
-    }), [keyword, minPrice, maxPrice, categoryParam])
+        minRating,
+    }), [keyword, minPrice, maxPrice, categoryParam, minRating])
 
     // The store may still hold products for older filters
     const isCurrent = key === productsKey(filters)
@@ -113,6 +115,10 @@ const Home = () => {
         })
     }
 
+    const onRatingChange = (rating) => {
+        updateParams({ minRating: rating })
+    }
+
     const onClear = () => {
         setSearchParams({}, { replace: true })
     }
@@ -120,7 +126,7 @@ const Home = () => {
     const showProducts = isCurrent ? products : []
     const isEmpty = isCurrent && page > 0 && !loading && !error && products.length === 0
     const isEnd = isCurrent && page > 0 && !loading && !hasMore && products.length > 0
-    const activeFilterCount = (minPrice || maxPrice ? 1 : 0) + filters.categories.length
+    const activeFilterCount = (minPrice || maxPrice ? 1 : 0) + filters.categories.length + (minRating ? 1 : 0)
 
     const filterPanel = (
         <ProductFilters
@@ -132,6 +138,8 @@ const Home = () => {
             selectedCategories={filters.categories}
             onPriceChange={onPriceChange}
             onCategoryToggle={onCategoryToggle}
+            minRating={minRating}
+            onRatingChange={onRatingChange}
             onClear={onClear}
         />
     )

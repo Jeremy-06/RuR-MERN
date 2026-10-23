@@ -1,5 +1,6 @@
 const Order = require('../models/order');
 const Product = require('../models/product');
+const { orderEvents, ORDER_CREATED, ORDER_STATUS_UPDATED } = require('../events/orderEvents');
 
 // Create a new order   =>  /api/v1/order/new
 exports.newOrder = async (req, res, next) => {
@@ -28,6 +29,11 @@ exports.newOrder = async (req, res, next) => {
     res.status(200).json({
         success: true,
         order
+    })
+
+    // Receipt PDF and confirmation email are built after responding so checkout stays fast
+    orderEvents.emit(ORDER_CREATED, {
+        order: { ...order.toObject(), user: { _id: req.user._id, name: req.user.name, email: req.user.email } }
     })
 }
 
@@ -85,8 +91,9 @@ exports.deleteOrder = async (req, res, next) => {
     })
 }
 
+// Update order status, then email the receipt in the background   =>  /api/v1/admin/order/:id
 exports.updateOrder = async (req, res, next) => {
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findById(req.params.id).populate('user', 'name email')
     if (!order) {
         return res.status(404).json({
             message: 'No Order found with this ID',
@@ -106,11 +113,17 @@ exports.updateOrder = async (req, res, next) => {
         order.deliveredAt = Date.now()
     }
 
+    const previousStatus = order.orderStatus
     order.orderStatus = req.body.status
     await order.save()
     res.status(200).json({
         success: true,
     })
+
+    // Emitted after responding so the PDF and email never delay the admin; a plain copy keeps listeners off the live document
+    if (previousStatus !== order.orderStatus) {
+        orderEvents.emit(ORDER_STATUS_UPDATED, { order: order.toObject(), previousStatus })
+    }
 }
 
 async function updateStock(id, quantity) {

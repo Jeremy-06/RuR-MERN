@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 const products = require('./routes/product');
 const auth = require('./routes/auth');
 const order = require('./routes/order');
+const review = require('./routes/review');
 
 app.use(cors({
     origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use('/api/v1', products);
 app.use('/api/v1', auth);
 app.use('/api/v1', order);
+app.use('/api/v1', review);
 
 app.use((err, req, res, next) => {
     let statusCode = err.statusCode || 500
@@ -24,6 +26,12 @@ app.use((err, req, res, next) => {
     if (err.name === 'ValidationError') {
         statusCode = 400
         message = Object.values(err.errors).map(value => value.message).join(', ')
+    }
+
+    // Unique index hit by two identical requests at once (e.g. the same review posted twice)
+    if (err.code === 11000) {
+        statusCode = 409
+        message = 'This record already exists'
     }
 
     // Upload limits from utils/multer.js

@@ -4,6 +4,8 @@ import CardActionArea from '@mui/material/CardActionArea'
 import CardMedia from '@mui/material/CardMedia'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import Rating from '@mui/material/Rating'
+import Box from '@mui/material/Box'
 
 const Product = ({ product }) => {
     return (
@@ -19,6 +21,10 @@ const Product = ({ product }) => {
                 <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography variant="overline" color="primary" sx={{ lineHeight: 1.5 }}>{product.category}</Typography>
                     <Typography variant="subtitle1" component="h5" sx={{ fontWeight: 700, lineHeight: 1.3 }}>{product.name}</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Rating value={product.averageRating || 0} precision={0.1} size="small" readOnly aria-label={`${product.averageRating || 0} out of 5 stars`} />
+                        <Typography variant="body2" color="text.secondary">({product.reviewCount || 0})</Typography>
+                    </Box>
                     <Typography variant="h5" component="p" sx={{ mt: 'auto', pt: 1 }}>{`$${Number(product.price).toFixed(2)}`}</Typography>
                 </CardContent>
             </CardActionArea>

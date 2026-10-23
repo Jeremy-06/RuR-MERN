@@ -12,8 +12,8 @@ import {
 export const RES_PER_PAGE = 12
 
 // Same filters always give the same key, so old answers can be told apart
-export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [] }) =>
-    JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort()])
+export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [], minRating = '' }) =>
+    JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort(), minRating])
 
 // Loads one page of the shop list; page 1 starts a new list for these filters
 export const getProducts = (filters, currentPage = 1) => async (dispatch, getState) => {
@@ -38,6 +38,7 @@ export const getProducts = (filters, currentPage = 1) => async (dispatch, getSta
         if (filters.minPrice !== '') params.set('minPrice', filters.minPrice)
         if (filters.maxPrice !== '') params.set('maxPrice', filters.maxPrice)
         filters.categories.forEach(category => params.append('category', category))
+        if (filters.minRating) params.set('minRating', filters.minRating)
 
         const { data } = await axios.get(`${import.meta.env.VITE_API}/products?${params.toString()}`)
         dispatch({

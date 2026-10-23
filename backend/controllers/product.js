@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const Product = require('../models/product')
 const Order = require('../models/order')
+const Review = require('../models/review')
 const cloudinary = require('cloudinary')
 const APIFeatures = require('../utils/apiFeatures');
 
@@ -46,7 +47,8 @@ const uploadImages = async (files = []) => {
 }
 
 exports.newProduct = async (req, res, next) => {
-    const product = new Product({ ...req.body, images: [], user: req.user.id })
+    // Ratings only come from reviews
+    const product = new Product({ ...req.body, images: [], averageRating: 0, reviewCount: 0, user: req.user.id })
 
     // Validate before uploading so a bad form does not leave images in Cloudinary
     await product.validate()
@@ -95,7 +97,7 @@ exports.getCategories = async (req, res, next) => {
     })
 }
 
-// http://localhost:4002/api/v1/products?page=2&limit=12&minPrice=10&maxPrice=200&category=Mice&category=Headsets
+// http://localhost:4002/api/v1/products?page=2&limit=12&minPrice=10&maxPrice=200&category=Mice&category=Headsets&minRating=4&minReviews=1
 exports.getProducts = async (req, res) => {
     const errorMessage = APIFeatures.validateShopQuery(req.query, productCategories())
     if (errorMessage) {
@@ -148,6 +150,8 @@ exports.updateProduct = async (req, res, next) => {
 
     delete req.body.removeImages
     delete req.body.images
+    delete req.body.averageRating
+    delete req.body.reviewCount
     product.set(req.body)
     await product.validate()
     if (keptImages.length + (req.files ? req.files.length : 0) === 0) {
@@ -183,6 +187,7 @@ exports.deleteProduct = async (req, res, next) => {
             message: 'Product not found'
         })
     }
+    await Review.deleteMany({ product: product._id })
     await destroyImages(product.images)
 
     return res.status(200).json({
@@ -215,7 +220,9 @@ exports.deleteProducts = async (req, res, next) => {
         })
     }
 
-    const { deletedCount } = await Product.deleteMany({ _id: { $in: products.map(product => product._id) } })
+    const productIds = products.map(product => product._id)
+    const { deletedCount } = await Product.deleteMany({ _id: { $in: productIds } })
+    await Review.deleteMany({ product: { $in: productIds } })
     await destroyImages(products.flatMap(product => product.images))
 
     return res.status(200).json({
@@ -247,85 +254,6 @@ exports.getAdminProducts = async (req, res, next) => {
         products,
         productsCount,
         filteredProductsCount,
-    })
-}
-
-exports.createProductReview = async (req, res, next) => {
-    const { rating, comment, productId } = req.body;
-    const review = {
-        user: req.user._id,
-        name: req.user.name,
-        rating: Number(rating),
-        comment
-    }
-    const product = await Product.findById(productId);
-    if (!product)
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found'
-        })
-
-    const isReviewed = product.reviews.find(
-        r => r.user.toString() === req.user._id.toString()
-    )
-    if (isReviewed) {
-        product.reviews.forEach(review => {
-            if (review.user.toString() === req.user._id.toString()) {
-                review.comment = comment;
-                review.rating = Number(rating);
-            }
-        })
-    } else {
-        product.reviews.push(review);
-        product.numOfReviews = product.reviews.length
-    }
-    product.ratings = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length
-    await product.save({ validateBeforeSave: false });
-
-    return res.status(200).json({
-        success: true
-    })
-}
-
-exports.getProductReviews = async (req, res, next) => {
-    const product = await Product.findById(req.query.id);
-    if (!product)
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found'
-        })
-
-    res.status(200).json({
-        success: true,
-        reviews: product.reviews
-    })
-}
-
-exports.deleteReview = async (req, res, next) => {
-    const product = await Product.findById(req.query.productId);
-    if (!product)
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found'
-        })
-
-    const reviews = product.reviews.filter(review => review._id.toString() !== req.query.id.toString());
-    const numOfReviews = reviews.length;
-    const ratings = numOfReviews > 0
-        ? reviews.reduce((acc, item) => item.rating + acc, 0) / numOfReviews
-        : 0
-
-    await Product.findByIdAndUpdate(req.query.productId, {
-        reviews,
-        ratings,
-        numOfReviews
-    }, {
-        returnDocument: 'after',
-        runValidators: true,
-    })
-
-    return res.status(200).json({
-        success: true
     })
 }
 

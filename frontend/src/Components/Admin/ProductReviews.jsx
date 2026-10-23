@@ -39,9 +39,9 @@ const ProductReviews = () => {
         }
     }
 
-    const deleteReview = async (id, productId) => {
+    const deleteReview = async (id) => {
         try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/reviews?id=${id}&productId=${productId}`, config)
+            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/review/${id}`, config)
             setIsDeleted(data.success)
         } catch (error) {
             errMsg(error.response ? error.response.data.message : error.message)
@@ -57,7 +57,7 @@ const ProductReviews = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteReview(id, productId)
+                deleteReview(id)
             }
         })
     }
@@ -73,6 +73,8 @@ const ProductReviews = () => {
 
         if (isDeleted) {
             successMsg('Review deleted successfully');
+            // Review counts in the product list changed
+            getAdminProducts()
             setIsDeleted(false)
         }
     }, [productId, isDeleted])
@@ -128,7 +130,7 @@ const ProductReviews = () => {
         id: review._id,
         comment: review.comment,
         rating: review.rating,
-        user: review.name,
+        user: review.user ? review.user.name : 'Deleted user',
     }));
 
     return (
@@ -154,7 +156,7 @@ const ProductReviews = () => {
                                             <option value="">-- Choose a product --</option>
                                             {products.map(product => (
                                                 <option key={product._id} value={product._id}>
-                                                    {product.name} ({product.numOfReviews} reviews)
+                                                    {product.name} ({product.reviewCount} reviews)
                                                 </option>
                                             ))}
                                         </select>

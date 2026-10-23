@@ -19,6 +19,11 @@ const ProductDetails = ({ addItemToCart }) => {
     const [rating, setRating] = useState(0)
     const [hoverRating, setHoverRating] = useState(0)
     const [comment, setComment] = useState('')
+    const [reviews, setReviews] = useState([])
+    // canReview: has a delivered order with this product; myReview: their existing review, if any
+    const [reviewStatus, setReviewStatus] = useState({ canReview: false, myReview: null })
+    // Bumped after saving a review so both lists load again
+    const [reviewsVersion, setReviewsVersion] = useState(0)
     let { id } = useParams()
     const dispatch = useDispatch()
 
@@ -36,21 +41,33 @@ const ProductDetails = ({ addItemToCart }) => {
         await addItemToCart(id, quantity);
     }
 
-    const newReview = async (reviewData) => {
-        try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        withCredentials: true
+    }
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API}/review`, reviewData, config)
+    // Opening the form for an existing review starts from what they wrote
+    const openReviewForm = () => {
+        const { myReview } = myReviewStatus
+        setRating(myReview ? myReview.rating : 0)
+        setComment(myReview ? myReview.comment : '')
+    }
+
+    // New review is a POST; editing their own review is a PUT
+    const saveReview = async (reviewData) => {
+        const { myReview } = myReviewStatus
+        try {
+            const { data } = myReview
+                ? await axios.put(`${import.meta.env.VITE_API}/review/${myReview._id}`, reviewData, config)
+                : await axios.post(`${import.meta.env.VITE_API}/review`, reviewData, config)
             if (data.success) {
-                successMsg('Review posted successfully')
+                successMsg(myReview ? 'Review updated successfully' : 'Review posted successfully')
                 setRating(0)
                 setComment('')
                 dispatch(getProductDetails(id))
+                setReviewsVersion(version => version + 1)
             }
         } catch (error) {
             errMsg(error.response ? error.response.data.message : error.message)
@@ -62,7 +79,7 @@ const ProductDetails = ({ addItemToCart }) => {
             errMsg('Please choose a rating and write a comment')
             return
         }
-        newReview({
+        saveReview({
             rating,
             comment,
             productId: id
@@ -73,6 +90,26 @@ const ProductDetails = ({ addItemToCart }) => {
         dispatch(getProductDetails(id))
         setQuantity(1)
     }, [dispatch, id]);
+
+    useEffect(() => {
+        let ignore = false
+        axios.get(`${import.meta.env.VITE_API}/reviews?id=${id}`)
+            .then(({ data }) => { if (!ignore) setReviews(data.reviews) })
+            .catch(error => { if (!ignore) errMsg(error.response ? error.response.data.message : error.message) })
+        return () => { ignore = true }
+    }, [id, reviewsVersion])
+
+    useEffect(() => {
+        if (!user) return
+        let ignore = false
+        axios.get(`${import.meta.env.VITE_API}/review/me?productId=${id}`, { withCredentials: true })
+            .then(({ data }) => { if (!ignore) setReviewStatus({ canReview: data.canReview, myReview: data.review }) })
+            .catch(() => { if (!ignore) setReviewStatus({ canReview: false, myReview: null }) })
+        return () => { ignore = true }
+    }, [id, user, reviewsVersion])
+
+    // A logged out visitor has no review status, whatever was loaded before
+    const myReviewStatus = user ? reviewStatus : { canReview: false, myReview: null }
 
     useEffect(() => {
         if (error) {
@@ -105,9 +142,9 @@ const ProductDetails = ({ addItemToCart }) => {
                     <hr />
 
                     <div className="rating-outer">
-                        <div className="rating-inner" style={{ width: `${(product.ratings / 5) * 100}%` }}></div>
+                        <div className="rating-inner" style={{ width: `${(product.averageRating / 5) * 100}%` }}></div>
                     </div>
-                    <span id="no_of_reviews">({product.numOfReviews} Reviews)</span>
+                    <span id="no_of_reviews">{product.averageRating > 0 && `${product.averageRating.toFixed(1)} `}({product.reviewCount} Reviews)</span>
 
                     <hr />
 
@@ -132,10 +169,15 @@ const ProductDetails = ({ addItemToCart }) => {
                     <hr />
                     <p id="product_seller" className="mb-3">Sold by: <strong>{product.seller}</strong></p>
 
-                    {user ? <button id="review_btn" type="button" className="btn btn-primary mt-4" data-toggle="modal" data-target="#ratingModal" >
-                        Submit Your Review
-                    </button> :
-                        <div className="alert alert-danger mt-5" type='alert'>Login to post your review.</div>}
+                    {!user ? (
+                        <div className="alert alert-danger mt-5" type='alert'>Login to post your review.</div>
+                    ) : myReviewStatus.myReview || myReviewStatus.canReview ? (
+                        <button id="review_btn" type="button" className="btn btn-primary mt-4" data-toggle="modal" data-target="#ratingModal" onClick={openReviewForm}>
+                            {myReviewStatus.myReview ? 'Edit Your Review' : 'Submit Your Review'}
+                        </button>
+                    ) : (
+                        <div className="alert alert-info mt-5" type='alert'>You can review this product once an order with it has been delivered.</div>
+                    )}
 
                     <div className="row mt-2 mb-5">
                         <div className="rating w-50">
@@ -143,7 +185,7 @@ const ProductDetails = ({ addItemToCart }) => {
                                 <div className="modal-dialog" role="document">
                                     <div className="modal-content">
                                         <div className="modal-header">
-                                            <h5 className="modal-title" id="ratingModalLabel">Submit Review</h5>
+                                            <h5 className="modal-title" id="ratingModalLabel">{myReviewStatus.myReview ? 'Edit Review' : 'Submit Review'}</h5>
                                             <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
@@ -179,8 +221,8 @@ const ProductDetails = ({ addItemToCart }) => {
                     </div>
                 </div>
             </div>
-            {product.reviews && product.reviews.length > 0 && (
-                <ListReviews reviews={product.reviews} />
+            {reviews.length > 0 && (
+                <ListReviews reviews={reviews} />
             )}
         </>
     )
