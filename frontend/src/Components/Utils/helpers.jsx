@@ -40,8 +40,16 @@ export const categories = [
     'Accessories'
 ]
 
+export const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered']
+
 // $1,234.50
 export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+
+// Oct 31, 2026
+export const formatDate = (value) => value ? dayjs(value).format('MMM D, YYYY') : ''
+
+// Oct 31, 2026 · 11:05 PM
+export const formatDateTime = (value) => value ? dayjs(value).format('MMM D, YYYY · h:mm A') : ''
 
 const NEW_PRODUCT_DAYS = 14
 export const LOW_STOCK = 5

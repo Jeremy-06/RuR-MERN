@@ -1,54 +1,123 @@
-import { useState, useEffect } from 'react'
-
-import MetaData from '../Layout/MetaData'
-import Sidebar from './SideBar'
-import Swal from 'sweetalert2'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
-import { errMsg, successMsg } from '../Utils/helpers'
-import { DataGrid, } from '@mui/x-data-grid'
+import Swal from 'sweetalert2'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Grid from '@mui/material/Grid'
+import MenuItem from '@mui/material/MenuItem'
+import Rating from '@mui/material/Rating'
+import TextField from '@mui/material/TextField'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+
+import EmptyState from '../Layout/EmptyState'
+import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
+import Sidebar from './SideBar'
+import AdminDataGrid, { PersonCell, RowAction } from './AdminDataGrid'
+import { errMsg, formatDateTime, successMsg } from '../Utils/helpers'
+
+const columns = [
+    {
+        field: 'product',
+        headerName: 'Product',
+        flex: 1.2,
+        minWidth: 170,
+        hideOnSmall: true
+    },
+    {
+        field: 'customer',
+        headerName: 'Customer',
+        flex: 1,
+        minWidth: 160,
+        renderCell: ({ row }) => <PersonCell name={row.customer} avatar={row.avatar} />
+    },
+    {
+        field: 'rating',
+        headerName: 'Rating',
+        type: 'number',
+        align: 'left',
+        headerAlign: 'left',
+        width: 130,
+        renderCell: ({ value }) => <Rating value={value} size="small" readOnly />
+    },
+    {
+        field: 'comment',
+        headerName: 'Comment',
+        flex: 1.6,
+        minWidth: 210,
+        renderCell: ({ value }) => (
+            <Tooltip title={value}>
+                <Typography
+                    variant="body2"
+                    sx={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden', whiteSpace: 'normal', lineHeight: 1.4 }}
+                >
+                    {value}
+                </Typography>
+            </Tooltip>
+        )
+    },
+    {
+        field: 'date',
+        headerName: 'Date',
+        type: 'date',
+        width: 190,
+        valueFormatter: formatDateTime
+    },
+]
 
 const ProductReviews = () => {
     const [productId, setProductId] = useState('')
     const [products, setProducts] = useState([])
     const [listReviews, setListReviews] = useState([])
-    const [isDeleted, setIsDeleted] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [loadError, setLoadError] = useState(null)
 
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        withCredentials: true
-    }
-
-    const getAdminProducts = async () => {
+    const getAdminProducts = useCallback(async () => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/products`, config)
+            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/products`, { withCredentials: true })
             setProducts(data.products)
         } catch (error) {
             errMsg(error.response ? error.response.data.message : error.message)
         }
-    }
+    }, [])
 
-    const getProductReviews = async (id) => {
+    const getProductReviews = useCallback(async (id) => {
+        setLoading(true)
+        setLoadError(null)
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/reviews?id=${id}`, config)
+            const { data } = await axios.get(`${import.meta.env.VITE_API}/reviews?id=${id}`, { withCredentials: true })
             setListReviews(data.reviews)
         } catch (error) {
             setListReviews([])
-            errMsg(error.response ? error.response.data.message : error.message)
+            setLoadError(error.response ? error.response.data.message : error.message)
         }
-    }
+        setLoading(false)
+    }, [])
 
-    const deleteReview = async (id) => {
+    useEffect(() => {
+        getAdminProducts()
+    }, [getAdminProducts])
+
+    const deleteReview = useCallback(async (id, product) => {
         try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/review/${id}`, config)
-            setIsDeleted(data.success)
+            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/review/${id}`, { withCredentials: true })
+            if (data.success) {
+                successMsg('Review deleted successfully')
+                getProductReviews(product)
+                // Review counts in the product list changed
+                getAdminProducts()
+            }
         } catch (error) {
             errMsg(error.response ? error.response.data.message : error.message)
         }
-    }
+    }, [getAdminProducts, getProductReviews])
 
-    const deleteReviewHandler = (id) => {
+    const deleteReviewHandler = useCallback((id, product) => {
         Swal.fire({
             title: 'Delete Review',
             icon: 'info',
@@ -57,27 +126,21 @@ const ProductReviews = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteReview(id)
+                deleteReview(id, product)
             }
         })
+    }, [deleteReview])
+
+    const productChangeHandler = (e) => {
+        const id = e.target.value
+        setProductId(id)
+        if (id === '') {
+            setListReviews([])
+            setLoadError(null)
+        } else {
+            getProductReviews(id)
+        }
     }
-
-    useEffect(() => {
-        getAdminProducts()
-    }, [])
-
-    useEffect(() => {
-        if (productId !== '') {
-            getProductReviews(productId)
-        }
-
-        if (isDeleted) {
-            successMsg('Review deleted successfully');
-            // Review counts in the product list changed
-            getAdminProducts()
-            setIsDeleted(false)
-        }
-    }, [productId, isDeleted])
 
     const submitHandler = (e) => {
         e.preventDefault();
@@ -86,109 +149,77 @@ const ProductReviews = () => {
         }
     }
 
-    const columns = [
-        {
-            field: 'id',
-            headerName: 'Review ID',
-            flex: 1,
-            renderCell: (params) => <span style={{ wordBreak: 'break-all' }}>{params.value}</span>
-        },
-        {
-            field: 'rating',
-            headerName: 'Rating',
-            width: 90,
-            align: 'right',
-            headerAlign: 'right'
-        },
-        {
-            field: 'comment',
-            headerName: 'Comment',
-            flex: 1,
-        },
-        {
-            field: 'user',
-            headerName: 'User',
-            width: 150,
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 100,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <>
-                    <button className="btn btn-danger py-1 px-2 ml-2" onClick={() => deleteReviewHandler(params.id)}>
-                        <i className="fa fa-trash"></i>
-                    </button>
-                </>
-            )
-        }
-    ];
+    const renderActions = useCallback((row) => (
+        <>
+            <RowAction label="View" subject={`product ${row.product}`} icon={<VisibilityOutlinedIcon fontSize="small" />} to={`/product/${row.productId}`} />
+            <RowAction label="Delete" subject={`review by ${row.customer}`} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteReviewHandler(row.id, row.productId)} />
+        </>
+    ), [deleteReviewHandler])
 
-    const rows = listReviews.map(review => ({
-        id: review._id,
-        comment: review.comment,
-        rating: review.rating,
-        user: review.user ? review.user.name : 'Deleted user',
-    }));
+    const rows = useMemo(() => listReviews.map(review => {
+        const product = products.find(item => item._id === review.product)
+        return {
+            id: review._id,
+            productId: review.product,
+            product: product ? product.name : '',
+            customer: review.user ? review.user.name : 'Deleted user',
+            avatar: review.user && review.user.avatar ? review.user.avatar.url : '',
+            rating: review.rating,
+            comment: review.comment,
+            date: new Date(review.createdAt),
+        }
+    }), [listReviews, products])
 
     return (
         <>
             <MetaData title={'Product Reviews'} />
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
-                <div className="col-12 col-md-10">
-                    <>
-                        <div className="row justify-content-center mt-5">
-                            <div className="col-12 col-lg-6">
-                                <form onSubmit={submitHandler}>
-                                    <div className="form-group">
-                                        <label htmlFor="productId_field">Select Product</label>
-                                        <select
-                                            id="productId_field"
-                                            className="form-control"
-                                            value={productId}
-                                            onChange={(e) => setProductId(e.target.value)}
-                                        >
-                                            <option value="">-- Choose a product --</option>
-                                            {products.map(product => (
-                                                <option key={product._id} value={product._id}>
-                                                    {product.name} ({product.reviewCount} reviews)
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <button
-                                        id="search_button"
-                                        type="submit"
-                                        className="btn btn-primary btn-block py-2"
-                                    >
-                                        SEARCH
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        {listReviews && listReviews.length > 0 ? (
-                            <div className="mt-5" style={{ width: '100%' }}>
-                                <DataGrid
-                                    rows={rows}
-                                    columns={columns}
-                                    initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-                                    pageSizeOptions={[5, 10, 25]}
-                                    disableRowSelectionOnClick
-                                    getRowId={(row) => row.id}
-                                    showToolbar
-                                />
-                            </div>
-                        ) : (
-                            <p className="mt-5 text-center">No Reviews.</p>
-                        )}
-                    </>
-                </div>
-            </div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 10 }}>
+                    <PageHeader title="Reviews" />
+                    <Card sx={{ height: 'auto', p: 2, mb: 3 }}>
+                        <Box component="form" onSubmit={submitHandler} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, gap: 2 }}>
+                            <TextField
+                                id="productId_field"
+                                select
+                                size="small"
+                                margin="none"
+                                label="Select Product"
+                                value={productId}
+                                onChange={productChangeHandler}
+                            >
+                                <MenuItem value="">Choose a product</MenuItem>
+                                {products.map(product => (
+                                    <MenuItem key={product._id} value={product._id}>
+                                        {product.name} ({product.reviewCount} reviews)
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                            <Button id="search_button" type="submit" variant="contained" disabled={productId === '' || loading} sx={{ flexShrink: 0 }}>
+                                Search
+                            </Button>
+                        </Box>
+                    </Card>
+
+                    {productId === '' ? (
+                        <EmptyState icon={<StarBorderOutlinedIcon />} title="Choose a product" message="Its reviews will show up here." />
+                    ) : (
+                        <AdminDataGrid
+                            label="Product reviews"
+                            rows={rows}
+                            columns={columns}
+                            loading={loading}
+                            error={loadError}
+                            onRetry={() => getProductReviews(productId)}
+                            empty={{ icon: <StarBorderOutlinedIcon />, title: 'No reviews yet', message: 'This product has no reviews.' }}
+                            renderActions={renderActions}
+                            sortField="date"
+                        />
+                    )}
+                </Grid>
+            </Grid>
         </>
     )
 }

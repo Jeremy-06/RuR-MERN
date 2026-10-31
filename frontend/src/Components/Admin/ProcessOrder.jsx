@@ -1,135 +1,119 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate, } from 'react-router-dom'
-import MetaData from '../Layout/MetaData'
+import { useDispatch, useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Grid from '@mui/material/Grid'
+import MenuItem from '@mui/material/MenuItem'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
+import EmptyState from '../Layout/EmptyState'
 import Loader from '../Layout/Loader'
+import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
+import OrderInfo from '../Order/OrderInfo'
 import Sidebar from './SideBar'
-import axios from 'axios'
-import { errMsg, successMsg } from '../Utils/helpers'
+import { clearErrors, getOrderDetails, updateOrder } from '../../actions/orderActions'
+import { UPDATE_ORDER_RESET } from '../../constants/orderConstants'
+import { errMsg, ORDER_STATUSES, successMsg } from '../Utils/helpers'
+import { accentTop } from '../../theme'
 
 const ProcessOrder = () => {
-    const [status, setStatus] = useState('')
-    const [loading, setLoading] = useState(true)
-    const [order, setOrder] = useState({})
+    const dispatch = useDispatch()
+    const { loading, error, order } = useSelector(state => state.orderDetails)
+    const { loading: updating, error: updateError, isUpdated } = useSelector(state => state.order)
+    // null until the admin picks a status
+    const [status, setStatus] = useState(null)
     let navigate = useNavigate()
 
     let { id } = useParams();
-    const { shippingInfo, orderItems, paymentInfo, user, totalPrice, orderStatus } = order
-
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        withCredentials: true
-    }
-
-    const getOrderDetails = async (id) => {
-        try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/order/${id}`, config)
-            setOrder(data.order)
-            setStatus(data.order.orderStatus)
-            setLoading(false)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
-
-    const updateOrder = async (id, formData) => {
-        try {
-            const { data } = await axios.put(`${import.meta.env.VITE_API}/admin/order/${id}`, formData, config)
-            if (data.success) {
-                successMsg('Order updated successfully');
-                navigate('/admin/orders')
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
 
     useEffect(() => {
-        getOrderDetails(id)
-    }, [id])
+        dispatch(getOrderDetails(id))
+    }, [dispatch, id])
 
-    const updateOrderHandler = (id) => {
-        updateOrder(id, { status })
+    useEffect(() => {
+        if (updateError) {
+            errMsg(updateError)
+            dispatch(clearErrors())
+        }
+        if (isUpdated) {
+            successMsg('Order updated successfully');
+            dispatch({ type: UPDATE_ORDER_RESET })
+            navigate('/admin/orders')
+        }
+    }, [dispatch, updateError, isUpdated, navigate])
+
+    const selectedStatus = status || (order ? order.orderStatus : '')
+    const isDelivered = order && order.orderStatus === 'Delivered'
+
+    const updateOrderHandler = () => {
+        dispatch(updateOrder(id, { status: selectedStatus }))
     }
-
-    const shippingDetails = shippingInfo && `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
-    const isPaid = paymentInfo && paymentInfo.status === 'succeeded' ? true : false
 
     return (
         <>
-            <MetaData title={`Process Order # ${order && order._id}`} />
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <MetaData title={`Process Order # ${id}`} />
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
-                <div className="col-12 col-md-10">
-                    <>
-                        {loading ? <Loader /> : (
-                            <div className="row d-flex justify-content-around">
-                                <div className="col-12 col-lg-7 order-details">
-                                    <h2 className="my-5">Order # {order._id}</h2>
-                                    <h4 className="mb-4">Shipping Info</h4>
-                                    <p><b>Name:</b> {user && user.name}</p>
-                                    <p><b>Phone:</b> {shippingInfo && shippingInfo.phoneNo}</p>
-                                    <p className="mb-4"><b>Address:</b> {shippingDetails}</p>
-                                    <p><b>Amount:</b> ${totalPrice}</p>
-                                    <hr />
-                                    <h4 className="my-4">Payment</h4>
-                                    <p className={isPaid ? "greenColor" : "redColor"}><b>{isPaid ? "PAID" : "NOT PAID"}</b></p>
-                                    <h4 className="my-4">Payment ID</h4>
-                                    <p><b>{paymentInfo && paymentInfo.id}</b></p>
-
-                                    <h4 className="my-4">Order Status:</h4>
-                                    <p className={order.orderStatus && String(order.orderStatus).includes('Delivered') ? "greenColor" : "redColor"} ><b>{orderStatus}</b></p>
-                                    <h4 className="my-4">Order Items:</h4>
-                                    <hr />
-                                    <div className="cart-item my-1">
-                                        {orderItems && orderItems.map(item => (
-                                            <div key={item.product} className="row my-5">
-                                                <div className="col-4 col-lg-2">
-                                                    <img src={item.image} alt={item.name} height="45" width="65" />
-                                                </div>
-
-                                                <div className="col-5 col-lg-5">
-                                                    <Link to={`/product/${item.product}`}>{item.name}</Link>
-                                                </div>
-                                                <div className="col-4 col-lg-2 mt-4 mt-lg-0">
-                                                    <p>${item.price}</p>
-                                                </div>
-                                                <div className="col-4 col-lg-3 mt-4 mt-lg-0">
-                                                    <p>{item.quantity} Piece(s)</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <hr />
-                                </div>
-                                <div className="col-12 col-lg-3 mt-5">
-                                    <h4 className="my-4">Status</h4>
-                                    <div className="form-group">
-                                        <select
-                                            className="form-control"
-                                            name='status'
-                                            value={status}
+                </Grid>
+                <Grid size={{ xs: 12, md: 10 }}>
+                    {error ? (
+                        <Box sx={{ mt: { xs: 3, md: 5 } }}>
+                            <EmptyState
+                                icon={<ErrorOutlinedIcon />}
+                                title="Could not load this order"
+                                message={error}
+                                action={<Button component={Link} to="/admin/orders" variant="contained">Back to All Orders</Button>}
+                            />
+                        </Box>
+                    ) : (loading || !order) ? <Loader /> : (
+                        <>
+                            <PageHeader title={`Order # ${order._id}`} />
+                            <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
+                                <Grid size={{ xs: 12, lg: 8 }}>
+                                    <OrderInfo order={order} showPaymentId />
+                                </Grid>
+                                <Grid size={{ xs: 12, lg: 4 }} sx={{ position: { lg: 'sticky' }, top: { lg: 96 } }}>
+                                    <Card sx={{ ...accentTop, height: 'auto', p: { xs: 2, sm: 3 } }}>
+                                        <Typography variant="h5" component="h2" sx={{ mb: 2 }}>Status</Typography>
+                                        <TextField
+                                            id="order_status_field"
+                                            select
+                                            size="small"
+                                            margin="none"
+                                            label="Order status"
+                                            name="status"
+                                            value={selectedStatus}
                                             onChange={(e) => setStatus(e.target.value)}
-                                            disabled={orderStatus === 'Delivered'}
+                                            disabled={isDelivered}
                                         >
-                                            <option value="Processing">Processing</option>
-                                            <option value="Shipped">Shipped</option>
-                                            <option value="Delivered">Delivered</option>
-                                        </select>
-                                    </div>
-                                    <button className="btn btn-primary btn-block" onClick={() => updateOrderHandler(order._id)} disabled={orderStatus === 'Delivered'}>
-                                        Update Status
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                </div>
-            </div>
+                                            {ORDER_STATUSES.map(option => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                                        </TextField>
+                                        <Button
+                                            variant="contained"
+                                            fullWidth
+                                            onClick={updateOrderHandler}
+                                            disabled={isDelivered || updating || selectedStatus === order.orderStatus}
+                                            sx={{ mt: 2 }}
+                                        >
+                                            Update Status
+                                        </Button>
+                                        {isDelivered && (
+                                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1.5 }}>Delivered orders can no longer change.</Typography>
+                                        )}
+                                    </Card>
+                                </Grid>
+                            </Grid>
+                        </>
+                    )}
+                </Grid>
+            </Grid>
         </>
     )
 }
+
 export default ProcessOrder

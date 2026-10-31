@@ -1,51 +1,93 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import Swal from 'sweetalert2'
+import Grid from '@mui/material/Grid'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 
 import MetaData from '../Layout/MetaData'
-import Loader from '../Layout/Loader'
+import OrderStatusChip from '../Layout/OrderStatusChip'
+import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
-import axios from 'axios'
-import Swal from 'sweetalert2'
-import { errMsg, successMsg } from '../Utils/helpers'
-import { DataGrid, } from '@mui/x-data-grid'
+import AdminDataGrid, { IdCell, PersonCell, RowAction } from './AdminDataGrid'
+import { allOrders, clearErrors, deleteOrder } from '../../actions/orderActions'
+import { DELETE_ORDER_RESET } from '../../constants/orderConstants'
+import { errMsg, formatDateTime, formatMoney, ORDER_STATUSES, successMsg } from '../Utils/helpers'
+
+const columns = [
+    {
+        field: 'id',
+        headerName: 'Order ID',
+        flex: 1,
+        minWidth: 150,
+        renderCell: ({ value }) => <IdCell id={value} label="Order" />
+    },
+    {
+        field: 'date',
+        headerName: 'Date',
+        type: 'date',
+        flex: 1.2,
+        minWidth: 190,
+        valueFormatter: formatDateTime
+    },
+    {
+        field: 'customer',
+        headerName: 'Customer',
+        flex: 1.6,
+        minWidth: 170,
+        renderCell: ({ row }) => <PersonCell name={row.customerName} detail={row.customerEmail} hideDetail />
+    },
+    {
+        field: 'items',
+        headerName: 'Items',
+        type: 'number',
+        width: 84,
+        hideOnSmall: true
+    },
+    {
+        field: 'amount',
+        headerName: 'Amount',
+        type: 'number',
+        width: 116,
+        valueFormatter: formatMoney
+    },
+    {
+        field: 'status',
+        headerName: 'Status',
+        type: 'singleSelect',
+        valueOptions: ORDER_STATUSES,
+        width: 130,
+        // Sorts by progress, not alphabetically
+        sortComparator: (a, b) => ORDER_STATUSES.indexOf(a) - ORDER_STATUSES.indexOf(b),
+        renderCell: ({ value }) => <OrderStatusChip status={value} />
+    },
+]
 
 const OrdersList = () => {
-    const [loading, setLoading] = useState(true)
-    const [allOrders, setAllOrders] = useState([])
-    const [isDeleted, setIsDeleted] = useState(false)
+    const dispatch = useDispatch()
+    const { loading, error, orders } = useSelector(state => state.allOrders)
+    const { error: deleteError, isDeleted } = useSelector(state => state.order)
 
-    const config = {
-        withCredentials: true
-    }
-
-    const listOrders = async () => {
-        try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/orders`, config)
-            setAllOrders(data.orders)
-            setLoading(false)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
-
-    const deleteOrder = async (id) => {
-        try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/order/${id}`, config)
-            setIsDeleted(data.success)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
+    const loadOrders = useCallback(() => dispatch(allOrders()), [dispatch])
 
     useEffect(() => {
-        listOrders()
-        if (isDeleted) {
-            successMsg('Order deleted successfully');
-            setIsDeleted(false)
-        }
-    }, [isDeleted])
+        loadOrders()
+    }, [loadOrders])
 
-    const deleteOrderHandler = (id) => {
+    useEffect(() => {
+        if (deleteError) {
+            errMsg(deleteError)
+            dispatch(clearErrors())
+        }
+        if (isDeleted) {
+            successMsg('Order deleted successfully')
+            dispatch({ type: DELETE_ORDER_RESET })
+            loadOrders()
+        }
+    }, [dispatch, deleteError, isDeleted, loadOrders])
+
+    const deleteOrderHandler = useCallback((id) => {
         Swal.fire({
             title: 'Delete Order',
             icon: 'warning',
@@ -54,93 +96,56 @@ const OrdersList = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteOrder(id)
+                dispatch(deleteOrder(id))
             }
         })
-    }
+    }, [dispatch])
 
-    const columns = [
-        {
-            field: 'id',
-            headerName: 'Order ID',
-            flex: 1,
-            renderCell: (params) => <span style={{ wordBreak: 'break-all' }}>{params.value}</span>
-        },
-        {
-            field: 'numofItems',
-            headerName: 'Number of Items',
-            width: 130,
-            align: 'right',
-            headerAlign: 'right'
-        },
-        {
-            field: 'amount',
-            headerName: 'Amount',
-            width: 120,
-            align: 'right',
-            headerAlign: 'right'
-        },
-        {
-            field: 'status',
-            headerName: 'Status',
-            width: 120,
-            renderCell: (params) =>
-                (params.value && String(params.value).includes('Delivered'))
-                    ? <span style={{ color: 'green' }}>{params.value}</span>
-                    : <span style={{ color: 'red' }}>{params.value}</span>
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 120,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <>
-                    <Link to={`/admin/order/${params.id}`} className="btn btn-primary py-1 px-2">
-                        <i className="fa fa-eye"></i>
-                    </Link>
-                    <button className="btn btn-danger py-1 px-2 ml-2" onClick={() => deleteOrderHandler(params.id)}>
-                        <i className="fa fa-trash"></i>
-                    </button>
-                </>
-            )
+    const renderActions = useCallback((row) => (
+        <>
+            <RowAction label="View" subject={`order ${row.id}`} icon={<VisibilityOutlinedIcon fontSize="small" />} to={`/admin/order/${row.id}`} />
+            <RowAction label="Delete" subject={`order ${row.id}`} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteOrderHandler(row.id)} />
+        </>
+    ), [deleteOrderHandler])
+
+    const rows = useMemo(() => orders.map(order => {
+        const customerName = order.user ? order.user.name : 'Deleted user'
+        const customerEmail = order.user ? order.user.email : ''
+        return {
+            id: order._id,
+            date: new Date(order.createdAt),
+            // Name and email together so search and filters match either one
+            customer: `${customerName} ${customerEmail}`.trim(),
+            customerName,
+            customerEmail,
+            items: order.orderItems.length,
+            amount: order.totalPrice,
+            status: order.orderStatus,
         }
-    ];
-
-    const rows = allOrders.map(order => ({
-        id: order._id,
-        numofItems: order.orderItems.length,
-        amount: `$${order.totalPrice}`,
-        status: order.orderStatus,
-    }));
+    }), [orders])
 
     return (
         <>
             <MetaData title={'All Orders'} />
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
-                <div className="col-12 col-md-10">
-                    <>
-                        <h1 className="my-5">All Orders</h1>
-                        {loading ? <Loader /> : (
-                            <div style={{ width: '100%' }}>
-                                <DataGrid
-                                    rows={rows}
-                                    columns={columns}
-                                    initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-                                    pageSizeOptions={[5, 10, 25]}
-                                    disableRowSelectionOnClick
-                                    getRowId={(row) => row.id}
-                                    showToolbar
-                                />
-                            </div>
-                        )}
-                    </>
-                </div>
-            </div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 10 }}>
+                    <PageHeader title="All Orders" />
+                    <AdminDataGrid
+                        label="All orders"
+                        rows={rows}
+                        columns={columns}
+                        loading={loading}
+                        error={error}
+                        onRetry={loadOrders}
+                        empty={{ icon: <ReceiptLongOutlinedIcon />, title: 'No orders yet', message: 'New orders will show up here.' }}
+                        renderActions={renderActions}
+                        sortField="date"
+                    />
+                </Grid>
+            </Grid>
         </>
     )
 }

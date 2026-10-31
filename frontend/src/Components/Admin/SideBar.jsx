@@ -20,9 +20,6 @@ const links = [
     { to: '/admin/reviews', icon: <StarBorderOutlinedIcon />, label: 'Reviews' },
 ]
 
-// Same width as the Bootstrap col-md-2 the admin pages sit in
-const desktop = '@media (min-width: 768px)'
-
 const Sidebar = () => {
     return (
         <Paper
@@ -35,10 +32,11 @@ const Sidebar = () => {
                 color: '#fff',
                 mt: { xs: 2, md: 3 },
                 p: 1,
-                [desktop]: { position: 'sticky', top: 96 },
+                position: { md: 'sticky' },
+                top: { md: 96 },
             }}
         >
-            <List disablePadding sx={{ display: 'grid', gap: 0.5, gridTemplateColumns: 'repeat(3, 1fr)', [desktop]: { gridTemplateColumns: '1fr' } }}>
+            <List disablePadding sx={{ display: 'grid', gap: 0.5, gridTemplateColumns: { xs: 'repeat(3, 1fr)', md: '1fr' } }}>
                 {links.map(link => (
                     <ListItemButton
                         key={link.to}
@@ -47,12 +45,11 @@ const Sidebar = () => {
                         sx={{
                             borderRadius: 1,
                             color: '#fff',
-                            flexDirection: 'column',
-                            gap: 0.5,
-                            px: 1,
+                            flexDirection: { xs: 'column', md: 'row' },
+                            gap: { xs: 0.5, md: 1.5 },
+                            px: { xs: 1, md: 1.5 },
                             '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.08)', color: '#fff' },
                             '&.active, &.active:hover': { bgcolor: 'primary.dark', color: '#fff' },
-                            [desktop]: { flexDirection: 'row', gap: 1.5, px: 1.5 },
                         }}
                     >
                         <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>{link.icon}</ListItemIcon>

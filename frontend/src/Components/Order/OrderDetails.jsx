@@ -1,90 +1,39 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import MetaData from '../Layout/MetaData'
+import { useDispatch, useSelector } from 'react-redux'
+import Button from '@mui/material/Button'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
+import EmptyState from '../Layout/EmptyState'
 import Loader from '../Layout/Loader'
-import axios from 'axios'
-import { errMsg } from '../Utils/helpers'
+import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
+import OrderInfo from './OrderInfo'
+import { getOrderDetails } from '../../actions/orderActions'
 
 const OrderDetails = () => {
-    const [loading, setLoading] = useState(true)
-    const [order, setOrder] = useState({})
-
-    const { shippingInfo, orderItems, paymentInfo, user, totalPrice, orderStatus } = order
+    const dispatch = useDispatch()
+    const { loading, error, order } = useSelector(state => state.orderDetails)
     let { id } = useParams();
 
-    const getOrderDetails = async (id) => {
-        try {
-            const config = {
-                withCredentials: true
-            }
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/order/${id}`, config)
-            setOrder(data.order)
-            setLoading(false)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
-
     useEffect(() => {
-        getOrderDetails(id)
-    }, [id])
-
-    const shippingDetails = shippingInfo && `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`
-
-    const isPaid = paymentInfo && paymentInfo.status === 'succeeded' ? true : false
+        dispatch(getOrderDetails(id))
+    }, [dispatch, id])
 
     return (
         <>
             <MetaData title={'Order Details'} />
 
-            {loading ? <Loader /> : (
+            {error ? (
+                <EmptyState
+                    icon={<ErrorOutlinedIcon />}
+                    title="Could not load this order"
+                    message={error}
+                    action={<Button component={Link} to="/orders/me" variant="contained">Back to My Orders</Button>}
+                />
+            ) : (loading || !order) ? <Loader /> : (
                 <>
-                    <div className="row d-flex justify-content-between">
-                        <div className="col-12 col-lg-8 mt-5 order-details">
-
-                            <h1 className="my-5">Order # {order._id}</h1>
-
-                            <h4 className="mb-4">Shipping Info</h4>
-                            <p><b>Name:</b> {user && user.name}</p>
-                            <p><b>Phone:</b> {shippingInfo && shippingInfo.phoneNo}</p>
-                            <p className="mb-4"><b>Address:</b> {shippingDetails}</p>
-                            <p><b>Amount:</b> ${totalPrice}</p>
-
-                            <hr />
-
-                            <h4 className="my-4">Payment</h4>
-                            <p className={isPaid ? "greenColor" : "redColor"}><b>{isPaid ? "PAID" : "NOT PAID"}</b></p>
-
-                            <h4 className="my-4">Order Status:</h4>
-                            <p className={order.orderStatus && String(order.orderStatus).includes('Delivered') ? "greenColor" : "redColor"} ><b>{orderStatus}</b></p>
-
-                            <h4 className="my-4">Order Items:</h4>
-
-                            <hr />
-                            <div className="cart-item my-1">
-                                {orderItems && orderItems.map(item => (
-                                    <div key={item.product} className="row my-5">
-                                        <div className="col-4 col-lg-2">
-                                            <img src={item.image} alt={item.name} height="45" width="65" />
-                                        </div>
-
-                                        <div className="col-5 col-lg-5">
-                                            <Link to={`/product/${item.product}`}>{item.name}</Link>
-                                        </div>
-
-                                        <div className="col-4 col-lg-2 mt-4 mt-lg-0">
-                                            <p>${item.price}</p>
-                                        </div>
-
-                                        <div className="col-4 col-lg-3 mt-4 mt-lg-0">
-                                            <p>{item.quantity} Piece(s)</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <hr />
-                        </div>
-                    </div>
+                    <PageHeader title={`Order # ${order._id}`} />
+                    <OrderInfo order={order} />
                 </>
             )}
         </>

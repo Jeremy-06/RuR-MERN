@@ -3,9 +3,9 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 
 // Shown when a page or section has nothing to list
-const EmptyState = ({ icon, title, message, action }) => {
+const EmptyState = ({ icon, title, message, action, flat }) => {
     return (
-        <Paper sx={{ px: 3, py: 6, textAlign: 'center' }}>
+        <Paper sx={{ px: 3, py: 6, textAlign: 'center', ...(flat && { border: 0, boxShadow: 'none', bgcolor: 'transparent' }) }}>
             {icon && <Box aria-hidden="true" sx={{ color: 'text.secondary', mb: 1, '& svg': { fontSize: 48 } }}>{icon}</Box>}
             <Typography variant="h5" component="h2">{title}</Typography>
             {message && <Typography color="textSecondary" sx={{ mt: 1 }}>{message}</Typography>}

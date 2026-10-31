@@ -1,55 +1,103 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import Swal from 'sweetalert2'
+import Chip from '@mui/material/Chip'
+import Grid from '@mui/material/Grid'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined'
 
 import MetaData from '../Layout/MetaData'
-import Loader from '../Layout/Loader'
+import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
+import AdminDataGrid, { IdCell, PersonCell, RowAction } from './AdminDataGrid'
+import { errMsg, formatDate, successMsg } from '../Utils/helpers'
 
-import axios from 'axios';
-import Swal from 'sweetalert2'
-import { errMsg, successMsg } from '../Utils/helpers';
-import { DataGrid, } from '@mui/x-data-grid'
+const columns = [
+    {
+        field: 'id',
+        headerName: 'User ID',
+        flex: 1,
+        minWidth: 150,
+        renderCell: ({ value }) => <IdCell id={value} label="User" />
+    },
+    {
+        field: 'name',
+        headerName: 'Name',
+        flex: 1.3,
+        minWidth: 170,
+        renderCell: ({ row }) => <PersonCell name={row.name} avatar={row.avatar} />
+    },
+    {
+        field: 'email',
+        headerName: 'Email',
+        flex: 1.5,
+        minWidth: 190,
+    },
+    {
+        field: 'role',
+        headerName: 'Role',
+        type: 'singleSelect',
+        valueOptions: ['user', 'admin'],
+        width: 100,
+        renderCell: ({ value }) => <Chip size="small" label={value} color={value === 'admin' ? 'primary' : 'default'} sx={{ textTransform: 'capitalize' }} />
+    },
+    {
+        field: 'joined',
+        headerName: 'Joined',
+        type: 'date',
+        width: 130,
+        valueFormatter: formatDate
+    },
+    {
+        field: 'provider',
+        headerName: 'Auth',
+        type: 'singleSelect',
+        valueOptions: [{ value: 'local', label: 'Email' }, { value: 'google', label: 'Google' }],
+        width: 100,
+        hideOnSmall: true
+    },
+]
 
 const UsersList = () => {
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState(null)
     const [allUsers, setAllUsers] = useState([])
-    const [isDeleted, setIsDeleted] = useState(false)
 
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        withCredentials: true
-    }
-
-    const listUsers = async () => {
+    const listUsers = useCallback(async () => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/users`, config)
+            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/users`, { withCredentials: true })
             setAllUsers(data.users)
-            setLoading(false)
+            setLoadError(null)
         } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+            setLoadError(error.response ? error.response.data.message : error.message)
         }
-    }
-
-    const deleteUser = async (id) => {
-        try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/user/${id}`, config)
-            setIsDeleted(data.success)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
+        setLoading(false)
+    }, [])
 
     useEffect(() => {
-        listUsers();
-        if (isDeleted) {
-            successMsg('User deleted successfully');
-            setIsDeleted(false)
-        }
-    }, [isDeleted])
+        listUsers()
+    }, [listUsers])
 
-    const deleteUserHandler = (id) => {
+    const retryHandler = () => {
+        setLoading(true)
+        setLoadError(null)
+        listUsers()
+    }
+
+    const deleteUser = useCallback(async (id) => {
+        try {
+            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/user/${id}`, { withCredentials: true })
+            if (data.success) {
+                successMsg('User deleted successfully')
+                listUsers()
+            }
+        } catch (error) {
+            errMsg(error.response ? error.response.data.message : error.message)
+        }
+    }, [listUsers])
+
+    const deleteUserHandler = useCallback((id) => {
         Swal.fire({
             title: 'Delete User',
             icon: 'warning',
@@ -61,82 +109,47 @@ const UsersList = () => {
                 deleteUser(id)
             }
         })
-    }
+    }, [deleteUser])
 
-    const columns = [
-        {
-            field: 'id',
-            headerName: 'User ID',
-            flex: 1,
-            renderCell: (params) => <span style={{ wordBreak: 'break-all' }}>{params.value}</span>
-        },
-        {
-            field: 'name',
-            headerName: 'Name',
-            width: 150,
-        },
-        {
-            field: 'email',
-            headerName: 'Email',
-            flex: 1,
-        },
-        {
-            field: 'role',
-            headerName: 'Role',
-            width: 100,
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 120,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <>
-                    <Link to={`/admin/user/${params.id}`} className="btn btn-primary py-1 px-2">
-                        <i className="fa fa-pencil"></i>
-                    </Link>
-                    <button className="btn btn-danger py-1 px-2 ml-2" onClick={() => deleteUserHandler(params.id)}>
-                        <i className="fa fa-trash"></i>
-                    </button>
-                </>
-            )
-        }
-    ];
+    const renderActions = useCallback((row) => (
+        <>
+            <RowAction label="Edit" subject={row.name} icon={<EditOutlinedIcon fontSize="small" />} to={`/admin/user/${row.id}`} />
+            <RowAction label="Delete" subject={row.name} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteUserHandler(row.id)} />
+        </>
+    ), [deleteUserHandler])
 
-    const rows = allUsers.map(user => ({
+    const rows = useMemo(() => allUsers.map(user => ({
         id: user._id,
         name: user.name,
+        avatar: user.avatar ? user.avatar.url : '',
         email: user.email,
         role: user.role,
-    }));
+        joined: new Date(user.createdAt),
+        provider: user.authProvider,
+    })), [allUsers])
 
     return (
         <>
             <MetaData title={'All Users'} />
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
-                <div className="col-12 col-md-10">
-                    <>
-                        <h1 className="my-5">All Users</h1>
-                        {loading ? <Loader /> : (
-                            <div style={{ width: '100%' }}>
-                                <DataGrid
-                                    rows={rows}
-                                    columns={columns}
-                                    initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-                                    pageSizeOptions={[5, 10, 25]}
-                                    disableRowSelectionOnClick
-                                    getRowId={(row) => row.id}
-                                    showToolbar
-                                />
-                            </div>
-                        )}
-                    </>
-                </div>
-            </div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 10 }}>
+                    <PageHeader title="All Users" />
+                    <AdminDataGrid
+                        label="All users"
+                        rows={rows}
+                        columns={columns}
+                        loading={loading}
+                        error={loadError}
+                        onRetry={retryHandler}
+                        empty={{ icon: <PeopleOutlinedIcon />, title: 'No users yet' }}
+                        renderActions={renderActions}
+                        sortField="joined"
+                    />
+                </Grid>
+            </Grid>
         </>
     )
 }

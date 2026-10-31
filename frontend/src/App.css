@@ -557,14 +557,163 @@ ul ul a {
   color: grey;
 }
 
-/* Admin products DataTable */
+/* Admin products DataTable: same look as AdminDataGrid */
+
+.products-table-card {
+  overflow: hidden;
+}
+
+.products-table-card .dt-container {
+  color: #11151b;
+  font-size: 0.875rem;
+}
+
+.products-table-card div.dt-container .dt-layout-row {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.products-table-card div.dt-container .dt-layout-cell {
+  display: flex;
+  padding: 0;
+  text-align: left;
+}
+
+.products-table-card div.dt-container .dt-layout-table {
+  display: block;
+  margin: 0;
+  overflow-x: auto;
+}
+
+.products-table-card div.dt-container .dt-layout-table .dt-layout-cell {
+  display: block;
+}
+
+.products-table-card div.dt-container .dt-layout-row:first-child {
+  min-height: 64px;
+  padding: 10px 16px;
+}
+
+.products-table-card div.dt-container .dt-layout-table + .dt-layout-row {
+  justify-content: flex-end;
+  min-height: 52px;
+  padding: 0 16px;
+  border-top: 1px solid #e3e7ee;
+}
+
+.products-table-card div.dt-container .dt-layout-start,
+.products-table-card div.dt-container .dt-search {
+  flex-grow: 1;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.products-table-card div.dt-container .dt-layout-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.products-table-card div.dt-container .dt-search input {
+  width: 100%;
+  height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 1rem;
+  background-color: #fff;
+  border: 1px solid #8993a1;
+  border-radius: 4px;
+}
+
+.products-table-card div.dt-container .dt-search input:focus {
+  outline: 2px solid var(--rur-blue);
+  outline-offset: -1px;
+}
+
+.products-table-card div.dt-container .dt-length,
+.products-table-card div.dt-container .dt-info,
+.products-table-card div.dt-container .dt-paging {
+  padding: 0;
+}
+
+.products-table-card div.dt-container .dt-length label {
+  margin: 0;
+}
+
+.products-table-card div.dt-container .dt-length select {
+  margin: 0 0 0 8px;
+  padding: 4px;
+  background-color: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.products-table-card div.dt-container .dt-paging .dt-paging-button {
+  min-width: 36px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0 !important;
+  border-radius: 50%;
+  background: transparent !important;
+  color: #11151b !important;
+  line-height: 0;
+}
+
+.products-table-card div.dt-container .dt-paging .dt-paging-button:not(.disabled):hover {
+  background: rgba(15, 107, 224, 0.08) !important;
+}
+
+.products-table-card div.dt-container .dt-paging .dt-paging-button.disabled {
+  opacity: 0.4;
+}
+
+.products-table {
+  border-collapse: collapse !important;
+  border-bottom: 0 !important;
+}
+
+.products-table thead th {
+  height: 52px;
+  padding: 0 12px !important;
+  background-color: #f4f6f9;
+  border-top: 1px solid #e3e7ee;
+  border-bottom: 1px solid #e3e7ee !important;
+  color: #5b6573;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.products-table tbody td {
+  height: 60px;
+  padding: 0 12px !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid #e3e7ee;
+  white-space: nowrap;
+}
+
+.products-table tbody tr:last-child > td {
+  border-bottom: 0 !important;
+}
+
+.products-table tbody tr:hover > td {
+  background-color: rgba(15, 107, 224, 0.04);
+  box-shadow: none !important;
+}
 
 .products-table .dt-thumb {
   display: inline-block;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   object-fit: cover;
-  border-radius: 6px;
+  vertical-align: middle;
+  border-radius: 4px;
   border: 1px solid #e3e7ee;
 }
 
@@ -581,4 +730,62 @@ ul ul a {
   width: 16px;
   height: 16px;
   cursor: pointer;
+}
+
+/* Matches a small MUI IconButton */
+.products-table .dt-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--rur-blue);
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.products-table .dt-action + .dt-action {
+  margin-left: 4px;
+}
+
+.products-table .dt-action:hover {
+  background-color: rgba(15, 107, 224, 0.08);
+}
+
+.products-table .dt-delete {
+  color: #d6203a;
+}
+
+.products-table .dt-delete:hover {
+  background-color: rgba(214, 32, 58, 0.08);
+}
+
+.products-table .dt-action:focus-visible {
+  outline: 2px solid var(--rur-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 599px) {
+  .products-table-card div.dt-container .dt-layout-table + .dt-layout-row {
+    display: flex !important;
+    padding: 0 8px;
+  }
+
+  /* DataTables stacks the footer below 768px */
+  .products-table-card div.dt-container .dt-layout-table + .dt-layout-row .dt-layout-cell {
+    display: flex !important;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    white-space: nowrap;
+  }
+
+  .products-table-card div.dt-container .dt-paging {
+    margin: 0;
+  }
 }

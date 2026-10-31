@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import MetaData from '../Layout/MetaData'
 import Loader from '../Layout/Loader'
+import Grid from '@mui/material/Grid'
 import Sidebar from './SideBar'
 import axios from 'axios'
 import { errMsg } from '../Utils/helpers'
@@ -51,12 +52,12 @@ const Dashboard = () => {
 
     return (
         <>
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
+                </Grid>
 
-                <div className="col-12 col-md-10">
+                <Grid size={{ xs: 12, md: 10 }}>
                     <h1 className="my-4">Dashboard</h1>
 
                     {loading ? <Loader /> : (
@@ -151,8 +152,8 @@ const Dashboard = () => {
                             </div>
                         </>
                     )}
-                </div>
-            </div>
+                </Grid>
+            </Grid>
         </>
     )
 }

@@ -65,7 +65,7 @@ exports.getSingleOrder = async (req, res, next) => {
 }
 
 exports.allOrders = async (req, res, next) => {
-    const orders = await Order.find().sort({ createdAt: -1 })
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 })
     let totalAmount = 0;
 
     orders.forEach(order => {

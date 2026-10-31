@@ -1,109 +1,99 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import Button from '@mui/material/Button'
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import MetaData from '../Layout/MetaData'
-import Loader from '../Layout/Loader'
-import axios from 'axios'
-import { errMsg } from '../Utils/helpers'
-import { Button } from '@mui/material'
-import { DataGrid, } from '@mui/x-data-grid'
+import OrderStatusChip from '../Layout/OrderStatusChip'
+import PageHeader from '../Layout/PageHeader'
+import AdminDataGrid, { IdCell, RowAction } from '../Admin/AdminDataGrid'
+import { myOrders } from '../../actions/orderActions'
+import { formatDateTime, formatMoney, ORDER_STATUSES } from '../Utils/helpers'
+
+const columns = [
+    {
+        field: 'id',
+        headerName: 'Order ID',
+        flex: 1,
+        minWidth: 150,
+        renderCell: ({ value }) => <IdCell id={value} label="Order" />
+    },
+    {
+        field: 'date',
+        headerName: 'Date',
+        type: 'date',
+        flex: 1.2,
+        minWidth: 190,
+        valueFormatter: formatDateTime
+    },
+    {
+        field: 'numOfItems',
+        headerName: 'Items',
+        type: 'number',
+        width: 84,
+        hideOnSmall: true
+    },
+    {
+        field: 'amount',
+        headerName: 'Amount',
+        type: 'number',
+        width: 116,
+        valueFormatter: formatMoney
+    },
+    {
+        field: 'status',
+        headerName: 'Status',
+        type: 'singleSelect',
+        valueOptions: ORDER_STATUSES,
+        width: 130,
+        sortComparator: (a, b) => ORDER_STATUSES.indexOf(a) - ORDER_STATUSES.indexOf(b),
+        renderCell: ({ value }) => <OrderStatusChip status={value} />
+    },
+]
+
+const renderActions = (row) => (
+    <RowAction label="View" subject={`order ${row.id}`} icon={<VisibilityOutlinedIcon fontSize="small" />} to={`/order/${row.id}`} />
+)
 
 const ListOrders = () => {
-    const [loading, setLoading] = useState(true)
-    const [myOrdersList, setMyOrdersList] = useState([])
+    const dispatch = useDispatch()
+    const { loading, error, orders } = useSelector(state => state.myOrders)
 
-    const myOrders = async () => {
-        try {
-            const config = {
-                withCredentials: true
-            }
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/orders/me`, config)
-            setMyOrdersList(data.orders)
-            setLoading(false)
-        } catch (error) {
-            setLoading(false)
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
+    const loadOrders = useCallback(() => dispatch(myOrders()), [dispatch])
 
     useEffect(() => {
-        myOrders();
-    }, [])
+        loadOrders()
+    }, [loadOrders])
 
-    const columns = [
-        {
-            field: 'id',
-            headerName: 'Order ID',
-            flex: 1,
-            renderCell: (params) => <span style={{ wordBreak: 'break-all' }}>{params.value}</span>
-        },
-        {
-            field: 'numOfItems',
-            headerName: 'Num of Items',
-            type: 'number',
-            width: 130,
-            align: 'right',
-            headerAlign: 'right'
-        },
-        {
-            field: 'amount',
-            headerName: 'Amount',
-            width: 120,
-            align: 'right',
-            headerAlign: 'right'
-        },
-        {
-            field: 'status',
-            headerName: 'Status',
-            width: 160,
-            renderCell: (params) =>
-                (params.value && String(params.value).includes('Delivered'))
-                    ? <span style={{ color: 'green' }}>{params.value}</span>
-                    : <span style={{ color: 'red' }}>{params.value}</span>
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 120,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Button
-                    component={Link}
-                    to={`/order/${params.id}`}
-                    variant="contained"
-                    size="small"
-                >
-                    <i className="fa fa-eye" />
-                </Button>
-            )
-        }
-    ];
-
-    const rows = myOrdersList.map(order => ({
+    const rows = useMemo(() => orders.map(order => ({
         id: order._id,
+        date: new Date(order.createdAt),
         numOfItems: order.orderItems.length,
-        amount: `$${order.totalPrice}`,
+        amount: order.totalPrice,
         status: order.orderStatus || ''
-    }));
+    })), [orders])
 
     return (
         <>
             <MetaData title={'My Orders'} />
-            <h1 className="my-5">My Orders</h1>
-
-            {loading ? <Loader /> : (
-                <div style={{ width: '100%' }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-                        pageSizeOptions={[5, 10, 25]}
-                        disableRowSelectionOnClick
-                        getRowId={(row) => row.id}
-                        showToolbar
-                    />
-                </div>
-            )}
+            <PageHeader title="My Orders" />
+            <AdminDataGrid
+                label="My orders"
+                rows={rows}
+                columns={columns}
+                loading={loading}
+                error={error}
+                onRetry={loadOrders}
+                empty={{
+                    icon: <ReceiptLongOutlinedIcon />,
+                    title: 'No orders yet',
+                    message: 'Your orders will show up here.',
+                    action: <Button component={Link} to="/" variant="contained">Browse products</Button>
+                }}
+                renderActions={renderActions}
+                sortField="date"
+            />
         </>
     )
 }

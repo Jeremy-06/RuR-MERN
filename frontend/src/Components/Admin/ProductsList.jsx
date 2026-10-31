@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import DataTable from 'datatables.net-dt'
 import 'datatables.net-dt/css/dataTables.dataTables.css'
 import Grid from '@mui/material/Grid'
-import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 
 import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
 import ProductDialog from './ProductDialog'
 import axios from 'axios'
@@ -20,6 +21,13 @@ DataTable.ext.errMode = 'none'
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 })[char])
+
+// Same paths as the MUI EditOutlined and DeleteOutlined icons used by the other admin tables
+const actionIcon = (path) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="${path}"></path></svg>`
+const EDIT_ICON = actionIcon('m14.06 9.02.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z')
+const DELETE_ICON = actionIcon('M16 9v10H8V9zm-1.5-6h-5l-1 1H5v2h14V4h-3.5zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2z')
+const PREVIOUS_ICON = actionIcon('M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z')
+const NEXT_ICON = actionIcon('M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z')
 
 const ProductsList = () => {
     const tableRef = useRef(null)
@@ -43,8 +51,28 @@ const ProductsList = () => {
             processing: true,
             searchDelay: 400,
             pageLength: 10,
-            lengthMenu: [5, 10, 25, 50],
+            lengthMenu: [10, 25, 50],
             order: [],
+            // Search on the left; rows per page, count and arrows together in the footer
+            layout: {
+                topStart: 'search',
+                topEnd: null,
+                bottomStart: null,
+                bottomEnd: ['pageLength', 'info', { paging: { firstLast: false, numbers: false } }]
+            },
+            language: {
+                search: '',
+                searchPlaceholder: 'Search ...',
+                lengthMenu: 'Rows per page _MENU_',
+                info: '_START_–_END_ of _TOTAL_',
+                infoEmpty: '0 of 0',
+                infoFiltered: '',
+                zeroRecords: 'No matching rows',
+                emptyTable: 'No products yet',
+                entries: { _: '', 1: '' },
+                paginate: { previous: PREVIOUS_ICON, next: NEXT_ICON },
+                aria: { paginate: { previous: 'Previous page', next: 'Next page' } }
+            },
             ajax: {
                 url: `${import.meta.env.VITE_API}/admin/products`,
                 xhrFields: {
@@ -87,9 +115,10 @@ const ProductsList = () => {
                     orderable: false,
                     searchable: false,
                     className: 'dt-nowrap',
+                    width: '124px',
                     render: (id) => `
-                        <button type="button" class="btn btn-primary py-1 px-2 dt-edit" data-id="${id}" aria-label="Edit product"><i class="fa fa-pencil"></i></button>
-                        <button type="button" class="btn btn-danger py-1 px-2 ml-2 dt-delete" data-id="${id}" aria-label="Delete product"><i class="fa fa-trash"></i></button>`
+                        <button type="button" class="dt-action dt-edit" data-id="${id}" title="Edit" aria-label="Edit product">${EDIT_ICON}</button>
+                        <button type="button" class="dt-action dt-delete" data-id="${id}" title="Delete" aria-label="Delete product">${DELETE_ICON}</button>`
                 },
             ],
         })
@@ -236,28 +265,32 @@ const ProductsList = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 10 }}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2, my: 4 }}>
-                        <Typography variant="h3" component="h1" sx={{ mr: 'auto' }}>All Products</Typography>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            disabled={selectedCount === 0}
-                            onClick={deleteSelectedHandler}
-                            startIcon={<i className="fa fa-trash"></i>}
-                        >
-                            Delete selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={() => setDialog({ open: true, productId: null })}
-                            startIcon={<i className="fa fa-plus"></i>}
-                        >
-                            New Product
-                        </Button>
-                    </Box>
+                    <PageHeader
+                        title="All Products"
+                        actions={(
+                            <>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    disabled={selectedCount === 0}
+                                    onClick={deleteSelectedHandler}
+                                    startIcon={<DeleteOutlinedIcon />}
+                                >
+                                    Delete selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => setDialog({ open: true, productId: null })}
+                                    startIcon={<AddIcon />}
+                                >
+                                    New Product
+                                </Button>
+                            </>
+                        )}
+                    />
 
-                    <Paper sx={{ p: 2, overflowX: 'auto' }}>
-                        <table ref={tableRef} className="display products-table" style={{ width: '100%' }}></table>
+                    <Paper className="products-table-card">
+                        <table ref={tableRef} className="products-table" style={{ width: '100%' }}></table>
                     </Paper>
                 </Grid>
             </Grid>

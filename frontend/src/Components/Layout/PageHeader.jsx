@@ -10,7 +10,7 @@ const PageHeader = ({ title, subtitle, actions }) => {
             direction={{ xs: 'column', sm: 'row' }}
             sx={{ alignItems: { sm: 'flex-end' }, justifyContent: 'space-between', gap: 2, mt: { xs: 3, md: 5 }, mb: 3 }}
         >
-            <Box>
+            <Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                 <SectionTitle variant="h2" component="h1">{title}</SectionTitle>
                 {subtitle && <Typography color="textSecondary" sx={{ mt: 1 }}>{subtitle}</Typography>}
             </Box>

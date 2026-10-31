@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from "react-router-dom";
 import MetaData from '../Layout/MetaData'
 import Loader from '../Layout/Loader'
+import Grid from '@mui/material/Grid'
 import Sidebar from './SideBar'
 import axios from 'axios';
 import { errMsg, successMsg } from '../Utils/helpers'
@@ -57,11 +58,11 @@ const UpdateUser = () => {
     return (
         <>
             <MetaData title={`Update User`} />
-            <div className="row">
-                <div className="col-12 col-md-2">
+            <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
-                </div>
-                <div className="col-12 col-md-10">
+                </Grid>
+                <Grid size={{ xs: 12, md: 10 }}>
                     {loading ? <Loader /> : (
                         <div className="row wrapper">
                             <div className="col-10 col-lg-5">
@@ -107,8 +108,8 @@ const UpdateUser = () => {
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
+                </Grid>
+            </Grid>
         </>
     )
 }
