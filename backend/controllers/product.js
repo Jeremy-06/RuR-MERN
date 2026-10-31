@@ -6,6 +6,10 @@ const cloudinary = require('cloudinary')
 const APIFeatures = require('../utils/apiFeatures');
 
 const PRODUCTS_FOLDER = 'rur/products'
+const MIN_SUGGEST_LENGTH = 2
+const MAX_SUGGEST_LENGTH = 100
+const MAX_SUGGESTED_PRODUCTS = 6
+const MAX_SUGGESTED_CATEGORIES = 3
 
 // Streams one multer memory file to Cloudinary
 const uploadImage = (file) => {
@@ -98,6 +102,38 @@ exports.getCategories = async (req, res, next) => {
 }
 
 // http://localhost:4002/api/v1/products?page=2&limit=12&minPrice=10&maxPrice=200&category=Mice&category=Headsets&minRating=4&minReviews=1
+// Suggestions for the search box   =>  /api/v1/products/suggest?keyword=key
+exports.getProductSuggestions = async (req, res, next) => {
+    const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim() : ''
+
+    if (keyword.length < MIN_SUGGEST_LENGTH || keyword.length > MAX_SUGGEST_LENGTH) {
+        return res.status(400).json({
+            success: false,
+            message: `keyword must be from ${MIN_SUGGEST_LENGTH} to ${MAX_SUGGEST_LENGTH} characters`
+        })
+    }
+
+    const apiFeatures = new APIFeatures(Product.find().select('name category price images'), { keyword }).search().sort()
+    const matches = await apiFeatures.query.limit(MAX_SUGGESTED_PRODUCTS)
+
+    const products = matches.map(({ _id, name, category, price, images }) => ({
+        _id,
+        name,
+        category,
+        price,
+        image: images[0] ? images[0].url : ''
+    }))
+    const categories = productCategories()
+        .filter(category => category.toLowerCase().includes(keyword.toLowerCase()))
+        .slice(0, MAX_SUGGESTED_CATEGORIES)
+
+    return res.status(200).json({
+        success: true,
+        products,
+        categories
+    })
+}
+
 exports.getProducts = async (req, res) => {
     const errorMessage = APIFeatures.validateShopQuery(req.query, productCategories())
     if (errorMessage) {
