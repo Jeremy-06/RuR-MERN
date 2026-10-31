@@ -5,6 +5,19 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    NEW_REVIEW_REQUEST,
+    NEW_REVIEW_SUCCESS,
+    NEW_REVIEW_FAIL,
+    GET_REVIEWS_REQUEST,
+    GET_REVIEWS_SUCCESS,
+    GET_REVIEWS_FAIL,
+    DELETE_REVIEW_REQUEST,
+    DELETE_REVIEW_SUCCESS,
+    DELETE_REVIEW_RESET,
+    DELETE_REVIEW_FAIL,
+    MY_REVIEW_REQUEST,
+    MY_REVIEW_SUCCESS,
+    MY_REVIEW_FAIL,
     SEARCH_SUGGESTIONS_REQUEST,
     SEARCH_SUGGESTIONS_SUCCESS,
     SEARCH_SUGGESTIONS_FAIL,
@@ -145,6 +158,122 @@ export const productDetailsReducer = (state = { product: {} }, action) => {
                 ...state,
                 loading: false,
                 error: action.payload
+            }
+        case CLEAR_ERRORS:
+            return {
+                ...state,
+                error: null
+            }
+        default:
+            return state
+    }
+}
+
+// productId = product the list belongs to; a refresh of the same product keeps its rows
+export const productReviewsReducer = (state = { reviews: [], productId: null }, action) => {
+    switch (action.type) {
+        case GET_REVIEWS_REQUEST:
+            return {
+                loading: true,
+                productId: action.productId,
+                reviews: action.productId === state.productId ? state.reviews : []
+            }
+        case GET_REVIEWS_SUCCESS:
+            if (action.productId !== state.productId) return state
+            return {
+                ...state,
+                loading: false,
+                reviews: action.payload
+            }
+        case GET_REVIEWS_FAIL:
+            if (action.productId !== state.productId) return state
+            return {
+                ...state,
+                loading: false,
+                reviews: [],
+                error: action.payload
+            }
+        default:
+            return state
+    }
+}
+
+const noReview = { canReview: false, review: null }
+
+export const myReviewReducer = (state = { ...noReview, productId: null }, action) => {
+    switch (action.type) {
+        case MY_REVIEW_REQUEST:
+            return {
+                ...noReview,
+                productId: action.productId
+            }
+        case MY_REVIEW_SUCCESS:
+            if (action.productId !== state.productId) return state
+            return {
+                productId: action.productId,
+                canReview: action.payload.canReview,
+                review: action.payload.review
+            }
+        case MY_REVIEW_FAIL:
+            if (action.productId !== state.productId) return state
+            return {
+                ...noReview,
+                productId: action.productId
+            }
+        default:
+            return state
+    }
+}
+
+export const newReviewReducer = (state = {}, action) => {
+    switch (action.type) {
+        case NEW_REVIEW_REQUEST:
+            return {
+                ...state,
+                loading: true
+            }
+        case NEW_REVIEW_SUCCESS:
+            return {
+                loading: false
+            }
+        case NEW_REVIEW_FAIL:
+            return {
+                loading: false,
+                error: action.payload
+            }
+        case CLEAR_ERRORS:
+            return {
+                ...state,
+                error: null
+            }
+        default:
+            return state
+    }
+}
+
+export const reviewReducer = (state = {}, action) => {
+    switch (action.type) {
+        case DELETE_REVIEW_REQUEST:
+            return {
+                ...state,
+                loading: true
+            }
+        case DELETE_REVIEW_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                isDeleted: action.payload
+            }
+        case DELETE_REVIEW_FAIL:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
+        case DELETE_REVIEW_RESET:
+            return {
+                ...state,
+                isDeleted: false
             }
         case CLEAR_ERRORS:
             return {

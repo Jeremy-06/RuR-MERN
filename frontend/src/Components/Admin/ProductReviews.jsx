@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import axios from 'axios'
+import { useCallback, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import Swal from 'sweetalert2'
+import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Grid from '@mui/material/Grid'
-import MenuItem from '@mui/material/MenuItem'
+import IconButton from '@mui/material/IconButton'
 import Rating from '@mui/material/Rating'
-import TextField from '@mui/material/TextField'
+import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import ClearIcon from '@mui/icons-material/Clear'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 
@@ -19,7 +22,10 @@ import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
 import AdminDataGrid, { PersonCell, RowAction } from './AdminDataGrid'
-import { errMsg, formatDateTime, successMsg } from '../Utils/helpers'
+import ProductPicker from './ProductPicker'
+import { clearErrors, deleteReview, getProductDetails, getProductReviews } from '../../actions/productActions'
+import { DELETE_REVIEW_RESET } from '../../constants/productConstants'
+import { errMsg, formatDateTime, isProductId, successMsg } from '../Utils/helpers'
 
 const columns = [
     {
@@ -71,53 +77,44 @@ const columns = [
 ]
 
 const ProductReviews = () => {
-    const [productId, setProductId] = useState('')
-    const [products, setProducts] = useState([])
-    const [listReviews, setListReviews] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [loadError, setLoadError] = useState(null)
+    const dispatch = useDispatch()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const { product, error: productError } = useSelector(state => state.productDetails)
+    const productReviews = useSelector(state => state.productReviews)
+    const { error: deleteError, isDeleted } = useSelector(state => state.review)
 
-    const getAdminProducts = useCallback(async () => {
-        try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/products`, { withCredentials: true })
-            setProducts(data.products)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }, [])
+    // The chosen product lives in the URL so a refresh keeps it
+    const productId = searchParams.get('product') || ''
+    const validId = isProductId(productId)
+    const selected = product._id === productId ? product : null
+    const reviews = useMemo(() => productReviews.productId === productId ? productReviews.reviews : [], [productReviews, productId])
 
-    const getProductReviews = useCallback(async (id) => {
-        setLoading(true)
-        setLoadError(null)
-        try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/reviews?id=${id}`, { withCredentials: true })
-            setListReviews(data.reviews)
-        } catch (error) {
-            setListReviews([])
-            setLoadError(error.response ? error.response.data.message : error.message)
-        }
-        setLoading(false)
-    }, [])
+    const loadReviews = useCallback(() => dispatch(getProductReviews(productId)), [dispatch, productId])
 
     useEffect(() => {
-        getAdminProducts()
-    }, [getAdminProducts])
+        if (!validId) return
+        dispatch(getProductDetails(productId))
+        loadReviews()
+    }, [dispatch, productId, validId, loadReviews])
 
-    const deleteReview = useCallback(async (id, product) => {
-        try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/review/${id}`, { withCredentials: true })
-            if (data.success) {
-                successMsg('Review deleted successfully')
-                getProductReviews(product)
-                // Review counts in the product list changed
-                getAdminProducts()
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+    useEffect(() => {
+        if (deleteError) {
+            errMsg(deleteError)
+            dispatch(clearErrors())
         }
-    }, [getAdminProducts, getProductReviews])
+        if (isDeleted) {
+            successMsg('Review deleted successfully')
+            dispatch({ type: DELETE_REVIEW_RESET })
+            loadReviews()
+        }
+    }, [dispatch, deleteError, isDeleted, loadReviews])
 
-    const deleteReviewHandler = useCallback((id, product) => {
+    // A not found message must not follow the admin to the product page
+    useEffect(() => () => {
+        dispatch(clearErrors())
+    }, [dispatch])
+
+    const deleteReviewHandler = useCallback((id) => {
         Swal.fire({
             title: 'Delete Review',
             icon: 'info',
@@ -126,49 +123,53 @@ const ProductReviews = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteReview(id, product)
+                dispatch(deleteReview(id))
             }
         })
-    }, [deleteReview])
-
-    const productChangeHandler = (e) => {
-        const id = e.target.value
-        setProductId(id)
-        if (id === '') {
-            setListReviews([])
-            setLoadError(null)
-        } else {
-            getProductReviews(id)
-        }
-    }
-
-    const submitHandler = (e) => {
-        e.preventDefault();
-        if (productId !== '') {
-            getProductReviews(productId)
-        }
-    }
+    }, [dispatch])
 
     const renderActions = useCallback((row) => (
         <>
             <RowAction label="View" subject={`product ${row.product}`} icon={<VisibilityOutlinedIcon fontSize="small" />} to={`/product/${row.productId}`} />
-            <RowAction label="Delete" subject={`review by ${row.customer}`} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteReviewHandler(row.id, row.productId)} />
+            <RowAction label="Delete" subject={`review by ${row.customer}`} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteReviewHandler(row.id)} />
         </>
     ), [deleteReviewHandler])
 
-    const rows = useMemo(() => listReviews.map(review => {
-        const product = products.find(item => item._id === review.product)
-        return {
-            id: review._id,
-            productId: review.product,
-            product: product ? product.name : '',
-            customer: review.user ? review.user.name : 'Deleted user',
-            avatar: review.user && review.user.avatar ? review.user.avatar.url : '',
-            rating: review.rating,
-            comment: review.comment,
-            date: new Date(review.createdAt),
-        }
-    }), [listReviews, products])
+    const rows = useMemo(() => reviews.map(review => ({
+        id: review._id,
+        productId: review.product,
+        product: selected ? selected.name : '',
+        customer: review.user ? review.user.name : 'Deleted user',
+        avatar: review.user && review.user.avatar ? review.user.avatar.url : '',
+        rating: review.rating,
+        comment: review.comment,
+        date: new Date(review.createdAt),
+    })), [reviews, selected])
+
+    const selectProduct = (id) => setSearchParams({ product: id })
+
+    let content
+    if (!productId) {
+        content = <EmptyState icon={<StarBorderOutlinedIcon />} title="Choose a product" message="Its reviews will show up here." />
+    } else if (!validId) {
+        content = <EmptyState icon={<ErrorOutlinedIcon />} title="Not a valid product ID" message="A product ID has 24 letters and numbers." />
+    } else if (productError) {
+        content = <EmptyState icon={<ErrorOutlinedIcon />} title={productError} message="No product has this ID." />
+    } else {
+        content = (
+            <AdminDataGrid
+                label="Product reviews"
+                rows={rows}
+                columns={columns}
+                loading={productReviews.loading || productReviews.productId !== productId}
+                error={productReviews.error}
+                onRetry={loadReviews}
+                empty={{ icon: <StarBorderOutlinedIcon />, title: 'No reviews yet', message: 'This product has no reviews.' }}
+                renderActions={renderActions}
+                sortField="date"
+            />
+        )
+    }
 
     return (
         <>
@@ -180,44 +181,26 @@ const ProductReviews = () => {
                 <Grid size={{ xs: 12, md: 10 }}>
                     <PageHeader title="Reviews" />
                     <Card sx={{ height: 'auto', p: 2, mb: 3 }}>
-                        <Box component="form" onSubmit={submitHandler} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, gap: 2 }}>
-                            <TextField
-                                id="productId_field"
-                                select
-                                size="small"
-                                margin="none"
-                                label="Select Product"
-                                value={productId}
-                                onChange={productChangeHandler}
-                            >
-                                <MenuItem value="">Choose a product</MenuItem>
-                                {products.map(product => (
-                                    <MenuItem key={product._id} value={product._id}>
-                                        {product.name} ({product.reviewCount} reviews)
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                            <Button id="search_button" type="submit" variant="contained" disabled={productId === '' || loading} sx={{ flexShrink: 0 }}>
-                                Search
-                            </Button>
-                        </Box>
+                        <ProductPicker onSelect={selectProduct} />
+                        {selected && (
+                            <Stack direction="row" sx={{ alignItems: 'center', gap: 1.5, mt: 2 }}>
+                                <Avatar variant="rounded" src={selected.images[0] ? selected.images[0].url : undefined} alt="" sx={{ width: 44, height: 44 }} />
+                                <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                                    <Typography variant="body2" noWrap sx={{ fontWeight: 700 }}>{selected.name}</Typography>
+                                    <Typography variant="caption" color="textSecondary" component="div">
+                                        {selected.category} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                                    </Typography>
+                                </Box>
+                                <Tooltip title="Clear product">
+                                    <IconButton size="small" aria-label="Clear product" onClick={() => setSearchParams({})}>
+                                        <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </Stack>
+                        )}
                     </Card>
 
-                    {productId === '' ? (
-                        <EmptyState icon={<StarBorderOutlinedIcon />} title="Choose a product" message="Its reviews will show up here." />
-                    ) : (
-                        <AdminDataGrid
-                            label="Product reviews"
-                            rows={rows}
-                            columns={columns}
-                            loading={loading}
-                            error={loadError}
-                            onRetry={() => getProductReviews(productId)}
-                            empty={{ icon: <StarBorderOutlinedIcon />, title: 'No reviews yet', message: 'This product has no reviews.' }}
-                            renderActions={renderActions}
-                            sortField="date"
-                        />
-                    )}
+                    {content}
                 </Grid>
             </Grid>
         </>

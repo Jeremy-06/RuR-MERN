@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Divider from '@mui/material/Divider'
-import Grid from '@mui/material/Grid'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -12,34 +11,22 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
 import EmptyState from '../Layout/EmptyState'
+import CheckoutLayout from './CheckoutLayout'
 import CheckoutSteps from './CheckoutSteps'
-import { formatMoney } from '../Utils/helpers'
-import { accentTop } from '../../theme'
-
-const SummaryRow = ({ label, value }) => (
-    <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-        <Typography color="textSecondary">{label}</Typography>
-        <Typography sx={{ fontWeight: 700 }}>{value}</Typography>
-    </Stack>
-)
+import { formatMoney, orderPrices } from '../Utils/helpers'
 
 const ConfirmOrder = () => {
     const { cartItems, shippingInfo } = useSelector(state => state.cart)
     const { user } = useSelector(state => state.auth)
     let navigate = useNavigate();
 
-    // Calculate Order Prices
-    const itemsPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
-    const shippingPrice = itemsPrice > 200 ? 0 : 25
-    const taxPrice = Number((0.05 * itemsPrice).toFixed(2))
-    const totalPrice = (itemsPrice + shippingPrice + taxPrice).toFixed(2)
-
     const processToPayment = () => {
+        const { itemsPrice, shippingPrice, taxPrice, totalPrice } = orderPrices(cartItems)
         const data = {
             itemsPrice: itemsPrice.toFixed(2),
             shippingPrice,
             taxPrice,
-            totalPrice
+            totalPrice: totalPrice.toFixed(2)
         }
 
         sessionStorage.setItem('orderInfo', JSON.stringify(data))
@@ -69,64 +56,47 @@ const ConfirmOrder = () => {
             <CheckoutSteps shipping confirmOrder />
             <PageHeader title="Confirm Order" subtitle="Check everything looks right before paying." />
 
-            <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
-                <Grid size={{ xs: 12, md: 8 }}>
-                    <Stack spacing={3}>
-                        <Card component="section" aria-labelledby="shipping-info-title" sx={{ height: 'auto', p: 3 }}>
-                            <Typography id="shipping-info-title" variant="h4" component="h2" sx={{ mb: 2 }}>Shipping Info</Typography>
-                            {user && <Typography><b>Name:</b> {user.name}</Typography>}
-                            <Typography sx={{ mt: 0.5 }}><b>Phone:</b> {shippingInfo.phoneNo}</Typography>
-                            <Typography sx={{ mt: 0.5, overflowWrap: 'anywhere' }}>
-                                <b>Address:</b> {`${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`}
-                            </Typography>
-                        </Card>
-
-                        <Card component="section" aria-labelledby="cart-items-title" sx={{ height: 'auto', p: 3 }}>
-                            <Typography id="cart-items-title" variant="h4" component="h2" sx={{ mb: 1 }}>Your Cart Items</Typography>
-                            <Stack component="ul" divider={<Divider />} sx={{ listStyle: 'none', m: 0, p: 0 }}>
-                                {cartItems.map(item => (
-                                    <Box
-                                        component="li"
-                                        key={item.product}
-                                        sx={{ py: 1.5, display: 'grid', alignItems: 'center', columnGap: 2, gridTemplateColumns: { xs: '56px 1fr', sm: '72px 1fr auto' } }}
-                                    >
-                                        <Box
-                                            component="img"
-                                            src={item.image || '/images/default_avatar.svg'}
-                                            alt={item.name}
-                                            sx={{ gridRow: { xs: 'span 2', sm: 'auto' }, width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 1, bgcolor: 'background.default' }}
-                                        />
-                                        <Link component={RouterLink} to={`/product/${item.product}`} sx={{ color: 'text.primary', fontWeight: 700, overflowWrap: 'anywhere' }}>
-                                            {item.name}
-                                        </Link>
-                                        <Typography color="textSecondary" sx={{ textAlign: { sm: 'right' } }}>
-                                            {item.quantity} x {formatMoney(item.price)} = <Box component="b" sx={{ color: 'text.primary' }}>{formatMoney(item.quantity * item.price)}</Box>
-                                        </Typography>
-                                    </Box>
-                                ))}
-                            </Stack>
-                        </Card>
-                    </Stack>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }} sx={{ position: { md: 'sticky' }, top: { md: 96 } }}>
-                    <Card component="section" aria-labelledby="order-summary-title" sx={{ ...accentTop, p: 3 }}>
-                        <Typography id="order-summary-title" variant="h4" component="h2">Order Summary</Typography>
-                        <Divider sx={{ my: 2 }} />
-                        <Stack spacing={1}>
-                            <SummaryRow label="Subtotal" value={formatMoney(itemsPrice)} />
-                            <SummaryRow label="Shipping" value={formatMoney(shippingPrice)} />
-                            <SummaryRow label="Tax" value={formatMoney(taxPrice)} />
-                        </Stack>
-                        <Divider sx={{ my: 2 }} />
-                        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <Typography color="textSecondary">Total</Typography>
-                            <Typography variant="h2" component="p">{formatMoney(totalPrice)}</Typography>
-                        </Stack>
-                        <Button variant="contained" size="large" fullWidth onClick={processToPayment} sx={{ mt: 3 }}>Proceed to Payment</Button>
+            <CheckoutLayout
+                hideItems
+                action={<Button variant="contained" size="large" fullWidth onClick={processToPayment}>Proceed to Payment</Button>}
+            >
+                <Stack spacing={3}>
+                    <Card component="section" aria-labelledby="shipping-info-title" sx={{ height: 'auto', p: 3 }}>
+                        <Typography id="shipping-info-title" variant="h4" component="h2" sx={{ mb: 2 }}>Shipping Info</Typography>
+                        {user && <Typography><b>Name:</b> {user.name}</Typography>}
+                        <Typography sx={{ mt: 0.5 }}><b>Phone:</b> {shippingInfo.phoneNo}</Typography>
+                        <Typography sx={{ mt: 0.5, overflowWrap: 'anywhere' }}>
+                            <b>Address:</b> {`${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`}
+                        </Typography>
                     </Card>
-                </Grid>
-            </Grid>
+
+                    <Card component="section" aria-labelledby="cart-items-title" sx={{ height: 'auto', p: 3 }}>
+                        <Typography id="cart-items-title" variant="h4" component="h2" sx={{ mb: 1 }}>Your Cart Items</Typography>
+                        <Stack component="ul" divider={<Divider />} sx={{ listStyle: 'none', m: 0, p: 0 }}>
+                            {cartItems.map(item => (
+                                <Box
+                                    component="li"
+                                    key={item.product}
+                                    sx={{ py: 1.5, display: 'grid', alignItems: 'center', columnGap: 2, gridTemplateColumns: { xs: '56px 1fr', sm: '72px 1fr auto' } }}
+                                >
+                                    <Box
+                                        component="img"
+                                        src={item.image || '/images/default_avatar.svg'}
+                                        alt={item.name}
+                                        sx={{ gridRow: { xs: 'span 2', sm: 'auto' }, width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 1, bgcolor: 'background.default' }}
+                                    />
+                                    <Link component={RouterLink} to={`/product/${item.product}`} sx={{ color: 'text.primary', fontWeight: 700, overflowWrap: 'anywhere' }}>
+                                        {item.name}
+                                    </Link>
+                                    <Typography color="textSecondary" sx={{ textAlign: { sm: 'right' } }}>
+                                        {item.quantity} x {formatMoney(item.price)} = <Box component="b" sx={{ color: 'text.primary' }}>{formatMoney(item.quantity * item.price)}</Box>
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </Stack>
+                    </Card>
+                </Stack>
+            </CheckoutLayout>
         </>
     )
 }

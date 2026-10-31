@@ -6,6 +6,18 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    NEW_REVIEW_REQUEST,
+    NEW_REVIEW_SUCCESS,
+    NEW_REVIEW_FAIL,
+    GET_REVIEWS_REQUEST,
+    GET_REVIEWS_SUCCESS,
+    GET_REVIEWS_FAIL,
+    DELETE_REVIEW_REQUEST,
+    DELETE_REVIEW_SUCCESS,
+    DELETE_REVIEW_FAIL,
+    MY_REVIEW_REQUEST,
+    MY_REVIEW_SUCCESS,
+    MY_REVIEW_FAIL,
     SEARCH_SUGGESTIONS_REQUEST,
     SEARCH_SUGGESTIONS_SUCCESS,
     SEARCH_SUGGESTIONS_FAIL,
@@ -119,6 +131,83 @@ export const getTopRatedProducts = () => async (dispatch) => {
     } catch (error) {
         dispatch({
             type: TOP_RATED_PRODUCTS_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+// The product id travels with each action so the reducer can drop late answers
+export const getProductReviews = (id) => async (dispatch) => {
+    try {
+        dispatch({ type: GET_REVIEWS_REQUEST, productId: id })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/reviews`, { params: { id } })
+        dispatch({
+            type: GET_REVIEWS_SUCCESS,
+            productId: id,
+            payload: data.reviews
+        })
+    } catch (error) {
+        dispatch({
+            type: GET_REVIEWS_FAIL,
+            productId: id,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+// Whether the logged in user can review a product, and their review if they have one
+export const getMyReview = (id) => async (dispatch) => {
+    try {
+        dispatch({ type: MY_REVIEW_REQUEST, productId: id })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/review/me`, { params: { productId: id }, withCredentials: true })
+        dispatch({
+            type: MY_REVIEW_SUCCESS,
+            productId: id,
+            payload: data
+        })
+    } catch {
+        dispatch({ type: MY_REVIEW_FAIL, productId: id })
+    }
+}
+
+// New review is a POST, editing their own review is a PUT; answers whether it was saved
+export const newReview = (reviewData, reviewId) => async (dispatch) => {
+    try {
+        dispatch({ type: NEW_REVIEW_REQUEST })
+        const config = {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            withCredentials: true
+        }
+        const { data } = reviewId
+            ? await axios.put(`${import.meta.env.VITE_API}/review/${reviewId}`, reviewData, config)
+            : await axios.post(`${import.meta.env.VITE_API}/review`, reviewData, config)
+        dispatch({
+            type: NEW_REVIEW_SUCCESS,
+            payload: data.success
+        })
+        return data.success
+    } catch (error) {
+        dispatch({
+            type: NEW_REVIEW_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+        return false
+    }
+}
+
+export const deleteReview = (id) => async (dispatch) => {
+    try {
+        dispatch({ type: DELETE_REVIEW_REQUEST })
+        const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/review/${id}`, { withCredentials: true })
+        dispatch({
+            type: DELETE_REVIEW_SUCCESS,
+            payload: data.success
+        })
+    } catch (error) {
+        dispatch({
+            type: DELETE_REVIEW_FAIL,
             payload: error.response ? error.response.data.message : error.message
         })
     }

@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
+import CheckoutLayout from './CheckoutLayout'
 import CheckoutSteps from './CheckoutSteps'
 import { createOrder, clearErrors } from '../../actions/orderActions'
 import { CREATE_ORDER_RESET } from '../../constants/orderConstants'
@@ -67,31 +68,33 @@ const Payment = () => {
             <CheckoutSteps shipping confirmOrder payment />
             <PageHeader title="Card Info" subtitle="This is a demo checkout. Card details are not sent or stored." />
 
-            <Card sx={{ ...accentTop, height: 'auto', maxWidth: 720, p: { xs: 2.5, sm: 4 } }}>
-                <Box component="form" onSubmit={submitHandler}>
-                    <TextField id="card_num_field" label="Card Number" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} sx={{ mt: 0 }} />
-                    <Grid container columnSpacing={2}>
-                        <Grid size={6}>
-                            <TextField id="card_exp_field" label="Card Expiry" autoComplete="off" />
+            <CheckoutLayout>
+                <Card sx={{ ...accentTop, height: 'auto', p: { xs: 2.5, sm: 4 } }}>
+                    <Box component="form" onSubmit={submitHandler}>
+                        <TextField id="card_num_field" label="Card Number" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} sx={{ mt: 0 }} />
+                        <Grid container columnSpacing={2}>
+                            <Grid size={6}>
+                                <TextField id="card_exp_field" label="Card Expiry" autoComplete="off" />
+                            </Grid>
+                            <Grid size={6}>
+                                <TextField id="card_cvc_field" label="Card CVC" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} />
+                            </Grid>
                         </Grid>
-                        <Grid size={6}>
-                            <TextField id="card_cvc_field" label="Card CVC" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} />
-                        </Grid>
-                    </Grid>
 
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        size="large"
-                        fullWidth
-                        startIcon={<LockOutlinedIcon />}
-                        disabled={loading || !orderInfo || cartItems.length === 0}
-                        sx={{ mt: 3 }}
-                    >
-                        {orderInfo ? `Pay ${formatMoney(orderInfo.totalPrice)}` : 'Pay'}
-                    </Button>
-                </Box>
-            </Card>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            startIcon={<LockOutlinedIcon />}
+                            disabled={loading || !orderInfo || cartItems.length === 0}
+                            sx={{ mt: 3 }}
+                        >
+                            {orderInfo ? `Pay ${formatMoney(orderInfo.totalPrice)}` : 'Pay'}
+                        </Button>
+                    </Box>
+                </Card>
+            </CheckoutLayout>
         </>
     )
 }

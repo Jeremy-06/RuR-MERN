@@ -42,8 +42,19 @@ export const categories = [
 
 export const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered']
 
+// A MongoDB id, as pasted from the product page
+export const isProductId = (value) => /^[a-f\d]{24}$/i.test(value)
+
 // $1,234.50
 export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+
+// Same prices on every checkout page
+export const orderPrices = (cartItems) => {
+    const itemsPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    const shippingPrice = itemsPrice > 200 ? 0 : 25
+    const taxPrice = Number((0.05 * itemsPrice).toFixed(2))
+    return { itemsPrice, shippingPrice, taxPrice, totalPrice: itemsPrice + shippingPrice + taxPrice }
+}
 
 // Oct 31, 2026
 export const formatDate = (value) => value ? dayjs(value).format('MMM D, YYYY') : ''

@@ -11,6 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
+import CheckoutLayout from './CheckoutLayout'
 import CheckoutSteps from './CheckoutSteps'
 import { saveShippingInfo } from '../../actions/cartActions'
 import { accentTop } from '../../theme'
@@ -69,25 +70,27 @@ const Shipping = () => {
             <CheckoutSteps shipping />
             <PageHeader title="Shipping Info" subtitle="Where should we send your gear?" />
 
-            <Card sx={{ ...accentTop, height: 'auto', maxWidth: 720, p: { xs: 2.5, sm: 4 } }}>
-                <Box component="form" onSubmit={formik.handleSubmit} noValidate>
-                    <TextField {...field('address')} label="Address" required autoComplete="street-address" sx={{ mt: 0 }} />
-                    <TextField {...field('city')} label="City" required autoComplete="address-level2" />
-                    <Grid container columnSpacing={2}>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <TextField {...field('phoneNo')} label="Phone No" required type="tel" autoComplete="tel" />
+            <CheckoutLayout>
+                <Card sx={{ ...accentTop, height: 'auto', p: { xs: 2.5, sm: 4 } }}>
+                    <Box component="form" onSubmit={formik.handleSubmit} noValidate>
+                        <TextField {...field('address')} label="Address" required autoComplete="street-address" sx={{ mt: 0 }} />
+                        <TextField {...field('city')} label="City" required autoComplete="address-level2" />
+                        <Grid container columnSpacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField {...field('phoneNo')} label="Phone No" required type="tel" autoComplete="tel" />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField {...field('postalCode')} label="Postal Code" required autoComplete="postal-code" />
+                            </Grid>
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <TextField {...field('postalCode')} label="Postal Code" required autoComplete="postal-code" />
-                        </Grid>
-                    </Grid>
-                    <TextField {...field('country')} label="Country" required select autoComplete="country-name">
-                        {countryNames.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}
-                    </TextField>
+                        <TextField {...field('country')} label="Country" required select autoComplete="country-name">
+                            {countryNames.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}
+                        </TextField>
 
-                    <Button type="submit" variant="contained" size="large" fullWidth sx={{ mt: 3 }}>Continue</Button>
-                </Box>
-            </Card>
+                        <Button type="submit" variant="contained" size="large" fullWidth sx={{ mt: 3 }}>Continue</Button>
+                    </Box>
+                </Card>
+            </CheckoutLayout>
         </>
     )
 }

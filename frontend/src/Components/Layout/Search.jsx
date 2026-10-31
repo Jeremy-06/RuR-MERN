@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from 'react-redux'
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -9,12 +8,8 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
 import SearchIcon from '@mui/icons-material/Search'
-import { clearSearchSuggestions, getSearchSuggestions } from '../../actions/productActions'
 import { formatMoney } from '../Utils/helpers'
-
-const MIN_LENGTH = 2
-const MAX_LENGTH = 100
-const DEBOUNCE = 300
+import useSearchSuggestions, { MAX_LENGTH } from '../Utils/useSearchSuggestions'
 
 // Wraps the typed text in <mark> wherever it appears in the name
 const highlight = (name, text) => {
@@ -27,23 +22,10 @@ const highlight = (name, text) => {
 const Search = () => {
     const [keyword, setKeyword] = useState('');
     const [open, setOpen] = useState(false)
-    const dispatch = useDispatch()
-    const suggestions = useSelector(state => state.searchSuggestions)
     let navigate = useNavigate();
 
     const text = keyword.trim()
-    const ready = text.length >= MIN_LENGTH
-
-    useEffect(() => {
-        if (!ready) {
-            dispatch(clearSearchSuggestions())
-            return
-        }
-        const timer = setTimeout(() => dispatch(getSearchSuggestions(text)), DEBOUNCE)
-        return () => clearTimeout(timer)
-    }, [dispatch, text, ready])
-
-    const loading = ready && (suggestions.keyword !== text || suggestions.loading)
+    const { suggestions, ready, loading } = useSearchSuggestions(text)
 
     const options = useMemo(() => [
         ...suggestions.categories.map(name => ({ type: 'category', name })),

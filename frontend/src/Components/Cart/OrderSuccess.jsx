@@ -21,15 +21,30 @@ const OrderSuccess = () => {
         <>
             <MetaData title={'Order Success'} />
 
-            <Card sx={{ ...accentTop, height: 'auto', maxWidth: 640, mx: 'auto', mt: { xs: 3, md: 6 }, p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
+            <Card
+                sx={{
+                    ...accentTop,
+                    height: 'auto',
+                    mt: { xs: 3, md: 6 },
+                    p: { xs: 3, sm: 5, md: 7 },
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: { xs: 3, md: 6 },
+                    textAlign: { xs: 'center', md: 'left' },
+                }}
+            >
                 <Box
                     component="img"
                     src="/images/order_success.png"
                     alt=""
-                    sx={{ display: 'block', width: 140, height: 140, objectFit: 'contain', mx: 'auto', mb: 3 }}
+                    sx={{ width: { xs: 140, md: 180 }, height: { xs: 140, md: 180 }, flexShrink: 0, objectFit: 'contain' }}
                 />
-                <Typography variant="h3" component="h1">Your Order has been placed successfully.</Typography>
-                <Button component={Link} to="/orders/me" variant="contained" size="large" sx={{ mt: 3 }}>Go to Orders</Button>
+                <Box>
+                    <Typography variant="h2" component="h1">Your Order has been placed successfully.</Typography>
+                    <Button component={Link} to="/orders/me" variant="contained" size="large" sx={{ mt: 3 }}>Go to Orders</Button>
+                </Box>
             </Card>
         </>
     )

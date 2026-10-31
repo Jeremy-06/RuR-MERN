@@ -8,7 +8,6 @@ import QuantitySelector from '../Layout/QuantitySelector'
 import ProductGallery from './ProductGallery'
 
 import 'react-toastify/dist/ReactToastify.css';
-import axios from 'axios'
 import ListReviews from '../Review/ListReviews';
 
 import Alert from '@mui/material/Alert'
@@ -33,7 +32,7 @@ import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import { successMsg, errMsg, formatMoney, LOW_STOCK } from '../Utils/helpers'
 import { accentTop } from '../../theme'
 import { useDispatch, useSelector } from 'react-redux'
-import { getProductDetails } from '../../actions/productActions'
+import { clearErrors, getMyReview, getProductDetails, getProductReviews, newReview } from '../../actions/productActions'
 import { addItemToCart } from '../../actions/cartActions'
 
 const ProductDetails = () => {
@@ -43,11 +42,9 @@ const ProductDetails = () => {
     const [rating, setRating] = useState(0)
     const [reviewOpen, setReviewOpen] = useState(false)
     const [comment, setComment] = useState('')
-    const [reviews, setReviews] = useState([])
-    // canReview: has a delivered order with this product; myReview: their existing review, if any
-    const [reviewStatus, setReviewStatus] = useState({ canReview: false, myReview: null })
-    // Bumped after saving a review so both lists load again
-    const [reviewsVersion, setReviewsVersion] = useState(0)
+    const productReviews = useSelector(state => state.productReviews)
+    const myReview = useSelector(state => state.myReview)
+    const { loading: savingReview, error: reviewError } = useSelector(state => state.newReview)
     let { id } = useParams()
     const dispatch = useDispatch()
 
@@ -65,13 +62,6 @@ const ProductDetails = () => {
         dispatch(addItemToCart(id, quantity));
     }
 
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        withCredentials: true
-    }
-
     // Opening the form for an existing review starts from what they wrote
     const openReviewForm = () => {
         const { myReview } = myReviewStatus
@@ -80,23 +70,17 @@ const ProductDetails = () => {
         setReviewOpen(true)
     }
 
-    // New review is a POST; editing their own review is a PUT
     const saveReview = async (reviewData) => {
         const { myReview } = myReviewStatus
-        try {
-            const { data } = myReview
-                ? await axios.put(`${import.meta.env.VITE_API}/review/${myReview._id}`, reviewData, config)
-                : await axios.post(`${import.meta.env.VITE_API}/review`, reviewData, config)
-            if (data.success) {
-                successMsg(myReview ? 'Review updated successfully' : 'Review posted successfully')
-                setReviewOpen(false)
-                setRating(0)
-                setComment('')
-                dispatch(getProductDetails(id))
-                setReviewsVersion(version => version + 1)
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+        const saved = await dispatch(newReview(reviewData, myReview && myReview._id))
+        if (saved) {
+            successMsg(myReview ? 'Review updated successfully' : 'Review posted successfully')
+            setReviewOpen(false)
+            setRating(0)
+            setComment('')
+            dispatch(getProductDetails(id))
+            dispatch(getProductReviews(id))
+            dispatch(getMyReview(id))
         }
     }
 
@@ -118,30 +102,35 @@ const ProductDetails = () => {
     }, [dispatch, id]);
 
     useEffect(() => {
-        let ignore = false
-        axios.get(`${import.meta.env.VITE_API}/reviews?id=${id}`)
-            .then(({ data }) => { if (!ignore) setReviews(data.reviews) })
-            .catch(error => { if (!ignore) errMsg(error.response ? error.response.data.message : error.message) })
-        return () => { ignore = true }
-    }, [id, reviewsVersion])
+        dispatch(getProductReviews(id))
+    }, [dispatch, id])
 
     useEffect(() => {
-        if (!user) return
-        let ignore = false
-        axios.get(`${import.meta.env.VITE_API}/review/me?productId=${id}`, { withCredentials: true })
-            .then(({ data }) => { if (!ignore) setReviewStatus({ canReview: data.canReview, myReview: data.review }) })
-            .catch(() => { if (!ignore) setReviewStatus({ canReview: false, myReview: null }) })
-        return () => { ignore = true }
-    }, [id, user, reviewsVersion])
+        if (user) dispatch(getMyReview(id))
+    }, [dispatch, id, user])
 
-    // A logged out visitor has no review status, whatever was loaded before
-    const myReviewStatus = user ? reviewStatus : { canReview: false, myReview: null }
+    // Only this product's answers count, and a logged out visitor has no review status
+    const reviews = productReviews.productId === id ? productReviews.reviews : []
+    const myReviewStatus = user && myReview.productId === id
+        ? { canReview: myReview.canReview, myReview: myReview.review }
+        : { canReview: false, myReview: null }
 
     useEffect(() => {
         if (error) {
             errMsg(error)
         }
     }, [error])
+
+    useEffect(() => {
+        if (productReviews.error) errMsg(productReviews.error)
+    }, [productReviews.error])
+
+    useEffect(() => {
+        if (reviewError) {
+            errMsg(reviewError)
+            dispatch(clearErrors())
+        }
+    }, [dispatch, reviewError])
 
     if (error) return <Box sx={{ mt: 5 }}><EmptyState icon={<ErrorOutlinedIcon />} title={error} /></Box>
     if (loading || product._id !== id) return <Loader />
@@ -311,7 +300,7 @@ const ProductDetails = () => {
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={() => setReviewOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={reviewHandler}>Submit</Button>
+                    <Button variant="contained" disabled={savingReview} onClick={reviewHandler}>Submit</Button>
                 </DialogActions>
             </Dialog>
         </>

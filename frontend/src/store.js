@@ -6,6 +6,10 @@ import {
     productDetailsReducer,
     searchSuggestionsReducer,
     topRatedProductsReducer,
+    productReviewsReducer,
+    myReviewReducer,
+    newReviewReducer,
+    reviewReducer,
 } from './reducers/productReducers'
 import {
     authReducer,
@@ -32,6 +36,10 @@ const reducer = combineReducers({
     productDetails: productDetailsReducer,
     searchSuggestions: searchSuggestionsReducer,
     topRatedProducts: topRatedProductsReducer,
+    productReviews: productReviewsReducer,
+    myReview: myReviewReducer,
+    newReview: newReviewReducer,
+    review: reviewReducer,
     auth: authReducer,
     cart: cartReducer,
     newOrder: newOrderReducer,
