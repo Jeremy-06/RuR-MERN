@@ -135,7 +135,7 @@ const SalesDashboard = () => {
     const renderSales = () => {
         if (data.totalOrders === 0) {
             return (
-                <Typography color="text.secondary" sx={{ textAlign: 'center', py: 10 }}>
+                <Typography color="textSecondary" sx={{ textAlign: 'center', py: 10 }}>
                     {`No orders from ${formatPeriod({ start: data.startDate, end: data.endDate })}.`}
                 </Typography>
             )
@@ -226,7 +226,7 @@ const SalesDashboard = () => {
                                     slotProps={pickerProps}
                                 />
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography variant="body2" color="text.secondary" id="group-by-label">Group by</Typography>
+                                    <Typography variant="body2" color="textSecondary" id="group-by-label">Group by</Typography>
                                     <ToggleButtonGroup
                                         size="small"
                                         exclusive
@@ -248,7 +248,7 @@ const SalesDashboard = () => {
 
                     {!data ? (
                         report.error
-                            ? <Typography color="text.secondary" sx={{ textAlign: 'center', py: 10 }}>{`Sales could not be loaded: ${report.error}`}</Typography>
+                            ? <Typography color="textSecondary" sx={{ textAlign: 'center', py: 10 }}>{`Sales could not be loaded: ${report.error}`}</Typography>
                             : <Loader />
                     ) : (
                         // The previous numbers stay, dimmed, while new ones load
@@ -257,7 +257,7 @@ const SalesDashboard = () => {
                                 {stats.map(stat => (
                                     <Grid key={stat.label} size={{ xs: 6, lg: 3 }}>
                                         <Paper elevation={0} sx={{ ...cardSx, height: '100%' }}>
-                                            <Typography variant="body2" color="text.secondary">{stat.label}</Typography>
+                                            <Typography variant="body2" color="textSecondary">{stat.label}</Typography>
                                             <Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.75rem' }, fontWeight: 600, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{stat.value}</Typography>
                                         </Paper>
                                     </Grid>
@@ -268,7 +268,7 @@ const SalesDashboard = () => {
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                                     <Box sx={{ mr: 'auto' }}>
                                         <Typography variant="h5" component="h2">{`Sales per ${data.groupBy}`}</Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="body2" color="textSecondary">
                                             {formatPeriod({ start: data.startDate, end: data.endDate })}
                                         </Typography>
                                     </Box>

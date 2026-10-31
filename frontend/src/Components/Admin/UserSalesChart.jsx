@@ -32,7 +32,7 @@ const UserSalesChart = () => {
         }
     }
 
-    const barColors = ["#1677ff", "#fb334b", "#14b8a6"]
+    const barColors = ["#0f6be0", "#fb334b", "#14b8a6"]
 
     useEffect(() => {
         userSales()

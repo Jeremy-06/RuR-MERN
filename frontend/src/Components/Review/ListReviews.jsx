@@ -1,20 +1,21 @@
+import Card from '@mui/material/Card'
+import Rating from '@mui/material/Rating'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 
 const ListReviews = ({ reviews }) => {
     return (
-        <div className="reviews w-75">
-            <h3>Other's Reviews:</h3>
-            <hr />
+        <Stack component="ul" spacing={2} sx={{ listStyle: 'none', m: 0, p: 0 }}>
             {reviews && reviews.map(review => (
-                <div key={review._id} className="review-card my-3">
-                    <div className="rating-outer">
-                        <div className="rating-inner" style={{ width: `${(review.rating / 5) * 100}%` }}></div>
-                    </div>
-                    <p className="review_user">by {review.user ? review.user.name : 'Deleted user'}{review.updatedAt && ' (edited)'}</p>
-                    <p className="review_comment">{review.comment}</p>
-                    <hr />
-                </div>
+                <Card component="li" key={review._id} sx={{ p: 2.5, height: 'auto' }}>
+                    <Rating value={review.rating} size="small" readOnly aria-label={`${review.rating} out of 5 stars`} />
+                    <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
+                        by {review.user ? review.user.name : 'Deleted user'}{review.updatedAt && ' (edited)'}
+                    </Typography>
+                    <Typography sx={{ mt: 1, overflowWrap: 'anywhere' }}>{review.comment}</Typography>
+                </Card>
             ))}
-        </div>
+        </Stack>
     )
 }
 

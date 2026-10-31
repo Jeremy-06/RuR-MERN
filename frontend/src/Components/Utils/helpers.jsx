@@ -43,6 +43,20 @@ export const categories = [
 // $1,234.50
 export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 
+const NEW_PRODUCT_DAYS = 14
+export const LOW_STOCK = 5
+const TOP_RATED = 4.5
+
+// Card badges, all worked out from the product's own data; at most two show
+export const productBadges = ({ stock, averageRating, reviewCount, createdAt }) => {
+    const badges = []
+    if (stock === 0) badges.push({ label: 'Sold out', tone: 'dark' })
+    else if (stock <= LOW_STOCK) badges.push({ label: 'Low stock', tone: 'alert' })
+    if (reviewCount > 0 && averageRating >= TOP_RATED) badges.push({ label: 'Top rated', tone: 'gold' })
+    if (dayjs().diff(dayjs(createdAt), 'day') < NEW_PRODUCT_DAYS) badges.push({ label: 'New', tone: 'blue' })
+    return badges.slice(0, 2)
+}
+
 // Oct 24, 2026 for one day, Oct 20 – Oct 26, 2026 for a longer period
 export const formatPeriod = ({ start, end }) => {
     const from = dayjs(start)

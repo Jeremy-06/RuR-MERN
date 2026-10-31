@@ -32,7 +32,7 @@ export default function MonthlySalesChart() {
     return (
         <ResponsiveContainer width="100%" height={350}>
             <LineChart data={sales} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <Line type="monotone" dataKey="total" stroke="#1677ff" strokeWidth={3} />
+                <Line type="monotone" dataKey="total" stroke="#0f6be0" strokeWidth={3} />
                 <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
                 <XAxis dataKey="month" />
                 <YAxis />

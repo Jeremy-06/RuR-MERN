@@ -11,18 +11,27 @@ import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
 import Product from './Product/Product'
+import CategoryStrip from './Product/CategoryStrip'
 import ProductFilters from './Product/ProductFilters'
 import MetaData from './Layout/MetaData'
+import SectionTitle from './Layout/SectionTitle'
+import { clipCorners, darkTexture } from '../theme'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { getProducts, productsKey } from '../actions/productActions'
+import { getProducts, getTopRatedProducts, productsKey } from '../actions/productActions'
+import { addItemToCart } from '../actions/cartActions'
+
+const heroImage = 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1400&q=80'
 
 const Home = () => {
     let { keyword } = useParams();
     const [searchParams, setSearchParams] = useSearchParams()
     const dispatch = useDispatch();
     const { loading, products, error, page, hasMore, filteredProductsCount, key } = useSelector(state => state.products);
+    const { products: topRated } = useSelector(state => state.topRatedProducts)
+    const { cartItems } = useSelector(state => state.cart)
     const [categories, setCategories] = useState(null)
     const [categoriesError, setCategoriesError] = useState('')
     const [categoriesAttempt, setCategoriesAttempt] = useState(0)
@@ -60,6 +69,10 @@ const Home = () => {
         setCategoriesError('')
         setCategoriesAttempt(attempt => attempt + 1)
     }
+
+    useEffect(() => {
+        dispatch(getTopRatedProducts())
+    }, [dispatch])
 
     // Any filter change starts again from page 1
     useEffect(() => {
@@ -115,6 +128,12 @@ const Home = () => {
         })
     }
 
+    // The cart stores a set quantity, so one more is added to what is already there
+    const quickAdd = (product) => {
+        const inCart = cartItems.find(item => item.product === product._id)
+        dispatch(addItemToCart(product._id, inCart ? Math.min(inCart.quantity + 1, product.stock) : 1))
+    }
+
     const onRatingChange = (rating) => {
         updateParams({ minRating: rating })
     }
@@ -148,24 +167,61 @@ const Home = () => {
         <>
             <MetaData title={'Gaming Setup Essentials'} />
             {!keyword && (
-                <section className="hero-banner">
-                    <span className="hero-eyebrow">BUILT FOR YOUR NEXT LEVEL</span>
-                    <h1>YOUR GAME. YOUR <span>GROUND.</span></h1>
-                    <p>Gear that keeps up with every clutch, every late night, every new high score.</p>
-                </section>
+                <Box
+                    component="section"
+                    aria-label="Welcome"
+                    sx={{
+                        position: 'relative',
+                        overflow: 'hidden',
+                        mt: 3,
+                        px: { xs: 3, md: 6 },
+                        py: { xs: 5, md: 8 },
+                        color: '#fff',
+                        bgcolor: 'rur.black',
+                        backgroundImage: `linear-gradient(105deg, #090b0f 38%, rgba(9, 11, 15, 0.55)), ${darkTexture}, url(${heroImage})`,
+                        backgroundSize: 'auto, auto, cover',
+                        backgroundPosition: 'center',
+                        clipPath: clipCorners(28),
+                    }}
+                >
+                    <Typography variant="overline" component="p" sx={{ color: '#a8cbff' }}>Built for your next level</Typography>
+                    <Typography variant="h1" component="p" sx={{ my: 1 }}>
+                        Your game. Your <Box component="span" sx={{ color: 'primary.main' }}>ground.</Box>
+                    </Typography>
+                    <Typography sx={{ maxWidth: 480, color: '#c9d0da' }}>
+                        Gear that keeps up with every clutch, every late night, every new high score.
+                    </Typography>
+                </Box>
             )}
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 2, mt: 5, mb: 3 }}>
-                <Typography variant="h3" component="h1" id="products_heading" sx={{ mr: 'auto' }}>
+            {!keyword && categories && (
+                <CategoryStrip categories={categories} selected={filters.categories} onToggle={onCategoryToggle} />
+            )}
+
+            {!keyword && activeFilterCount === 0 && !minRating && topRated.length > 0 && (
+                <Box component="section" aria-labelledby="top-rated-title" sx={{ mt: 5 }}>
+                    <SectionTitle id="top-rated-title" variant="h3" sx={{ mb: 3 }}>Top Rated</SectionTitle>
+                    <Grid container spacing={{ xs: 1.5, sm: 3 }}>
+                        {topRated.map(product => (
+                            <Grid key={product._id} size={{ xs: 6, md: 3 }}>
+                                <Product product={product} onAddToCart={quickAdd} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            )}
+
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 2, mt: 5, mb: 3 }}>
+                <SectionTitle variant="h3" component="h1" id="products_heading" sx={{ mr: 'auto' }}>
                     {keyword ? `Results for "${keyword}"` : 'Latest Gear'}
-                </Typography>
+                </SectionTitle>
                 {isCurrent && filteredProductsCount !== undefined && (
-                    <Typography color="text.secondary" aria-live="polite">
+                    <Typography color="textSecondary" aria-live="polite">
                         Showing {showProducts.length} of {filteredProductsCount}
                     </Typography>
                 )}
                 {isMobile && (
-                    <Button variant="outlined" onClick={() => setDrawerOpen(true)} startIcon={<i className="fa fa-sliders"></i>}>
+                    <Button variant="outlined" onClick={() => setDrawerOpen(true)} startIcon={<TuneOutlinedIcon />}>
                         Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
                     </Button>
                 )}
@@ -191,10 +247,10 @@ const Home = () => {
                 )}
 
                 <Grid size={{ xs: 12, md: 9 }}>
-                    <Grid container spacing={3}>
+                    <Grid container spacing={{ xs: 1.5, sm: 3 }}>
                         {showProducts.map(product => (
-                            <Grid key={product._id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                                <Product product={product} />
+                            <Grid key={product._id} size={{ xs: 6, lg: 4 }}>
+                                <Product product={product} onAddToCart={quickAdd} />
                             </Grid>
                         ))}
                     </Grid>
@@ -216,13 +272,13 @@ const Home = () => {
                         {isEmpty && (
                             <Paper sx={{ p: 5 }}>
                                 <Typography variant="h5" component="p">No gear matches these filters</Typography>
-                                <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>Try a wider price range or fewer categories.</Typography>
+                                <Typography color="textSecondary" sx={{ mt: 1, mb: 3 }}>Try a wider price range or fewer categories.</Typography>
                                 <Button variant="contained" onClick={onClear}>Clear filters</Button>
                             </Paper>
                         )}
 
                         {isEnd && (
-                            <Typography color="text.secondary">You've seen all {filteredProductsCount} products.</Typography>
+                            <Typography color="textSecondary">You've seen all {filteredProductsCount} products.</Typography>
                         )}
                     </Box>
                     <div ref={sentinelRef} aria-hidden="true" />

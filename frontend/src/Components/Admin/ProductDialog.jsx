@@ -221,7 +221,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
                                     {isEdit ? 'Add Images' : 'Choose Images'}
                                     <input type="file" name="images" hidden multiple accept=".jpg,.jpeg,.png,.webp" onChange={onImagesChange} />
                                 </Button>
-                                <Typography variant="caption" color="text.secondary">jpg, jpeg, png or webp, up to 5MB each</Typography>
+                                <Typography variant="caption" color="textSecondary">jpg, jpeg, png or webp, up to 5MB each</Typography>
                             </Box>
 
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>

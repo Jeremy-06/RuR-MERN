@@ -9,18 +9,24 @@ import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Container from '@mui/material/Container'
+import IconButton from '@mui/material/IconButton'
 import Avatar from '@mui/material/Avatar'
 import Badge from '@mui/material/Badge'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Divider from '@mui/material/Divider'
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 
 import Search from './Search'
-export const Header = ({ cartItems }) => {
+export const Header = () => {
     const dispatch = useDispatch();
     const { user, loading } = useSelector(state => state.auth)
+    const { cartItems } = useSelector(state => state.cart)
     const [anchorEl, setAnchorEl] = useState(null)
     let navigate = useNavigate()
+
+    const cartCount = cartItems.length
 
     const goTo = (path) => {
         setAnchorEl(null)
@@ -38,64 +44,69 @@ export const Header = ({ cartItems }) => {
 
     return (
         <>
-            <div className="announcement">
-                LEVEL UP YOUR SETUP <span>/</span> FREE SHIPPING ON ORDERS OVER $200
-            </div>
-            <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'rur.black', borderBottom: '1px solid rgba(211, 220, 235, 0.12)' }}>
-                <Toolbar sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' }, gap: 2, py: 1.5 }}>
-                    <Link to="/" className="brand-logo" aria-label="RuR home">
-                        <span className="brand-mark">R<span>u</span>R</span>
-                        <span className="brand-caption">READY. UP.<br />REPEAT.</span>
-                    </Link>
+            <Box sx={{ bgcolor: 'primary.dark', color: '#fff', textAlign: 'center', fontSize: '0.75rem', letterSpacing: '0.1em', py: 0.5, px: 2 }}>
+                LEVEL UP YOUR SETUP <Box component="span" sx={{ mx: 1, opacity: 0.7 }}>/</Box> FREE SHIPPING ON ORDERS OVER $200
+            </Box>
+            <AppBar position="sticky">
+                <Container>
+                    <Toolbar disableGutters sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' }, columnGap: 3, rowGap: 1, py: 1.5 }}>
+                        <Link to="/" className="brand-logo" aria-label="RuR home">
+                            <span className="brand-mark">R<span>u</span>R</span>
+                            <span className="brand-caption">READY. UP.<br />REPEAT.</span>
+                        </Link>
 
-                    <Box sx={{ flexGrow: 1, order: { xs: 3, md: 0 }, width: { xs: '100%', md: 'auto' }, maxWidth: { md: 560 }, mx: { md: 'auto' } }}>
-                        <Search />
-                    </Box>
+                        <Box sx={{ flexGrow: 1, order: { xs: 3, md: 0 }, width: { xs: '100%', md: 'auto' }, maxWidth: { md: 560 }, mx: { md: 'auto' } }}>
+                            <Search />
+                        </Box>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
-                        {user ? (
-                            <>
-                                <Button
-                                    color="inherit"
-                                    onClick={(e) => setAnchorEl(e.currentTarget)}
-                                    startIcon={<Avatar src={user.avatar && user.avatar.url} alt={user.name} sx={{ width: 32, height: 32 }} />}
-                                    sx={{ textTransform: 'none', fontWeight: 500 }}
-                                    aria-controls={anchorEl ? 'user-menu' : undefined}
-                                    aria-haspopup="true"
-                                >
-                                    {user.name}
-                                </Button>
-                                <Menu
-                                    id="user-menu"
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={() => setAnchorEl(null)}
-                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                >
-                                    {user.role === 'admin' && (
-                                        <MenuItem onClick={() => goTo('/dashboard')}>Dashboard</MenuItem>
-                                    )}
-                                    {user.role === 'admin' && (
-                                        <MenuItem onClick={() => goTo('/admin/products')}>Products</MenuItem>
-                                    )}
-                                    <MenuItem onClick={() => goTo('/orders/me')}>Orders</MenuItem>
-                                    <MenuItem onClick={() => goTo('/me')}>Profile</MenuItem>
-                                    <Divider />
-                                    <MenuItem onClick={logoutHandler} sx={{ color: 'secondary.main' }}>Logout</MenuItem>
-                                </Menu>
-                            </>
-                        ) : !loading && (
-                            <Button component={Link} to="/login" variant="contained" id="login_btn">Login</Button>
-                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+                            {user ? (
+                                <>
+                                    <Button
+                                        color="inherit"
+                                        onClick={(e) => setAnchorEl(e.currentTarget)}
+                                        startIcon={<Avatar src={user.avatar && user.avatar.url} alt="" sx={{ width: 32, height: 32 }} />}
+                                        sx={{ fontWeight: 500, minWidth: 0, '& .MuiButton-startIcon': { mr: { xs: 0, sm: 1 }, ml: 0 } }}
+                                        aria-label={`Account menu for ${user.name}`}
+                                        aria-controls={anchorEl ? 'user-menu' : undefined}
+                                        aria-haspopup="true"
+                                    >
+                                        <Box component="span" sx={{ display: { xs: 'none', sm: 'block' }, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {user.name}
+                                        </Box>
+                                    </Button>
+                                    <Menu
+                                        id="user-menu"
+                                        anchorEl={anchorEl}
+                                        open={Boolean(anchorEl)}
+                                        onClose={() => setAnchorEl(null)}
+                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    >
+                                        {user.role === 'admin' && (
+                                            <MenuItem onClick={() => goTo('/dashboard')}>Dashboard</MenuItem>
+                                        )}
+                                        {user.role === 'admin' && (
+                                            <MenuItem onClick={() => goTo('/admin/products')}>Products</MenuItem>
+                                        )}
+                                        <MenuItem onClick={() => goTo('/orders/me')}>Orders</MenuItem>
+                                        <MenuItem onClick={() => goTo('/me')}>Profile</MenuItem>
+                                        <Divider />
+                                        <MenuItem onClick={logoutHandler} sx={{ color: 'error.main' }}>Logout</MenuItem>
+                                    </Menu>
+                                </>
+                            ) : !loading && (
+                                <Button component={Link} to="/login" variant="contained">Login</Button>
+                            )}
 
-                        <Button component={Link} to="/cart" color="inherit" sx={{ textTransform: 'none' }}>
-                            <Badge badgeContent={cartItems ? cartItems.length : 0} color="primary" showZero>
-                                <span id="cart">Cart</span>
-                            </Badge>
-                        </Button>
-                    </Box>
-                </Toolbar>
+                            <IconButton component={Link} to="/cart" color="inherit" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
+                                <Badge badgeContent={cartCount} color="primary" showZero>
+                                    <ShoppingCartOutlinedIcon />
+                                </Badge>
+                            </IconButton>
+                        </Box>
+                    </Toolbar>
+                </Container>
             </AppBar>
         </>
     )

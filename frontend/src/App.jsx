@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axios from 'axios';
 import Container from '@mui/material/Container'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadUser } from './actions/userActions'
+import { setCartOwner } from './actions/cartActions'
 
 import { Header } from './Components/Layout/Header'
 import Footer from './Components/Layout/Footer'
@@ -38,144 +38,44 @@ import UpdateUser from './Components/Admin/UpdateUser';
 import ProductReviews from './Components/Admin/ProductReviews';
 import ProtectedRoute from './Components/Route/ProtectedRoute';
 
-// Reads a JSON value from localStorage, falling back when it is missing or broken
-const readStorage = (key, fallback) => {
-  try {
-    const value = localStorage.getItem(key)
-    return value ? JSON.parse(value) : fallback
-  } catch {
-    return fallback
-  }
-}
-
 function App() {
   const dispatch = useDispatch()
 
-  const { user } = useSelector(state => state.auth)
-
-  // Each account keeps its own cart; owner is undefined while the user is still loading
-  const owner = user ? user._id : 'guest'
-
-  const [state, setState] = useState({
-    owner: undefined,
-    cartItems: [],
-    shippingInfo: {},
-  })
+  const { user, loading } = useSelector(state => state.auth)
 
   useEffect(() => {
     dispatch(loadUser())
   }, [dispatch])
 
-  // Switch to the cart and shipping info of whoever is logged in
-  if (owner && owner !== state.owner) {
-    const cartItems = readStorage(`cartItems_${owner}`, [])
-
-    // Items added before logging in move into the account's cart
-    if (owner !== 'guest') {
-      readStorage('cartItems_guest', []).forEach(item => {
-        if (!cartItems.find(i => i.product === item.product)) cartItems.push(item)
-      })
-    }
-
-    setState({
-      owner,
-      cartItems,
-      shippingInfo: readStorage(`shippingInfo_${owner}`, {}),
-    })
-  }
-
+  // Each account keeps its own cart; wait for the login check so a refresh does not start as a guest
   useEffect(() => {
-    if (!state.owner) return
-    localStorage.setItem(`cartItems_${state.owner}`, JSON.stringify(state.cartItems))
-
-    // Guest items now live in the account's cart
-    if (state.owner !== 'guest') localStorage.removeItem('cartItems_guest')
-
-    // Old shared keys from before carts were per account
-    localStorage.removeItem('cartItems')
-    localStorage.removeItem('shippingInfo')
-  }, [state.owner, state.cartItems])
-
-  const addItemToCart = async (id, quantity) => {
-    try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API}/product/${id}`)
-
-      const item = {
-        product: data.product._id,
-        name: data.product.name,
-        price: data.product.price,
-        image: data.product.images[0] ? data.product.images[0].url : '',
-        stock: data.product.stock,
-        quantity: quantity
-      }
-
-      setState(prevState => {
-        const isItemExist = prevState.cartItems.find(i => i.product === item.product)
-        return {
-          ...prevState,
-          cartItems: isItemExist
-            ? prevState.cartItems.map(i => i.product === isItemExist.product ? item : i)
-            : [...prevState.cartItems, item]
-        }
-      })
-
-      toast.success('Item Added to Cart', {
-        position: 'bottom-right'
-      })
-
-    } catch (error) {
-      toast.error(error.response ? error.response.data.message : error.message, {
-        position: 'top-left'
-      });
-    }
-  }
-
-  const removeItemFromCart = async (id) => {
-    setState(prevState => ({
-      ...prevState,
-      cartItems: prevState.cartItems.filter(i => i.product !== id)
-    }))
-  }
-
-  const saveShippingInfo = async (data) => {
-    setState(prevState => ({
-      ...prevState,
-      shippingInfo: data
-    }))
-    localStorage.setItem(`shippingInfo_${owner}`, JSON.stringify(data))
-  }
-
-  const clearCart = () => {
-    setState(prevState => ({
-      ...prevState,
-      cartItems: []
-    }))
-  }
+    if (!loading) dispatch(setCartOwner(user ? user._id : 'guest'))
+  }, [dispatch, loading, user])
 
   return (
     <>
       <Router>
-        <Header cartItems={state.cartItems} />
-        <Container component="main" maxWidth="xl" sx={{ flex: '1 0 auto', pb: 4 }}>
+        <Header />
+        <Container component="main" sx={{ flex: '1 0 auto', pb: 4 }}>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/search/:keyword" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetails cartItems={state.cartItems} addItemToCart={addItemToCart} />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/password/forgot" element={<ForgotPassword />} />
             <Route path="/password/reset/:token" element={<NewPassword />} />
-            <Route path="/cart" element={<Cart cartItems={state.cartItems} addItemToCart={addItemToCart} removeItemFromCart={removeItemFromCart} />} />
+            <Route path="/cart" element={<Cart />} />
 
             {/* User routes (login required) */}
             <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/me/update" element={<ProtectedRoute><UpdateProfile /></ProtectedRoute>} />
             <Route path="/password/update" element={<ProtectedRoute><UpdatePassword /></ProtectedRoute>} />
-            <Route path="/shipping" element={<ProtectedRoute><Shipping shipping={state.shippingInfo} saveShippingInfo={saveShippingInfo} /></ProtectedRoute>} />
-            <Route path="/confirm" element={<ProtectedRoute><ConfirmOrder cartItems={state.cartItems} shippingInfo={state.shippingInfo} /></ProtectedRoute>} />
-            <Route path="/payment" element={<ProtectedRoute><Payment cartItems={state.cartItems} shippingInfo={state.shippingInfo} /></ProtectedRoute>} />
-            <Route path="/success" element={<ProtectedRoute><OrderSuccess clearCart={clearCart} /></ProtectedRoute>} />
+            <Route path="/shipping" element={<ProtectedRoute><Shipping /></ProtectedRoute>} />
+            <Route path="/confirm" element={<ProtectedRoute><ConfirmOrder /></ProtectedRoute>} />
+            <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+            <Route path="/success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
             <Route path="/orders/me" element={<ProtectedRoute><ListOrders /></ProtectedRoute>} />
             <Route path="/order/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
 

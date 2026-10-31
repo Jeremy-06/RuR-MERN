@@ -1,40 +1,32 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import Paper from '@mui/material/Paper'
+import Step from '@mui/material/Step'
+import StepButton from '@mui/material/StepButton'
+import Stepper from '@mui/material/Stepper'
 
-const CheckoutSteps = ({ shipping, confirmOrder, payment }) => {
+const steps = [
+    { key: 'shipping', label: 'Shipping', path: '/shipping' },
+    { key: 'confirmOrder', label: 'Confirm Order', path: '/confirm' },
+    { key: 'payment', label: 'Payment', path: '/payment' },
+]
+
+// Steps already reached can be clicked to go back, the same as the old links
+const CheckoutSteps = (props) => {
+    const navigate = useNavigate()
+    const activeStep = steps.filter(step => props[step.key]).length - 1
+
     return (
-        <div className="checkout-progress d-flex justify-content-center mt-5">
-
-            {shipping ? <Link to='/shipping' className="float-right">
-                <div className="triangle2-active"></div>
-                <div className="step active-step">Shipping</div>
-                <div className="triangle-active"></div>
-            </Link> : <Link to="#!" disabled>
-                <div className="triangle2-incomplete"></div>
-                <div className="step incomplete">Shipping</div>
-                <div className="triangle-incomplete"></div>
-            </Link>}
-
-            {confirmOrder ? <Link to='/confirm' className="float-right">
-                <div className="triangle2-active"></div>
-                <div className="step active-step">Confirm Order</div>
-                <div className="triangle-active"></div>
-            </Link> : <Link to="#!" disabled>
-                <div className="triangle2-incomplete"></div>
-                <div className="step incomplete">Confirm Order</div>
-                <div className="triangle-incomplete"></div>
-            </Link>}
-
-            {payment ? <Link to='/payment' className="float-right">
-                <div className="triangle2-active"></div>
-                <div className="step active-step">Payment</div>
-                <div className="triangle-active"></div>
-            </Link> : <Link to="#!" disabled>
-                <div className="triangle2-incomplete"></div>
-                <div className="step incomplete">Payment</div>
-                <div className="triangle-incomplete"></div>
-            </Link>}
-
-        </div>
+        <Paper sx={{ mt: { xs: 3, md: 5 }, py: 2.5, px: { xs: 1, sm: 3 } }}>
+            <Stepper nonLinear alternativeLabel activeStep={activeStep} aria-label="Checkout progress">
+                {steps.map((step, index) => (
+                    <Step key={step.key} completed={index < activeStep}>
+                        <StepButton disabled={!props[step.key]} onClick={() => navigate(step.path)}>
+                            {step.label}
+                        </StepButton>
+                    </Step>
+                ))}
+            </Stepper>
+        </Paper>
     )
 }
 

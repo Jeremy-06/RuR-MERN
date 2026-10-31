@@ -6,10 +6,18 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    SEARCH_SUGGESTIONS_REQUEST,
+    SEARCH_SUGGESTIONS_SUCCESS,
+    SEARCH_SUGGESTIONS_FAIL,
+    SEARCH_SUGGESTIONS_CLEAR,
+    TOP_RATED_PRODUCTS_REQUEST,
+    TOP_RATED_PRODUCTS_SUCCESS,
+    TOP_RATED_PRODUCTS_FAIL,
     CLEAR_ERRORS
 } from '../constants/productConstants';
 
 export const RES_PER_PAGE = 12
+const TOP_RATED_COUNT = 4
 
 // Same filters always give the same key, so old answers can be told apart
 export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [], minRating = '' }) =>
@@ -67,6 +75,50 @@ export const getProductDetails = (id) => async (dispatch) => {
     } catch (error) {
         dispatch({
             type: PRODUCT_DETAILS_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+// The keyword travels with each action so the reducer can drop late answers
+export const getSearchSuggestions = (keyword) => async (dispatch) => {
+    try {
+        dispatch({ type: SEARCH_SUGGESTIONS_REQUEST, keyword })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products/suggest`, { params: { keyword } })
+        dispatch({
+            type: SEARCH_SUGGESTIONS_SUCCESS,
+            keyword,
+            payload: data
+        })
+    } catch (error) {
+        dispatch({
+            type: SEARCH_SUGGESTIONS_FAIL,
+            keyword,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const clearSearchSuggestions = () => async (dispatch) => {
+    dispatch({
+        type: SEARCH_SUGGESTIONS_CLEAR
+    })
+}
+
+// The shop list has no rating sort, so the best of the 4-star products are picked here
+export const getTopRatedProducts = () => async (dispatch) => {
+    try {
+        dispatch({ type: TOP_RATED_PRODUCTS_REQUEST })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products`, { params: { minRating: 4, limit: 50 } })
+        dispatch({
+            type: TOP_RATED_PRODUCTS_SUCCESS,
+            payload: [...data.products]
+                .sort((a, b) => b.averageRating - a.averageRating || b.reviewCount - a.reviewCount)
+                .slice(0, TOP_RATED_COUNT)
+        })
+    } catch (error) {
+        dispatch({
+            type: TOP_RATED_PRODUCTS_FAIL,
             payload: error.response ? error.response.data.message : error.message
         })
     }

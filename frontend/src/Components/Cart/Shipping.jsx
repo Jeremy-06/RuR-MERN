@@ -1,111 +1,93 @@
-import { useState } from 'react'
 import { useNavigate } from "react-router-dom";
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
 import { countries } from 'countries-list'
+import { useDispatch, useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Grid from '@mui/material/Grid'
+import MenuItem from '@mui/material/MenuItem'
+import TextField from '@mui/material/TextField'
 import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
 import CheckoutSteps from './CheckoutSteps'
+import { saveShippingInfo } from '../../actions/cartActions'
+import { accentTop } from '../../theme'
 
-const Shipping = ({ shipping, saveShippingInfo }) => {
-    const countriesList = Object.values(countries)
-    const [address, setAddress] = useState(shipping.address || '')
-    const [city, setCity] = useState(shipping.city || '')
-    const [postalCode, setPostalCode] = useState(shipping.postalCode || '')
-    const [phoneNo, setPhoneNo] = useState(shipping.phoneNo || '')
-    const [country, setCountry] = useState(shipping.country || 'Philippines')
+const countryNames = Object.values(countries).map(country => country.name).sort((a, b) => a.localeCompare(b))
+
+const shippingSchema = Yup.object({
+    address: Yup.string().trim().required('Please enter your address').max(200, 'Address cannot exceed 200 characters'),
+    city: Yup.string().trim().required('Please enter your city').max(100, 'City cannot exceed 100 characters'),
+    phoneNo: Yup.string().trim().required('Please enter your phone number')
+        .matches(/^\+?[\d\s()-]+$/, 'Phone number can only have digits, spaces, ( ) and -')
+        .test('digits', 'Phone number must have 7 to 15 digits', value => {
+            const digits = (value || '').replace(/\D/g, '').length
+            return digits >= 7 && digits <= 15
+        }),
+    // Letters are allowed because the country list is international
+    postalCode: Yup.string().trim().required('Please enter your postal code')
+        .matches(/^[A-Za-z0-9][A-Za-z0-9 -]{1,9}$/, 'Please enter a valid postal code'),
+    country: Yup.string().required('Please select your country').oneOf(countryNames, 'Please select your country'),
+})
+
+const Shipping = () => {
+    const dispatch = useDispatch()
+    const { shippingInfo } = useSelector(state => state.cart)
     let navigate = useNavigate();
 
-    const submitHandler = (e) => {
-        e.preventDefault()
+    const formik = useFormik({
+        initialValues: {
+            address: shippingInfo.address || '',
+            city: shippingInfo.city || '',
+            phoneNo: shippingInfo.phoneNo || '',
+            postalCode: shippingInfo.postalCode || '',
+            country: shippingInfo.country || 'Philippines',
+        },
+        enableReinitialize: true,
+        validationSchema: shippingSchema,
+        onSubmit: (values) => {
+            dispatch(saveShippingInfo(shippingSchema.cast(values)))
+            navigate('/confirm')
+        },
+    })
 
-        saveShippingInfo({ address, city, phoneNo, postalCode, country })
-        navigate('/confirm')
-    }
+    const field = (name) => ({
+        id: `shipping_${name}`,
+        name,
+        value: formik.values[name],
+        onChange: formik.handleChange,
+        onBlur: formik.handleBlur,
+        error: formik.touched[name] && Boolean(formik.errors[name]),
+        helperText: formik.touched[name] && formik.errors[name],
+    })
 
     return (
         <>
             <MetaData title={'Shipping Info'} />
             <CheckoutSteps shipping />
-            <div className="row wrapper">
-                <div className="col-10 col-lg-5">
-                    <form
-                        className="shadow-lg"
-                        onSubmit={submitHandler}
-                    >
-                        <h1 className="mb-4">Shipping Info</h1>
-                        <div className="form-group">
-                            <label htmlFor="address_field">Address</label>
-                            <input
-                                type="text"
-                                id="address_field"
-                                className="form-control"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                required
-                            />
-                        </div>
+            <PageHeader title="Shipping Info" subtitle="Where should we send your gear?" />
 
-                        <div className="form-group">
-                            <label htmlFor="city_field">City</label>
-                            <input
-                                type="text"
-                                id="city_field"
-                                className="form-control"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                required
-                            />
-                        </div>
+            <Card sx={{ ...accentTop, height: 'auto', maxWidth: 720, p: { xs: 2.5, sm: 4 } }}>
+                <Box component="form" onSubmit={formik.handleSubmit} noValidate>
+                    <TextField {...field('address')} label="Address" required autoComplete="street-address" sx={{ mt: 0 }} />
+                    <TextField {...field('city')} label="City" required autoComplete="address-level2" />
+                    <Grid container columnSpacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField {...field('phoneNo')} label="Phone No" required type="tel" autoComplete="tel" />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField {...field('postalCode')} label="Postal Code" required autoComplete="postal-code" />
+                        </Grid>
+                    </Grid>
+                    <TextField {...field('country')} label="Country" required select autoComplete="country-name">
+                        {countryNames.map(name => <MenuItem key={name} value={name}>{name}</MenuItem>)}
+                    </TextField>
 
-                        <div className="form-group">
-                            <label htmlFor="phone_field">Phone No</label>
-                            <input
-                                type="phone"
-                                id="phone_field"
-                                className="form-control"
-                                value={phoneNo}
-                                onChange={(e) => setPhoneNo(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="postal_code_field">Postal Code</label>
-                            <input
-                                type="number"
-                                id="postal_code_field"
-                                className="form-control"
-                                value={postalCode}
-                                onChange={(e) => setPostalCode(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="country_field">Country</label>
-                            <select
-                                id="country_field"
-                                className="form-control"
-                                value={country}
-                                onChange={(e) => setCountry(e.target.value)}
-                                required
-                            >
-                                {countriesList.map(country => (
-                                    <option key={country.name} value={country.name}>
-                                        {country.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <button
-                            id="shipping_btn"
-                            type="submit"
-                            className="btn btn-block py-3"
-                        >
-                            CONTINUE
-                        </button>
-                    </form>
-                </div>
-            </div>
+                    <Button type="submit" variant="contained" size="large" fullWidth sx={{ mt: 3 }}>Continue</Button>
+                </Box>
+            </Card>
         </>
     )
 }

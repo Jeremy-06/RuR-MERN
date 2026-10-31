@@ -17,7 +17,7 @@ import { formatMoney, formatPeriod } from '../Utils/helpers'
 
 // One series in the theme blue; grid and axes stay quiet grays.
 // Animation is off so a new range swaps in place instead of redrawing from the left
-const SERIES_COLOR = '#1677ff'
+const SERIES_COLOR = '#0f6be0'
 const GRID_COLOR = '#e6e9ef'
 const AXIS_COLOR = '#c9ced6'
 const TICK_COLOR = '#5f6774'
@@ -31,11 +31,11 @@ const SalesTooltip = ({ active, payload }) => {
 
     return (
         <Paper elevation={3} sx={{ px: 1.5, py: 1 }}>
-            <Typography variant="caption" color="text.secondary" component="p">{formatPeriod(period)}</Typography>
+            <Typography variant="caption" color="textSecondary" component="p">{formatPeriod(period)}</Typography>
             <Typography sx={{ fontWeight: 700, fontSize: '1.05rem' }}>{formatMoney(period.total)}</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ width: 14, height: 2, borderRadius: 1, bgcolor: SERIES_COLOR }} />
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="textSecondary">
                     {`Sales · ${period.orders} ${period.orders === 1 ? 'order' : 'orders'} · ${period.items} items`}
                 </Typography>
             </Box>

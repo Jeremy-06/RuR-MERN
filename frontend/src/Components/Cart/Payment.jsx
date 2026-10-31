@@ -1,12 +1,30 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
 import CheckoutSteps from './CheckoutSteps'
-import axios from 'axios';
-import { errMsg, successMsg } from '../Utils/helpers'
+import { createOrder, clearErrors } from '../../actions/orderActions'
+import { CREATE_ORDER_RESET } from '../../constants/orderConstants'
+import { errMsg, formatMoney, successMsg } from '../Utils/helpers'
+import { accentTop } from '../../theme'
 
-const Payment = ({ cartItems, shippingInfo }) => {
-    const [loading, setLoading] = useState(false)
+// Demo checkout: every payment succeeds
+const paymentResult = () => ({
+    id: `pi_${Date.now()}`,
+    status: 'succeeded'
+})
+
+const Payment = () => {
+    const dispatch = useDispatch()
+    const { cartItems, shippingInfo } = useSelector(state => state.cart)
+    const { loading, error, success } = useSelector(state => state.newOrder)
     let navigate = useNavigate();
 
     const order = {
@@ -22,82 +40,58 @@ const Payment = ({ cartItems, shippingInfo }) => {
         order.totalPrice = orderInfo.totalPrice
     }
 
-    const createOrder = async (order) => {
-        try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
-            setLoading(true)
-            await axios.post(`${import.meta.env.VITE_API}/order/new`, order, config)
-            setLoading(false)
+    useEffect(() => {
+        if (error) {
+            errMsg(error)
+            dispatch(clearErrors())
+        }
+        if (success) {
             successMsg('order created')
             sessionStorage.removeItem('orderInfo')
+            dispatch({ type: CREATE_ORDER_RESET })
             navigate('/success')
-        } catch (error) {
-            setLoading(false)
-            errMsg(error.response ? error.response.data.message : error.message)
         }
-    }
+    }, [dispatch, error, success, navigate])
 
-    const submitHandler = async (e) => {
+    const submitHandler = (e) => {
         e.preventDefault();
-        createOrder({
+        dispatch(createOrder({
             ...order,
-            paymentInfo: {
-                id: `pi_${Date.now()}`,
-                status: 'succeeded'
-            }
-        })
+            paymentInfo: paymentResult()
+        }))
     }
 
     return (
         <>
             <MetaData title={'Payment'} />
             <CheckoutSteps shipping confirmOrder payment />
-            <div className="row wrapper">
-                <div className="col-10 col-lg-5">
-                    <form className="shadow-lg" onSubmit={submitHandler}>
-                        <h1 className="mb-4">Card Info</h1>
-                        <div className="form-group">
-                            <label htmlFor="card_num_field">Card Number</label>
-                            <input
-                                type="text"
-                                id="card_num_field"
-                                className="form-control"
-                            />
-                        </div>
+            <PageHeader title="Card Info" subtitle="This is a demo checkout. Card details are not sent or stored." />
 
-                        <div className="form-group">
-                            <label htmlFor="card_exp_field">Card Expiry</label>
-                            <input
-                                type="text"
-                                id="card_exp_field"
-                                className="form-control"
-                            />
-                        </div>
+            <Card sx={{ ...accentTop, height: 'auto', maxWidth: 720, p: { xs: 2.5, sm: 4 } }}>
+                <Box component="form" onSubmit={submitHandler}>
+                    <TextField id="card_num_field" label="Card Number" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} sx={{ mt: 0 }} />
+                    <Grid container columnSpacing={2}>
+                        <Grid size={6}>
+                            <TextField id="card_exp_field" label="Card Expiry" autoComplete="off" />
+                        </Grid>
+                        <Grid size={6}>
+                            <TextField id="card_cvc_field" label="Card CVC" autoComplete="off" slotProps={{ htmlInput: { inputMode: 'numeric' } }} />
+                        </Grid>
+                    </Grid>
 
-                        <div className="form-group">
-                            <label htmlFor="card_cvc_field">Card CVC</label>
-                            <input
-                                type="text"
-                                id="card_cvc_field"
-                                className="form-control"
-                            />
-                        </div>
-                        <button
-                            id="pay_btn"
-                            type="submit"
-                            className="btn btn-block py-3"
-                            disabled={loading || !orderInfo}
-                        >
-                            Pay {` - $${orderInfo && orderInfo.totalPrice}`}
-                        </button>
-                    </form>
-                </div>
-            </div>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        size="large"
+                        fullWidth
+                        startIcon={<LockOutlinedIcon />}
+                        disabled={loading || !orderInfo || cartItems.length === 0}
+                        sx={{ mt: 3 }}
+                    >
+                        {orderInfo ? `Pay ${formatMoney(orderInfo.totalPrice)}` : 'Pay'}
+                    </Button>
+                </Box>
+            </Card>
         </>
     )
 }

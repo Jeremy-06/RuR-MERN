@@ -9,7 +9,7 @@ export default function ProductSalesChart() {
     const [sales, setSales] = useState([])
     const [loading, setLoading] = useState(true)
     const pieColors = [
-        "#1677ff",
+        "#0f6be0",
         "#fb334b",
         "#14b8a6",
         "#f59e0b",
