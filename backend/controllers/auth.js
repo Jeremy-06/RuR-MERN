@@ -11,8 +11,6 @@ const DEFAULT_AVATAR = {
     url: '/images/default_avatar.svg'
 }
 
-exports.DEFAULT_AVATAR = DEFAULT_AVATAR
-
 // Same rules as the Yup schemas on the frontend; returns the first error message
 const validateUser = ({ name, email, password, avatar }, checkPassword) => {
     if (!name || !String(name).trim()) return 'Please enter your name'

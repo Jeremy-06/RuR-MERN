@@ -25,7 +25,7 @@ const uploadImage = (file) => {
     })
 }
 
-// Seed and legacy images are not stored in Cloudinary, so only our folder is destroyed
+// Only images in our Cloudinary folder are destroyed
 const destroyImages = async (images = []) => {
     const cloudinaryImages = images.filter(image => image.public_id && image.public_id.startsWith(`${PRODUCTS_FOLDER}/`))
     await Promise.all(cloudinaryImages.map(image => cloudinary.v2.uploader.destroy(image.public_id)))
