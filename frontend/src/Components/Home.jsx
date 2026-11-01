@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -9,29 +9,36 @@ import Drawer from '@mui/material/Drawer'
 import Alert from '@mui/material/Alert'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
-import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
+import SearchOffOutlinedIcon from '@mui/icons-material/SearchOffOutlined'
 import Product from './Product/Product'
+import ProductCardSkeleton from './Product/ProductCardSkeleton'
 import CategoryStrip from './Product/CategoryStrip'
+import HomeHero from './Product/HomeHero'
 import ProductFilters from './Product/ProductFilters'
-import Loader from './Layout/Loader'
+import ShopToolbar, { FilterChips } from './Product/ShopToolbar'
+import EmptyState from './Layout/EmptyState'
 import MetaData from './Layout/MetaData'
 import SectionTitle from './Layout/SectionTitle'
-import { clipCorners, darkTexture } from '../theme'
+import { DEFAULT_SORT, isSort, priceLabel, pricePresets, reviewsLabel } from './Utils/shopFilters'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { getCategories, getProducts, getTopRatedProducts, productsKey } from '../actions/productActions'
+import { getCategories, getProductFacets, getProducts, getTopRatedProducts, productsKey } from '../actions/productActions'
 import { addItemToCart } from '../actions/cartActions'
 
-const heroImage = 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1400&q=80'
+const PAGE_SKELETONS = 12
+const MORE_SKELETONS = 3
+const HERO_PRODUCTS = 3
 
 const Home = () => {
     let { keyword } = useParams();
     const [searchParams, setSearchParams] = useSearchParams()
+    const navigate = useNavigate()
     const dispatch = useDispatch();
-    const { loading, products, error, page, hasMore, filteredProductsCount, key } = useSelector(state => state.products);
+    const { loading, products, error, page, hasMore, filteredProductsCount, productsCount, key } = useSelector(state => state.products);
     const { products: topRated } = useSelector(state => state.topRatedProducts)
     const { cartItems } = useSelector(state => state.cart)
     const { categories, error: categoriesError } = useSelector(state => state.categories)
+    const facets = useSelector(state => state.productFacets)
     const [drawerOpen, setDrawerOpen] = useState(false)
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -41,13 +48,20 @@ const Home = () => {
     const maxPrice = searchParams.get('maxPrice') || ''
     const categoryParam = searchParams.getAll('category').join(',')
     const minRating = searchParams.get('minRating') || ''
-    const filters = useMemo(() => ({
+    const minReviews = searchParams.get('minReviews') || ''
+    const sortParam = searchParams.get('sort') || ''
+    const sort = isSort(sortParam) && sortParam !== DEFAULT_SORT ? sortParam : ''
+
+    // Hiwalay ang sort para hindi mag-reload ng counts pag sort lang ang nagbago
+    const shopFilters = useMemo(() => ({
         keyword: keyword || '',
         minPrice,
         maxPrice,
         categories: categoryParam ? categoryParam.split(',') : [],
         minRating,
-    }), [keyword, minPrice, maxPrice, categoryParam, minRating])
+        minReviews,
+    }), [keyword, minPrice, maxPrice, categoryParam, minRating, minReviews])
+    const filters = useMemo(() => ({ ...shopFilters, sort }), [shopFilters, sort])
 
     // Baka sa lumang filters pa ang products sa store
     const isCurrent = key === productsKey(filters)
@@ -60,6 +74,10 @@ const Home = () => {
     useEffect(() => {
         dispatch(getProducts(filters, 1))
     }, [dispatch, filters])
+
+    useEffect(() => {
+        dispatch(getProductFacets(shopFilters))
+    }, [dispatch, shopFilters])
 
     const loadMore = useCallback(() => {
         dispatch(getProducts(filters, page + 1))
@@ -115,32 +133,77 @@ const Home = () => {
         dispatch(addItemToCart(product._id, inCart ? Math.min(inCart.quantity + 1, product.stock) : 1))
     }
 
-    const onRatingChange = (rating) => {
-        updateParams({ minRating: rating })
+    // Hindi filter ang sort, kaya naiiwan
+    const onClear = () => {
+        setSearchParams(sort ? { sort } : {}, { replace: true })
     }
 
-    const onClear = () => {
-        setSearchParams({}, { replace: true })
-    }
+    const presets = useMemo(() => pricePresets(facets.priceRange), [facets.priceRange])
+
+    const filterChips = [
+        ...filters.categories.map(category => ({
+            key: `category-${category}`,
+            label: category,
+            remove: () => onCategoryToggle(category),
+        })),
+        ...(minPrice || maxPrice ? [{
+            key: 'price',
+            label: priceLabel(minPrice, maxPrice, presets),
+            remove: () => onPriceChange('', ''),
+        }] : []),
+        ...(minRating ? [{
+            key: 'rating',
+            label: `${minRating}★ & up`,
+            remove: () => updateParams({ minRating: '' }),
+        }] : []),
+        ...(minReviews ? [{
+            key: 'reviews',
+            label: reviewsLabel(minReviews),
+            remove: () => updateParams({ minReviews: '' }),
+        }] : []),
+    ]
+    const activeFilterCount = filterChips.length
+
+    const chips = keyword ? [{
+        key: 'keyword',
+        label: `Search: ${keyword}`,
+        remove: () => navigate({ pathname: '/', search: searchParams.toString() }),
+    }, ...filterChips] : filterChips
 
     const showProducts = isCurrent ? products : []
     const isEmpty = isCurrent && page > 0 && !loading && !error && products.length === 0
     const isEnd = isCurrent && page > 0 && !loading && !hasMore && products.length > 0
-    const activeFilterCount = (minPrice || maxPrice ? 1 : 0) + filters.categories.length + (minRating ? 1 : 0)
+    const firstLoad = (!isCurrent && !error) || (loading && showProducts.length === 0)
+    const count = isCurrent ? filteredProductsCount : undefined
+
+    let skeletons = 0
+    if (firstLoad) skeletons = PAGE_SKELETONS
+    else if (loading) skeletons = MORE_SKELETONS
+
+    const heroProducts = useMemo(() => {
+        const seen = new Set()
+        return [...topRated, ...products].filter(product => {
+            if (seen.has(product._id)) return false
+            seen.add(product._id)
+            return true
+        }).slice(0, HERO_PRODUCTS)
+    }, [topRated, products])
 
     const filterPanel = (
         <ProductFilters
             categories={categories}
             categoriesError={categoriesError}
             onRetryCategories={() => dispatch(getCategories())}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            selectedCategories={filters.categories}
+            facets={facets}
+            onRetryFacets={() => dispatch(getProductFacets(shopFilters))}
+            filters={filters}
+            onChange={updateParams}
             onPriceChange={onPriceChange}
             onCategoryToggle={onCategoryToggle}
-            minRating={minRating}
-            onRatingChange={onRatingChange}
             onClear={onClear}
+            onClose={isMobile ? () => setDrawerOpen(false) : undefined}
+            activeCount={activeFilterCount}
+            compact={isMobile}
         />
     )
 
@@ -148,38 +211,14 @@ const Home = () => {
         <>
             <MetaData title={'Gaming Setup Essentials'} />
             {!keyword && (
-                <Box
-                    component="section"
-                    aria-label="Welcome"
-                    sx={{
-                        position: 'relative',
-                        overflow: 'hidden',
-                        mt: 3,
-                        px: { xs: 3, md: 6 },
-                        py: { xs: 5, md: 8 },
-                        color: '#fff',
-                        bgcolor: 'rur.black',
-                        backgroundImage: `linear-gradient(105deg, #090b0f 38%, rgba(9, 11, 15, 0.55)), ${darkTexture}, url(${heroImage})`,
-                        backgroundSize: 'auto, auto, cover',
-                        backgroundPosition: 'center',
-                        clipPath: clipCorners(28),
-                    }}
-                >
-                    <Typography variant="overline" component="p" sx={{ color: '#a8cbff' }}>Built for your next level</Typography>
-                    <Typography variant="h1" component="p" sx={{ my: 1 }}>
-                        Your game. Your <Box component="span" sx={{ color: 'primary.main' }}>ground.</Box>
-                    </Typography>
-                    <Typography sx={{ maxWidth: 480, color: '#c9d0da' }}>
-                        Gear that keeps up with every clutch, every late night, every new high score.
-                    </Typography>
-                </Box>
+                <HomeHero products={heroProducts} productsCount={productsCount} categoriesCount={categories ? categories.length : 0} />
             )}
 
             {!keyword && categories && (
-                <CategoryStrip categories={categories} selected={filters.categories} onToggle={onCategoryToggle} />
+                <CategoryStrip categories={categories} counts={facets.key === null || facets.error ? null : facets.categories} selected={filters.categories} onToggle={onCategoryToggle} />
             )}
 
-            {!keyword && activeFilterCount === 0 && !minRating && topRated.length > 0 && (
+            {!keyword && activeFilterCount === 0 && topRated.length > 0 && (
                 <Box component="section" aria-labelledby="top-rated-title" sx={{ mt: 5 }}>
                     <SectionTitle id="top-rated-title" variant="h3" sx={{ mb: 3 }}>Top Rated</SectionTitle>
                     <Grid container spacing={{ xs: 1.5, sm: 3 }}>
@@ -192,28 +231,17 @@ const Home = () => {
                 </Box>
             )}
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 2, mt: 5, mb: 3 }}>
-                <SectionTitle variant="h3" component="h1" id="products_heading" sx={{ mr: 'auto' }}>
+            <Box sx={{ mt: 5, mb: 3 }}>
+                <SectionTitle variant="h3" component="h1" id="products_heading">
                     {keyword ? `Results for "${keyword}"` : 'Latest Gear'}
                 </SectionTitle>
-                {isCurrent && filteredProductsCount !== undefined && (
-                    <Typography color="textSecondary" aria-live="polite">
-                        Showing {showProducts.length} of {filteredProductsCount}
-                    </Typography>
-                )}
-                {isMobile && (
-                    <Button variant="outlined" onClick={() => setDrawerOpen(true)} startIcon={<TuneOutlinedIcon />}>
-                        Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-                    </Button>
-                )}
             </Box>
 
-            <Grid container spacing={3} id="products">
+            <Grid container spacing={3} id="products" sx={{ scrollMarginTop: { xs: 136, md: 96 } }}>
                 {!isMobile && (
-                    <Grid size={{ md: 3 }}>
+                    <Grid size={{ md: 4, lg: 3 }}>
                         {/* Sariling scroll para hindi ma-trigger ang infinite scroll sa dulo ng filters */}
                         <Paper sx={{
-                            p: 3,
                             position: 'sticky',
                             top: 96,
                             maxHeight: 'calc(100vh - 96px - 24px)',
@@ -226,18 +254,34 @@ const Home = () => {
                     </Grid>
                 )}
 
-                <Grid size={{ xs: 12, md: 9 }}>
+                <Grid size={{ xs: 12, md: 8, lg: 9 }}>
+                    <ShopToolbar
+                        shown={showProducts.length}
+                        total={count}
+                        chips={chips}
+                        sort={sort}
+                        onSortChange={(value) => updateParams({ sort: value === DEFAULT_SORT ? '' : value })}
+                        onClear={onClear}
+                        showClear={activeFilterCount > 0}
+                        isMobile={isMobile}
+                        activeCount={activeFilterCount}
+                        onOpenFilters={() => setDrawerOpen(true)}
+                    />
+
                     <Grid container spacing={{ xs: 1.5, sm: 3 }}>
                         {showProducts.map(product => (
                             <Grid key={product._id} size={{ xs: 6, lg: 4 }}>
                                 <Product product={product} onAddToCart={quickAdd} />
                             </Grid>
                         ))}
+                        {Array.from({ length: skeletons }, (item, index) => (
+                            <Grid key={index} size={{ xs: 6, lg: 4 }}>
+                                <ProductCardSkeleton />
+                            </Grid>
+                        ))}
                     </Grid>
 
-                    <Box sx={{ py: 5, textAlign: 'center' }} aria-live="polite">
-                        {(loading || (!isCurrent && !error)) && <Loader label="Loading products" sx={{ py: 0 }} />}
-
+                    <Box sx={{ pt: 3, textAlign: 'center' }} aria-live="polite">
                         {isCurrent && error && (
                             <Alert
                                 severity="error"
@@ -249,11 +293,23 @@ const Home = () => {
                         )}
 
                         {isEmpty && (
-                            <Paper sx={{ p: 5 }}>
-                                <Typography variant="h5" component="p">No gear matches these filters</Typography>
-                                <Typography color="textSecondary" sx={{ mt: 1, mb: 3 }}>Try a wider price range or fewer categories.</Typography>
-                                <Button variant="contained" onClick={onClear}>Clear filters</Button>
-                            </Paper>
+                            <EmptyState
+                                icon={<SearchOffOutlinedIcon />}
+                                title="No gear matches these filters"
+                                message="Try a wider price range or fewer categories."
+                                action={
+                                    <>
+                                        {chips.length > 0 && (
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.75, mb: 2 }}>
+                                                <FilterChips chips={chips} />
+                                            </Box>
+                                        )}
+                                        {activeFilterCount > 0
+                                            ? <Button variant="contained" onClick={onClear}>Clear filters</Button>
+                                            : <Button component={Link} to="/" variant="contained">Browse all gear</Button>}
+                                    </>
+                                }
+                            />
                         )}
 
                         {isEnd && (
@@ -265,11 +321,20 @@ const Home = () => {
             </Grid>
 
             {isMobile && (
-                <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)} keepMounted>
-                    <Box sx={{ width: 300, p: 3 }}>
+                <Drawer
+                    anchor="left"
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    keepMounted
+                    slotProps={{ paper: { sx: { width: 'min(360px, 92vw)', display: 'flex', flexDirection: 'column', border: 0 } } }}
+                >
+                    <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain' }}>
                         {filterPanel}
-                        <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={() => setDrawerOpen(false)}>
-                            Show results
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1, p: 1.5, pb: 'calc(12px + env(safe-area-inset-bottom))', borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+                        <Button variant="outlined" color="secondary" disabled={activeFilterCount === 0} onClick={onClear}>Clear</Button>
+                        <Button variant="contained" sx={{ flexGrow: 1 }} onClick={() => setDrawerOpen(false)}>
+                            {count === undefined ? 'Show results' : `Show ${count} ${count === 1 ? 'result' : 'results'}`}
                         </Button>
                     </Box>
                 </Drawer>

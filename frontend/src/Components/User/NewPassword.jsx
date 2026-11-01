@@ -47,7 +47,7 @@ const NewPassword = () => {
         <>
             <MetaData title={'New Password Reset'} />
 
-            <AuthCard title="New Password" onSubmit={formik.handleSubmit}>
+            <AuthCard brandPanel title="New Password" onSubmit={formik.handleSubmit}>
                 <PasswordField formik={formik} name="password" id="password_field" label="Password" autoComplete="new-password" />
                 <PasswordField formik={formik} name="confirmPassword" id="confirm_password_field" label="Confirm password" autoComplete="new-password" />
 

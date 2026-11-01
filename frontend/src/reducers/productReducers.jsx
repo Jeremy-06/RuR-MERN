@@ -43,6 +43,12 @@ import {
     TOP_RATED_PRODUCTS_REQUEST,
     TOP_RATED_PRODUCTS_SUCCESS,
     TOP_RATED_PRODUCTS_FAIL,
+    PRODUCT_FACETS_REQUEST,
+    PRODUCT_FACETS_SUCCESS,
+    PRODUCT_FACETS_FAIL,
+    RELATED_PRODUCTS_REQUEST,
+    RELATED_PRODUCTS_SUCCESS,
+    RELATED_PRODUCTS_FAIL,
     CLEAR_ERRORS
 } from '../constants/productConstants'
 
@@ -94,6 +100,63 @@ export const productsReducer = (state = { products: [], page: 0, hasMore: true, 
             }
         default:
             return state;
+    }
+}
+
+// Nananatili ang lumang counts habang naglo-load para hindi kumurap ang filters
+export const productFacetsReducer = (state = { key: null, priceRange: null, categories: {}, ratings: {}, reviews: {} }, action) => {
+    switch (action.type) {
+        case PRODUCT_FACETS_REQUEST:
+            return {
+                ...state,
+                key: action.key,
+                loading: true,
+                error: null
+            }
+        case PRODUCT_FACETS_SUCCESS:
+            if (action.key !== state.key) return state
+            return {
+                key: state.key,
+                loading: false,
+                priceRange: action.payload.priceRange,
+                categories: action.payload.categories,
+                ratings: action.payload.ratings,
+                reviews: action.payload.reviews
+            }
+        case PRODUCT_FACETS_FAIL:
+            if (action.key !== state.key) return state
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
+        default:
+            return state
+    }
+}
+
+export const relatedProductsReducer = (state = { products: [], productId: null }, action) => {
+    switch (action.type) {
+        case RELATED_PRODUCTS_REQUEST:
+            return {
+                products: action.productId === state.productId ? state.products : [],
+                productId: action.productId
+            }
+        case RELATED_PRODUCTS_SUCCESS:
+            if (action.productId !== state.productId) return state
+            return {
+                ...state,
+                products: action.payload
+            }
+        case RELATED_PRODUCTS_FAIL:
+            if (action.productId !== state.productId) return state
+            return {
+                ...state,
+                products: [],
+                error: action.payload
+            }
+        default:
+            return state
     }
 }
 

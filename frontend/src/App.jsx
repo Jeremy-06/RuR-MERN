@@ -87,8 +87,8 @@ function App() {
             <Route path="/admin/reviews" element={<ProtectedRoute isAdmin={true}><ProductReviews /></ProtectedRoute>} />
           </Routes>
         </Container>
+        <Footer />
       </Router>
-      <Footer />
       <ToastContainer />
     </>
   )

@@ -1,41 +1,10 @@
 import Box from '@mui/material/Box'
 import ButtonBase from '@mui/material/ButtonBase'
 import Typography from '@mui/material/Typography'
-import CableOutlinedIcon from '@mui/icons-material/CableOutlined'
-import ChairOutlinedIcon from '@mui/icons-material/ChairOutlined'
-import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined'
-import CropLandscapeOutlinedIcon from '@mui/icons-material/CropLandscapeOutlined'
-import DeskOutlinedIcon from '@mui/icons-material/DeskOutlined'
-import HeadsetOutlinedIcon from '@mui/icons-material/HeadsetOutlined'
-import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined'
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
-import MemoryOutlinedIcon from '@mui/icons-material/MemoryOutlined'
-import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined'
-import MonitorOutlinedIcon from '@mui/icons-material/MonitorOutlined'
-import MouseOutlinedIcon from '@mui/icons-material/MouseOutlined'
-import SpeakerOutlinedIcon from '@mui/icons-material/SpeakerOutlined'
-import SportsEsportsOutlinedIcon from '@mui/icons-material/SportsEsportsOutlined'
-import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import { clipCorners, darkTexture } from '../../theme'
+import { categoryIcon } from '../Utils/categoryIcons'
 
-const icons = {
-    Keyboards: <KeyboardOutlinedIcon />,
-    Mice: <MouseOutlinedIcon />,
-    Headsets: <HeadsetOutlinedIcon />,
-    Speakers: <SpeakerOutlinedIcon />,
-    Monitors: <MonitorOutlinedIcon />,
-    Controllers: <SportsEsportsOutlinedIcon />,
-    Chairs: <ChairOutlinedIcon />,
-    Desks: <DeskOutlinedIcon />,
-    Mousepads: <CropLandscapeOutlinedIcon />,
-    Microphones: <MicNoneOutlinedIcon />,
-    Webcams: <VideocamOutlinedIcon />,
-    Lighting: <LightbulbOutlinedIcon />,
-    Components: <MemoryOutlinedIcon />,
-    Accessories: <CableOutlinedIcon />,
-}
-
-const CategoryStrip = ({ categories, selected, onToggle }) => {
+const CategoryStrip = ({ categories, counts, selected, onToggle }) => {
     return (
         <Box
             component="nav"
@@ -45,33 +14,45 @@ const CategoryStrip = ({ categories, selected, onToggle }) => {
                 p: 1,
                 bgcolor: 'rur.panel',
                 backgroundImage: darkTexture,
-                display: 'grid',
-                gap: 0.5,
-                gridTemplateColumns: { xs: 'repeat(4, minmax(0, 1fr))', sm: 'repeat(7, minmax(0, 1fr))', lg: 'repeat(14, minmax(0, 1fr))' },
+                gap: 0.75,
+                display: { xs: 'flex', sm: 'grid' },
+                overflowX: { xs: 'auto', sm: 'visible' },
+                scrollSnapType: { xs: 'x proximity', sm: 'none' },
+                scrollbarWidth: 'thin',
+                gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
             }}
         >
             {categories.map(category => {
                 const active = selected.includes(category)
+                const count = counts ? counts[category] || 0 : undefined
                 return (
                     <ButtonBase
                         key={category}
                         aria-pressed={active}
+                        aria-label={count === undefined ? category : `${category}, ${count} ${count === 1 ? 'product' : 'products'}`}
                         onClick={() => onToggle(category)}
                         sx={{
+                            flex: { xs: '0 0 104px', sm: 'initial' },
+                            scrollSnapAlign: 'start',
                             flexDirection: 'column',
                             gap: 0.5,
-                            py: 1.25,
-                            px: 0.25,
+                            py: 2,
+                            px: 0.5,
                             color: '#fff',
-                            bgcolor: active ? 'primary.dark' : 'transparent',
-                            clipPath: clipCorners(6),
-                            transition: 'background-color 180ms ease',
-                            '&:hover': { bgcolor: active ? 'primary.dark' : 'rgba(255, 255, 255, 0.1)' },
+                            bgcolor: active ? 'primary.dark' : 'rgba(255, 255, 255, 0.04)',
+                            clipPath: clipCorners(8),
+                            transition: 'background-color 180ms ease, transform 180ms ease',
+                            '& svg': { fontSize: 30, color: active ? '#fff' : '#5c9dff', transition: 'color 180ms ease' },
+                            '&:hover': { bgcolor: active ? 'primary.dark' : 'rgba(255, 255, 255, 0.12)' },
+                            '@media (hover: hover) and (prefers-reduced-motion: no-preference)': { '&:hover': { transform: 'translateY(-2px)' } },
                             '&.Mui-focusVisible': { outline: '2px solid #fff', outlineOffset: -4 },
                         }}
                     >
-                        {icons[category] || <CategoryOutlinedIcon />}
-                        <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.6875rem' }}>{category}</Typography>
+                        {categoryIcon(category)}
+                        <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{category}</Typography>
+                        {count !== undefined && (
+                            <Typography variant="caption" sx={{ color: active ? '#fff' : '#c9d0da', lineHeight: 1 }}>{count}</Typography>
+                        )}
                     </ButtonBase>
                 )
             })}

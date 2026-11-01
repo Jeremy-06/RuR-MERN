@@ -1,5 +1,20 @@
 const hasValue = (value) => value !== undefined && value !== ''
 
+// _id para stable ang order sa bawat page
+const SORT_OPTIONS = {
+    newest: { createdAt: -1, _id: -1 },
+    price_asc: { price: 1, _id: -1 },
+    price_desc: { price: -1, _id: -1 },
+    top_rated: { averageRating: -1, reviewCount: -1, _id: -1 },
+}
+const RATING_STEPS = [4, 3, 2, 1]
+const REVIEW_STEPS = [1, 5, 10]
+
+const countAtLeast = (field, steps) => Object.fromEntries(steps.map(step => [
+    step,
+    { $sum: { $cond: [{ $gte: [`$${field}`, step] }, 1, 0] } }
+]))
+
 class APIFeatures {
     constructor(query, queryStr) {
         this.query = query;
@@ -15,7 +30,7 @@ class APIFeatures {
     }
 
     static validateShopQuery(queryStr, categories) {
-        const { minPrice, maxPrice, minRating, minReviews, page, limit } = queryStr
+        const { minPrice, maxPrice, minRating, minReviews, page, limit, sort } = queryStr
 
         for (const [name, value] of Object.entries({ minPrice, maxPrice })) {
             if (!hasValue(value)) continue
@@ -41,6 +56,10 @@ class APIFeatures {
             return 'limit must be a whole number from 1 to 50'
         }
 
+        if (hasValue(sort) && !Object.hasOwn(SORT_OPTIONS, String(sort))) {
+            return `sort must be one of: ${Object.keys(SORT_OPTIONS).join(', ')}`
+        }
+
         const invalidCategory = APIFeatures.categoryList(queryStr).find(category => !categories.includes(category))
         if (invalidCategory) {
             return `Invalid category: ${invalidCategory}`
@@ -48,15 +67,17 @@ class APIFeatures {
         return null
     }
 
-    search() {
-        const keyword = this.queryStr.keyword ? {
+    keywordFilter() {
+        return this.queryStr.keyword ? {
             name: {
                 $regex: String(this.queryStr.keyword).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
                 $options: 'i'
             }
         } : {}
+    }
 
-        this.query = this.query.find({ ...keyword });
+    search() {
+        this.query = this.query.find(this.keywordFilter());
         return this;
     }
 
@@ -90,22 +111,53 @@ class APIFeatures {
         return categories.length > 0 ? { category: { $in: categories } } : {}
     }
 
-    ratingFilter() {
-        const { minRating, minReviews } = this.queryStr
-        const conditions = {}
+    minRatingFilter() {
+        const { minRating } = this.queryStr
+        return hasValue(minRating) && Number(minRating) > 0 ? { averageRating: { $gte: Number(minRating) } } : {}
+    }
 
-        if (hasValue(minRating) && Number(minRating) > 0) {
-            conditions.averageRating = { $gte: Number(minRating) }
-        }
-        if (hasValue(minReviews) && Number(minReviews) > 0) {
-            conditions.reviewCount = { $gte: Number(minReviews) }
-        }
-        return conditions
+    minReviewsFilter() {
+        const { minReviews } = this.queryStr
+        return hasValue(minReviews) && Number(minReviews) > 0 ? { reviewCount: { $gte: Number(minReviews) } } : {}
+    }
+
+    ratingFilter() {
+        return { ...this.minRatingFilter(), ...this.minReviewsFilter() }
     }
 
     sort() {
-        // _id para stable ang order sa bawat page
-        this.query = this.query.sort({ createdAt: -1, _id: -1 });
+        this.query = this.query.sort(SORT_OPTIONS[this.queryStr.sort] || SORT_OPTIONS.newest);
+        return this;
+    }
+
+    // Bawat grupo, lahat ng filters maliban sa sarili niya, para bilang ito kung pipiliin.
+    // Keyword lang ang sa priceRange para hindi gumalaw ang slider habang nagfi-filter.
+    facets() {
+        const price = this.priceFilter()
+        const category = this.categoryFilter()
+        const rating = this.minRatingFilter()
+        const reviews = this.minReviewsFilter()
+
+        this.query = this.query.match(this.keywordFilter()).facet({
+            priceRange: [
+                { $group: { _id: null, min: { $min: '$price' }, max: { $max: '$price' } } },
+                { $project: { _id: 0 } }
+            ],
+            categories: [
+                { $match: { ...price, ...rating, ...reviews } },
+                { $group: { _id: '$category', count: { $sum: 1 } } }
+            ],
+            ratings: [
+                { $match: { ...price, ...category, ...reviews } },
+                { $group: { _id: null, ...countAtLeast('averageRating', RATING_STEPS) } },
+                { $project: { _id: 0 } }
+            ],
+            reviews: [
+                { $match: { ...price, ...category, ...rating } },
+                { $group: { _id: null, ...countAtLeast('reviewCount', REVIEW_STEPS) } },
+                { $project: { _id: 0 } }
+            ],
+        })
         return this;
     }
 

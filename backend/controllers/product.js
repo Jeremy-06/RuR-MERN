@@ -164,6 +164,26 @@ exports.getProducts = async (req, res) => {
     })
 }
 
+exports.getProductFacets = async (req, res) => {
+    const errorMessage = APIFeatures.validateShopQuery(req.query, productCategories())
+    if (errorMessage) {
+        return res.status(400).json({
+            success: false,
+            message: errorMessage
+        })
+    }
+
+    const [facets] = await new APIFeatures(Product.aggregate(), req.query).facets().query
+
+    return res.status(200).json({
+        success: true,
+        priceRange: facets.priceRange[0] || null,
+        categories: Object.fromEntries(facets.categories.map(({ _id, count }) => [_id, count])),
+        ratings: facets.ratings[0] || {},
+        reviews: facets.reviews[0] || {},
+    })
+}
+
 exports.updateProduct = async (req, res, next) => {
     let product = await Product.findById(req.params.id);
     if (!product) {

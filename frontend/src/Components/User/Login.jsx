@@ -53,7 +53,7 @@ const Login = () => {
         <>
             <MetaData title={'Login'} />
 
-            <AuthCard title="Login" onSubmit={formik.handleSubmit}>
+            <AuthCard brandPanel title="Login" onSubmit={formik.handleSubmit}>
                 <TextField
                     id="email_field"
                     label="Email"

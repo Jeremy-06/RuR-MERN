@@ -62,7 +62,7 @@ const Register = () => {
         <>
             <MetaData title={'Register User'} />
 
-            <AuthCard title="Register" onSubmit={formik.handleSubmit}>
+            <AuthCard brandPanel title="Register" onSubmit={formik.handleSubmit}>
                 <TextField
                     id="name_field"
                     label="Name"

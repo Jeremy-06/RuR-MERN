@@ -7,6 +7,7 @@ const {
     getSingleProduct,
     getProducts,
     getProductSuggestions,
+    getProductFacets,
     getCategories,
     updateProduct,
     deleteProduct,
@@ -20,6 +21,7 @@ router.post('/admin/product/new', isAuthenticatedUser, authorizeRoles('admin'), 
 router.get('/product/:id', getSingleProduct)
 router.get('/products', getProducts)
 router.get('/products/suggest', getProductSuggestions)
+router.get('/products/facets', getProductFacets)
 router.get('/categories', getCategories)
 router.put('/admin/product/:id', isAuthenticatedUser, authorizeRoles('admin'), upload.array('images', 10), updateProduct);
 router.delete('/admin/product/:id', isAuthenticatedUser, authorizeRoles('admin'), deleteProduct);

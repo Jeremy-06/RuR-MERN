@@ -44,7 +44,7 @@ const ForgotPassword = () => {
         <>
             <MetaData title={'Forgot Password'} />
 
-            <AuthCard title="Forgot Password" subtitle="We will email you a link to set a new password." onSubmit={formik.handleSubmit}>
+            <AuthCard brandPanel title="Forgot Password" subtitle="We will email you a link to set a new password." onSubmit={formik.handleSubmit}>
                 <TextField
                     id="email_field"
                     label="Enter Email"

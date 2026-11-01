@@ -40,15 +40,34 @@ import {
     TOP_RATED_PRODUCTS_REQUEST,
     TOP_RATED_PRODUCTS_SUCCESS,
     TOP_RATED_PRODUCTS_FAIL,
+    PRODUCT_FACETS_REQUEST,
+    PRODUCT_FACETS_SUCCESS,
+    PRODUCT_FACETS_FAIL,
+    RELATED_PRODUCTS_REQUEST,
+    RELATED_PRODUCTS_SUCCESS,
+    RELATED_PRODUCTS_FAIL,
     CLEAR_ERRORS
 } from '../constants/productConstants';
 
 const RES_PER_PAGE = 12
 const TOP_RATED_COUNT = 4
+const RELATED_COUNT = 4
 
 // Parehong filters, parehong key, para ma-spot ang lumang answers
-export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [], minRating = '' }) =>
-    JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort(), minRating])
+export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [], minRating = '', minReviews = '', sort = '' }) =>
+    JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort(), minRating, minReviews, sort])
+
+// Parehong params ang /products at /products/facets
+const shopParams = (filters) => {
+    const params = new URLSearchParams()
+    if (filters.keyword) params.set('keyword', filters.keyword)
+    if (filters.minPrice !== '') params.set('minPrice', filters.minPrice)
+    if (filters.maxPrice !== '') params.set('maxPrice', filters.maxPrice)
+    filters.categories.forEach(category => params.append('category', category))
+    if (filters.minRating) params.set('minRating', filters.minRating)
+    if (filters.minReviews) params.set('minReviews', filters.minReviews)
+    return params
+}
 
 export const getProducts = (filters, currentPage = 1) => async (dispatch, getState) => {
     const key = productsKey(filters)
@@ -65,14 +84,10 @@ export const getProducts = (filters, currentPage = 1) => async (dispatch, getSta
             page: currentPage
         })
 
-        const params = new URLSearchParams()
+        const params = shopParams(filters)
         params.set('page', currentPage)
         params.set('limit', RES_PER_PAGE)
-        if (filters.keyword) params.set('keyword', filters.keyword)
-        if (filters.minPrice !== '') params.set('minPrice', filters.minPrice)
-        if (filters.maxPrice !== '') params.set('maxPrice', filters.maxPrice)
-        filters.categories.forEach(category => params.append('category', category))
-        if (filters.minRating) params.set('minRating', filters.minRating)
+        if (filters.sort) params.set('sort', filters.sort)
 
         const { data } = await axios.get(`${import.meta.env.VITE_API}/products?${params.toString()}`)
         dispatch({
@@ -84,6 +99,25 @@ export const getProducts = (filters, currentPage = 1) => async (dispatch, getSta
     } catch (error) {
         dispatch({
             type: ALL_PRODUCTS_FAIL,
+            key,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const getProductFacets = (filters) => async (dispatch) => {
+    const key = productsKey(filters)
+    try {
+        dispatch({ type: PRODUCT_FACETS_REQUEST, key })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products/facets?${shopParams(filters).toString()}`)
+        dispatch({
+            type: PRODUCT_FACETS_SUCCESS,
+            key,
+            payload: data
+        })
+    } catch (error) {
+        dispatch({
+            type: PRODUCT_FACETS_FAIL,
             key,
             payload: error.response ? error.response.data.message : error.message
         })
@@ -193,7 +227,10 @@ export const deleteProducts = (ids) => async (dispatch) => {
     }
 }
 
-export const getCategories = () => async (dispatch) => {
+export const getCategories = () => async (dispatch, getState) => {
+    // Sabay kumukuha ang Home at Footer
+    if (getState().categories.loading) return
+
     try {
         dispatch({ type: ALL_CATEGORIES_REQUEST })
         const { data } = await axios.get(`${import.meta.env.VITE_API}/categories`)
@@ -234,20 +271,36 @@ export const clearSearchSuggestions = () => async (dispatch) => {
     })
 }
 
-// Walang rating sort ang shop list kaya dito sina-sort
 export const getTopRatedProducts = () => async (dispatch) => {
     try {
         dispatch({ type: TOP_RATED_PRODUCTS_REQUEST })
-        const { data } = await axios.get(`${import.meta.env.VITE_API}/products`, { params: { minRating: 4, limit: 50 } })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products`, { params: { minRating: 4, sort: 'top_rated', limit: TOP_RATED_COUNT } })
         dispatch({
             type: TOP_RATED_PRODUCTS_SUCCESS,
-            payload: [...data.products]
-                .sort((a, b) => b.averageRating - a.averageRating || b.reviewCount - a.reviewCount)
-                .slice(0, TOP_RATED_COUNT)
+            payload: data.products
         })
     } catch (error) {
         dispatch({
             type: TOP_RATED_PRODUCTS_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+// Isa pa sa limit kasi kasama ang product mismo sa sagot
+export const getRelatedProducts = (id, category) => async (dispatch) => {
+    try {
+        dispatch({ type: RELATED_PRODUCTS_REQUEST, productId: id })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/products`, { params: { category, limit: RELATED_COUNT + 1 } })
+        dispatch({
+            type: RELATED_PRODUCTS_SUCCESS,
+            productId: id,
+            payload: data.products.filter(product => product._id !== id).slice(0, RELATED_COUNT)
+        })
+    } catch (error) {
+        dispatch({
+            type: RELATED_PRODUCTS_FAIL,
+            productId: id,
             payload: error.response ? error.response.data.message : error.message
         })
     }

@@ -49,13 +49,13 @@ const Product = ({ product, onAddToCart }) => {
                 '&:hover': { borderColor: 'primary.main' },
                 '&:hover::before, &:focus-within::before': { transform: 'scaleX(1)' },
                 [canAnimate]: {
-                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 14px 30px rgba(9, 11, 15, 0.22)', borderColor: 'primary.main' },
+                    '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 28px rgba(9, 11, 15, 0.16)', borderColor: 'primary.main' },
                     '&:hover img': { transform: 'scale(1.06)' },
                 },
             }}
         >
             <CardActionArea component={Link} to={`/product/${product._id}`} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', '&:hover': { color: 'inherit', textDecoration: 'none' } }}>
-                <Box sx={{ overflow: 'hidden', bgcolor: 'background.default' }}>
+                <Box sx={{ overflow: 'hidden', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider' }}>
                     <CardMedia
                         component="img"
                         image={product.images[0] ? product.images[0].url : '/images/default_avatar.svg'}
@@ -64,16 +64,23 @@ const Product = ({ product, onAddToCart }) => {
                         sx={{ aspectRatio: IMAGE_RATIO, objectFit: 'cover', transition: 'transform 250ms ease', opacity: soldOut ? 0.6 : 1 }}
                     />
                 </Box>
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 0.5, p: { xs: 1.5, sm: 2 } }}>
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 0.5, p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
                     <Typography variant="overline" sx={{ color: 'primary.dark', fontSize: '0.6875rem' }}>{product.category}</Typography>
-                    <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{product.name}</Typography>
+                    <Typography
+                        variant="subtitle1"
+                        component="h3"
+                        title={product.name}
+                        sx={{ fontWeight: 700, lineHeight: 1.25, minHeight: '2.5em', overflowWrap: 'anywhere', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                    >
+                        {product.name}
+                    </Typography>
                     {product.reviewCount > 0 ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minHeight: 24 }}>
                             <Rating value={product.averageRating} precision={0.1} size="small" readOnly aria-label={`${product.averageRating} out of 5 stars`} />
                             <Typography variant="body2" color="textSecondary">({product.reviewCount})</Typography>
                         </Box>
                     ) : (
-                        <Typography variant="body2" color="textSecondary">No reviews yet</Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ minHeight: 24, display: 'flex', alignItems: 'center' }}>No reviews yet</Typography>
                     )}
                     <Typography variant="h4" component="p" sx={{ mt: 'auto', pt: 1 }}>{formatMoney(product.price)}</Typography>
                 </CardContent>

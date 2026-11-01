@@ -13,6 +13,11 @@ export const accentGradient = 'linear-gradient(90deg, #0f6be0, #fb334b)'
 export const darkTexture = 'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 12px)'
 export const clipCorners = (size = 10) =>
     `polygon(${size}px 0, 100% 0, 100% calc(100% - ${size}px), calc(100% - ${size}px) 100%, 0 100%, 0 ${size}px)`
+// Reduced motion: naka-off ito sa MuiCssBaseline
+export const riseIn = (delay = 0) => ({
+    animation: 'rur-rise 400ms ease both',
+    animationDelay: `${delay}ms`,
+})
 export const accentTop = {
     position: 'relative',
     overflow: 'hidden',
@@ -73,8 +78,23 @@ const theme = createTheme({
     components: {
         MuiCssBaseline: {
             styleOverrides: {
+                '@keyframes rur-rise': {
+                    from: { opacity: 0, transform: 'translateY(12px)' },
+                    to: { opacity: 1, transform: 'none' }
+                },
+                '@keyframes rur-pop': {
+                    '0%': { transform: 'scale(1)' },
+                    '40%': { transform: 'scale(1.3)' },
+                    '100%': { transform: 'scale(1)' }
+                },
+                'a:focus-visible, [tabindex]:not(.MuiInputBase-input):focus-visible': { outline: '2px solid #0f6be0', outlineOffset: 2 },
                 '@media (prefers-reduced-motion: reduce)': {
-                    '*, *::before, *::after': { transitionDuration: '0.01ms !important', scrollBehavior: 'auto !important' }
+                    '*, *::before, *::after': {
+                        transitionDuration: '0.01ms !important',
+                        animationDuration: '0.01ms !important',
+                        animationDelay: '0ms !important',
+                        scrollBehavior: 'auto !important'
+                    }
                 }
             }
         },
@@ -101,7 +121,8 @@ const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    transition: `background-color ${FAST}, color ${FAST}, border-color ${FAST}, transform ${FAST}`
+                    transition: `background-color ${FAST}, color ${FAST}, border-color ${FAST}, transform ${FAST}`,
+                    '&:active': { transform: 'translateY(1px)' }
                 },
                 // Pinuputol ng clip-path ang outer outline kaya inner ang focus
                 contained: {
@@ -170,7 +191,9 @@ const theme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    backgroundColor: '#fff'
+                    backgroundColor: '#fff',
+                    transition: `box-shadow ${FAST}`,
+                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(15, 107, 224, 0.2)' }
                 },
                 notchedOutline: {
                     borderColor: inputBorderColor
@@ -181,7 +204,31 @@ const theme = createTheme({
             styleOverrides: {
                 root: {
                     borderRadius: 2,
-                    fontWeight: 700
+                    fontWeight: 700,
+                    transition: `background-color ${FAST}, color ${FAST}, border-color ${FAST}`
+                }
+            }
+        },
+        MuiListItemButton: {
+            styleOverrides: {
+                root: {
+                    transition: `background-color ${FAST}, color ${FAST}`
+                }
+            }
+        },
+        MuiMenuItem: {
+            styleOverrides: {
+                root: {
+                    transition: `background-color ${FAST}, color ${FAST}`
+                }
+            }
+        },
+        MuiAccordionSummary: {
+            styleOverrides: {
+                root: {
+                    transition: `background-color ${FAST}`,
+                    '&:hover': { backgroundColor: 'rgba(9, 11, 15, 0.03)' },
+                    '&.Mui-focusVisible': { backgroundColor: 'transparent', outline: '2px solid #0f6be0', outlineOffset: -2 }
                 }
             }
         },
@@ -224,6 +271,11 @@ const theme = createTheme({
         MuiLink: {
             defaultProps: {
                 underline: 'hover'
+            },
+            styleOverrides: {
+                root: {
+                    transition: `color ${FAST}`
+                }
             }
         },
         MuiRating: {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import MetaData from '../Layout/MetaData'
+import Product from './Product'
 import Loader from '../Layout/Loader'
 import EmptyState from '../Layout/EmptyState'
 import SectionTitle from '../Layout/SectionTitle'
@@ -11,6 +12,7 @@ import ListReviews from '../Review/ListReviews';
 
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Dialog from '@mui/material/Dialog'
@@ -31,7 +33,7 @@ import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import { successMsg, errMsg, infoMsg, formatMoney, LOW_STOCK } from '../Utils/helpers'
 import { accentTop } from '../../theme'
 import { useDispatch, useSelector } from 'react-redux'
-import { clearErrors, getMyReview, getProductDetails, getProductReviews, newReview } from '../../actions/productActions'
+import { clearErrors, getMyReview, getProductDetails, getProductReviews, getRelatedProducts, newReview } from '../../actions/productActions'
 import { addItemToCart } from '../../actions/cartActions'
 
 const ProductDetails = () => {
@@ -45,6 +47,7 @@ const ProductDetails = () => {
     const [comment, setComment] = useState('')
     const productReviews = useSelector(state => state.productReviews)
     const myReview = useSelector(state => state.myReview)
+    const related = useSelector(state => state.relatedProducts)
     const { loading: savingReview, error: reviewError } = useSelector(state => state.newReview)
     const dispatch = useDispatch()
 
@@ -115,6 +118,12 @@ const ProductDetails = () => {
         if (user) dispatch(getMyReview(id))
     }, [dispatch, id, user])
 
+    // Category ng product na ito pa lang, hindi yung naiwan sa store
+    const category = product._id === id ? product.category : null
+    useEffect(() => {
+        if (category) dispatch(getRelatedProducts(id, category))
+    }, [dispatch, id, category])
+
     // Sa product na ito lang; walang review status ang logged out
     const reviews = productReviews.productId === id ? productReviews.reviews : []
     const myReviewStatus = user && myReview.productId === id
@@ -153,11 +162,17 @@ const ProductDetails = () => {
     return (
         <>
             <MetaData title={product.name} />
+            <Breadcrumbs aria-label="Breadcrumb" sx={{ mt: { xs: 2, md: 3 }, '& .MuiBreadcrumbs-li': { minWidth: 0, overflowWrap: 'anywhere' } }}>
+                <Link component={RouterLink} to="/" variant="body2" sx={{ color: 'primary.dark' }}>Home</Link>
+                <Link component={RouterLink} to={`/?category=${encodeURIComponent(product.category)}`} variant="body2" sx={{ color: 'primary.dark' }}>{product.category}</Link>
+                <Typography variant="body2" aria-current="page" sx={{ color: 'text.primary', fontWeight: 500 }}>{product.name}</Typography>
+            </Breadcrumbs>
+
             <Box
                 sx={{
                     display: 'grid',
                     gap: { xs: 3, md: 4 },
-                    mt: { xs: 3, md: 5 },
+                    mt: 2,
                     gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 7fr) minmax(0, 5fr)' },
                     gridTemplateRows: { sm: 'auto 1fr' },
                     gridTemplateAreas: {
@@ -171,30 +186,30 @@ const ProductDetails = () => {
                 </Box>
 
                 <Box sx={{ gridArea: 'buy', minWidth: 0 }}>
-                    <Card sx={{ ...accentTop, height: 'auto', p: 3, position: { sm: 'sticky' }, top: { sm: 96 } }}>
+                    <Card sx={{ ...accentTop, height: 'auto', p: 2.5, position: { sm: 'sticky' }, top: { sm: 96 } }}>
                         <Typography variant="overline" component="p" sx={{ color: 'primary.dark' }}>{product.category}</Typography>
-                        <Typography variant="h2" component="h1" sx={{ overflowWrap: 'anywhere' }}>{product.name}</Typography>
+                        <Typography variant="h3" component="h1" sx={{ overflowWrap: 'anywhere' }}>{product.name}</Typography>
                         <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, overflowWrap: 'anywhere' }}>Product # {product._id}</Typography>
 
                         {reviewCount > 0 ? (
-                            <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
+                            <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                                 <Rating value={product.averageRating} precision={0.1} readOnly aria-label={`${product.averageRating} out of 5 stars`} />
                                 <Link href="#reviews" variant="body2" sx={{ color: 'primary.dark' }}>
                                     {product.averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'Review' : 'Reviews'})
                                 </Link>
                             </Stack>
                         ) : (
-                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1.5 }}>No reviews yet</Typography>
+                            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>No reviews yet</Typography>
                         )}
 
-                        <Typography variant="h1" component="p" sx={{ mt: 2 }}>{formatMoney(product.price)}</Typography>
+                        <Typography variant="h2" component="p" sx={{ mt: 1.5 }}>{formatMoney(product.price)}</Typography>
 
                         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mt: 1, color: !inStock || lowStock ? 'error.main' : 'success.main' }}>
                             {inStock && !lowStock ? <CheckCircleOutlinedIcon fontSize="small" /> : <ErrorOutlinedIcon fontSize="small" />}
                             <Typography variant="body2" sx={{ fontWeight: 700 }}>{stockLabel}</Typography>
                         </Stack>
 
-                        <Stack direction="row" sx={{ alignItems: 'stretch', flexWrap: 'wrap', gap: 1.5, mt: 3 }}>
+                        <Stack direction="row" sx={{ alignItems: 'stretch', flexWrap: 'wrap', gap: 1.5, mt: 2 }}>
                             <QuantitySelector quantity={quantity} stock={product.stock} onDecrease={decreaseQty} onIncrease={increaseQty} />
                             <Button
                                 variant="contained"
@@ -208,7 +223,7 @@ const ProductDetails = () => {
                             </Button>
                         </Stack>
 
-                        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1.5 }}>
                             Sold by: <Box component="strong" sx={{ color: 'text.primary' }}>{product.seller}</Box>
                         </Typography>
                     </Card>
@@ -283,6 +298,19 @@ const ProductDetails = () => {
                     )}
                 </Grid>
             </Box>
+
+            {related.productId === id && related.products.length > 0 && (
+                <Box component="section" aria-labelledby="related-title" sx={{ mt: 6 }}>
+                    <SectionTitle id="related-title" sx={{ mb: 3 }}>More in this category</SectionTitle>
+                    <Grid container spacing={{ xs: 1.5, sm: 3 }}>
+                        {related.products.map(item => (
+                            <Grid key={item._id} size={{ xs: 6, md: 3 }}>
+                                <Product product={item} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            )}
 
             <Dialog open={reviewOpen} onClose={() => setReviewOpen(false)} fullWidth maxWidth="sm" aria-labelledby="review-dialog-title">
                 <DialogTitle id="review-dialog-title">{reviewTitle}</DialogTitle>
