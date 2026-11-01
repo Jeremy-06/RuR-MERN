@@ -56,7 +56,7 @@ const ForgotPassword = () => {
                 />
 
                 <Button id="forgot_password_button" type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ mt: 2 }}>
-                    Send Email
+                    {loading ? 'Sending…' : 'Send Email'}
                 </Button>
             </AuthCard>
         </>

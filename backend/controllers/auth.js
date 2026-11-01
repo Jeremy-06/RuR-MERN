@@ -8,6 +8,7 @@ const { getFirebaseAuth } = require('../config/firebase')
 
 const MIN_PASSWORD_LENGTH = 6
 const USER_ROLES = ['user', 'admin']
+const GOOGLE_ACCOUNT_MESSAGE = 'This account uses Google sign-in. Please continue with Google.'
 
 const DEFAULT_AVATAR = {
     public_id: 'default_avatar',
@@ -92,7 +93,7 @@ exports.loginUser = async (req, res, next) => {
 
     // Google-only accounts have no password to check
     if (!user.password) {
-        return res.status(400).json({ message: 'This account uses Google sign-in. Please continue with Google.' })
+        return res.status(400).json({ message: GOOGLE_ACCOUNT_MESSAGE })
     }
 
     // Checks if password is correct or not
@@ -144,9 +145,14 @@ exports.googleLogin = async (req, res, next) => {
 }
 
 exports.forgotPassword = async (req, res, next) => {
-    const user = await User.findOne({ email: String(req.body.email).toLowerCase() });
+    const user = await User.findOne({ email: String(req.body.email).toLowerCase() }).select('+password');
     if (!user) {
         return res.status(404).json({ message: 'User not found with this email' })
+    }
+
+    // Google-only accounts have no password to reset
+    if (!user.password) {
+        return res.status(400).json({ message: GOOGLE_ACCOUNT_MESSAGE })
     }
 
     // Get reset token
