@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux'
 import dayjs from 'dayjs'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
@@ -18,12 +18,17 @@ import TableRow from '@mui/material/TableRow'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 
+import EmptyState from '../Layout/EmptyState'
 import MetaData from '../Layout/MetaData'
 import Loader from '../Layout/Loader'
+import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
 import SalesChart from './SalesChart'
-import { errMsg, formatMoney, formatPeriod } from '../Utils/helpers'
+import StatCard from './StatCard'
+import { getSalesReport } from '../../actions/orderActions'
+import { formatMoney, formatPeriod } from '../Utils/helpers'
 
 // Each preset also picks a grouping, so long ranges are not drawn day by day
 const presets = [
@@ -43,20 +48,20 @@ const MAX_PERIODS = 366
 // Sent with every request so each day starts at midnight where the admin is
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-const cardSx = { p: { xs: 2, sm: 2.5 }, borderRadius: '0.6rem', boxShadow: '0 2px 10px rgba(9, 11, 15, 0.08)' }
+const cardSx = { p: { xs: 2, sm: 2.5 } }
 // Full width on phones, side by side from tablets up
 const fieldWidth = { width: { xs: '100%', sm: 170 } }
 const pickerProps = { textField: { size: 'small', margin: 'none', fullWidth: false, sx: fieldWidth } }
 
 const SalesDashboard = () => {
+    const dispatch = useDispatch()
+    const report = useSelector(state => state.salesReport)
     const [preset, setPreset] = useState('30d')
     const [startDate, setStartDate] = useState(() => dayjs().subtract(29, 'day'))
     const [endDate, setEndDate] = useState(() => dayjs())
     const [dateErrors, setDateErrors] = useState({ start: null, end: null })
     const [groupBy, setGroupBy] = useState('day')
     const [view, setView] = useState('line')
-    // query names the filters the data was loaded for, so a refetch can dim the old numbers instead of blanking them
-    const [report, setReport] = useState({ query: null, data: null, error: null })
 
     const validDates = startDate && startDate.isValid() && endDate && endDate.isValid()
     const start = validDates ? startDate.format('YYYY-MM-DD') : ''
@@ -74,33 +79,13 @@ const SalesDashboard = () => {
     }
 
     const query = rangeError ? null : `${start}|${end}|${groupBy}`
-    const refreshing = query !== null && report.query !== query
+    const refreshing = query !== null && (report.key !== query || report.loading)
     const { data } = report
 
     useEffect(() => {
-        if (rangeError) return
-        const controller = new AbortController()
-
-        const getSales = async () => {
-            try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/sales-by-date`, {
-                    params: { startDate: start, endDate: end, groupBy, timezone },
-                    signal: controller.signal,
-                    withCredentials: true
-                })
-                setReport({ query: `${start}|${end}|${groupBy}`, data, error: null })
-            } catch (error) {
-                // A newer request replaced this one
-                if (axios.isCancel(error)) return
-                const message = error.response ? error.response.data.message : error.message
-                errMsg(message)
-                setReport({ query: `${start}|${end}|${groupBy}`, data: null, error: message })
-            }
-        }
-
-        getSales()
-        return () => controller.abort()
-    }, [start, end, groupBy, rangeError])
+        if (query === null) return
+        dispatch(getSalesReport(query, { startDate: start, endDate: end, groupBy, timezone }))
+    }, [dispatch, query, start, end, groupBy])
 
     const presetHandler = (event) => {
         const value = event.target.value
@@ -135,9 +120,7 @@ const SalesDashboard = () => {
     const renderSales = () => {
         if (data.totalOrders === 0) {
             return (
-                <Typography color="textSecondary" sx={{ textAlign: 'center', py: 10 }}>
-                    {`No orders from ${formatPeriod({ start: data.startDate, end: data.endDate })}.`}
-                </Typography>
+                <EmptyState flat title="No orders" message={`No orders from ${formatPeriod({ start: data.startDate, end: data.endDate })}.`} />
             )
         }
 
@@ -186,10 +169,10 @@ const SalesDashboard = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 10 }}>
-                    <Typography variant="h3" component="h1" sx={{ my: 4 }}>Sales</Typography>
+                    <PageHeader title="Sales" />
 
                     {/* Filters: everything below follows this range */}
-                    <Paper elevation={0} sx={{ ...cardSx, mb: 3 }}>
+                    <Paper sx={{ ...cardSx, mb: 3 }}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
                                 <TextField
@@ -248,7 +231,7 @@ const SalesDashboard = () => {
 
                     {!data ? (
                         report.error
-                            ? <Typography color="textSecondary" sx={{ textAlign: 'center', py: 10 }}>{`Sales could not be loaded: ${report.error}`}</Typography>
+                            ? <EmptyState icon={<ErrorOutlinedIcon />} title="Sales could not be loaded" message={report.error} />
                             : <Loader />
                     ) : (
                         // The previous numbers stay, dimmed, while new ones load
@@ -256,15 +239,12 @@ const SalesDashboard = () => {
                             <Grid container spacing={2} sx={{ mb: 3 }}>
                                 {stats.map(stat => (
                                     <Grid key={stat.label} size={{ xs: 6, lg: 3 }}>
-                                        <Paper elevation={0} sx={{ ...cardSx, height: '100%' }}>
-                                            <Typography variant="body2" color="textSecondary">{stat.label}</Typography>
-                                            <Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.75rem' }, fontWeight: 600, lineHeight: 1.3, overflowWrap: 'anywhere' }}>{stat.value}</Typography>
-                                        </Paper>
+                                        <StatCard label={stat.label} value={stat.value} />
                                     </Grid>
                                 ))}
                             </Grid>
 
-                            <Paper elevation={0} sx={{ ...cardSx, mb: 4 }}>
+                            <Paper sx={{ ...cardSx, mb: 4 }}>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                                     <Box sx={{ mr: 'auto' }}>
                                         <Typography variant="h5" component="h2">{`Sales per ${data.groupBy}`}</Typography>

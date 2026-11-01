@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import axios from 'axios'
+import { useCallback, useEffect, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Swal from 'sweetalert2'
 import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
@@ -11,6 +11,8 @@ import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
 import AdminDataGrid, { IdCell, PersonCell, RowAction } from './AdminDataGrid'
+import { allUsers, clearErrors, deleteUser } from '../../actions/userActions'
+import { DELETE_USER_RESET } from '../../constants/userConstants'
 import { errMsg, formatDate, successMsg } from '../Utils/helpers'
 
 const columns = [
@@ -60,42 +62,28 @@ const columns = [
 ]
 
 const UsersList = () => {
-    const [loading, setLoading] = useState(true)
-    const [loadError, setLoadError] = useState(null)
-    const [allUsers, setAllUsers] = useState([])
+    const dispatch = useDispatch()
+    const { user: me } = useSelector(state => state.auth)
+    const { loading, error, users } = useSelector(state => state.allUsers)
+    const { error: deleteError, isDeleted } = useSelector(state => state.user)
 
-    const listUsers = useCallback(async () => {
-        try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/users`, { withCredentials: true })
-            setAllUsers(data.users)
-            setLoadError(null)
-        } catch (error) {
-            setLoadError(error.response ? error.response.data.message : error.message)
-        }
-        setLoading(false)
-    }, [])
+    const loadUsers = useCallback(() => dispatch(allUsers()), [dispatch])
 
     useEffect(() => {
-        listUsers()
-    }, [listUsers])
+        loadUsers()
+    }, [loadUsers])
 
-    const retryHandler = () => {
-        setLoading(true)
-        setLoadError(null)
-        listUsers()
-    }
-
-    const deleteUser = useCallback(async (id) => {
-        try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/user/${id}`, { withCredentials: true })
-            if (data.success) {
-                successMsg('User deleted successfully')
-                listUsers()
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+    useEffect(() => {
+        if (deleteError) {
+            errMsg(deleteError)
+            dispatch(clearErrors())
         }
-    }, [listUsers])
+        if (isDeleted) {
+            successMsg('User deleted successfully')
+            dispatch({ type: DELETE_USER_RESET })
+            loadUsers()
+        }
+    }, [dispatch, deleteError, isDeleted, loadUsers])
 
     const deleteUserHandler = useCallback((id) => {
         Swal.fire({
@@ -106,19 +94,22 @@ const UsersList = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteUser(id)
+                dispatch(deleteUser(id))
             }
         })
-    }, [deleteUser])
+    }, [dispatch])
 
     const renderActions = useCallback((row) => (
         <>
             <RowAction label="Edit" subject={row.name} icon={<EditOutlinedIcon fontSize="small" />} to={`/admin/user/${row.id}`} />
-            <RowAction label="Delete" subject={row.name} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteUserHandler(row.id)} />
+            {/* An admin cannot delete their own account */}
+            {row.id !== me._id && (
+                <RowAction label="Delete" subject={row.name} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteUserHandler(row.id)} />
+            )}
         </>
-    ), [deleteUserHandler])
+    ), [deleteUserHandler, me._id])
 
-    const rows = useMemo(() => allUsers.map(user => ({
+    const rows = useMemo(() => users.map(user => ({
         id: user._id,
         name: user.name,
         avatar: user.avatar ? user.avatar.url : '',
@@ -126,7 +117,7 @@ const UsersList = () => {
         role: user.role,
         joined: new Date(user.createdAt),
         provider: user.authProvider,
-    })), [allUsers])
+    })), [users])
 
     return (
         <>
@@ -142,8 +133,8 @@ const UsersList = () => {
                         rows={rows}
                         columns={columns}
                         loading={loading}
-                        error={loadError}
-                        onRetry={retryHandler}
+                        error={error}
+                        onRetry={loadUsers}
                         empty={{ icon: <PeopleOutlinedIcon />, title: 'No users yet' }}
                         renderActions={renderActions}
                         sortField="joined"

@@ -20,6 +20,12 @@ import {
     DELETE_ORDER_SUCCESS,
     DELETE_ORDER_RESET,
     DELETE_ORDER_FAIL,
+    DASHBOARD_SALES_REQUEST,
+    DASHBOARD_SALES_SUCCESS,
+    DASHBOARD_SALES_FAIL,
+    SALES_REPORT_REQUEST,
+    SALES_REPORT_SUCCESS,
+    SALES_REPORT_FAIL,
     CLEAR_ERRORS
 } from '../constants/orderConstants'
 
@@ -176,5 +182,59 @@ export const orderReducer = (state = {}, action) => {
             }
         default:
             return state;
+    }
+}
+
+export const dashboardSalesReducer = (state = { loading: true, monthly: [], customers: [], products: [] }, action) => {
+    switch (action.type) {
+        case DASHBOARD_SALES_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null
+            }
+        case DASHBOARD_SALES_SUCCESS:
+            return {
+                loading: false,
+                ...action.payload
+            }
+        case DASHBOARD_SALES_FAIL:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
+        default:
+            return state
+    }
+}
+
+// The previous numbers stay while a new range loads, so the page can dim them instead of blanking
+export const salesReportReducer = (state = { key: null, data: null }, action) => {
+    switch (action.type) {
+        case SALES_REPORT_REQUEST:
+            return {
+                ...state,
+                key: action.key,
+                loading: true,
+                error: null
+            }
+        case SALES_REPORT_SUCCESS:
+            if (action.key !== state.key) return state
+            return {
+                ...state,
+                loading: false,
+                data: action.payload
+            }
+        case SALES_REPORT_FAIL:
+            if (action.key !== state.key) return state
+            return {
+                ...state,
+                loading: false,
+                data: null,
+                error: action.payload
+            }
+        default:
+            return state
     }
 }

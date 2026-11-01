@@ -1,66 +1,64 @@
-import { useState, } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
 import MetaData from '../Layout/MetaData'
-import axios from 'axios'
+import AuthCard from './AuthCard'
+import { clearErrors, forgotPassword } from '../../actions/userActions'
+import { FORGOT_PASSWORD_RESET } from '../../constants/userConstants'
 import { errMsg, successMsg } from '../Utils/helpers'
 
-const ForgotPassword = () => {
-    const [email, setEmail] = useState('')
-    const [loading, setLoading] = useState(false)
+const forgotSchema = Yup.object({
+    email: Yup.string().trim().required('Please enter your email').email('Please enter valid email address'),
+})
 
+const ForgotPassword = () => {
+    const dispatch = useDispatch()
+    const { loading, error, message } = useSelector(state => state.forgotPassword)
     const navigate = useNavigate()
 
-    const forgotPassword = async (formData) => {
-        const config = {
-            headers: {
-                'Content-Type': 'application/json'
-            }
+    useEffect(() => {
+        if (error) {
+            errMsg(error)
+            dispatch(clearErrors())
         }
-        try {
-            setLoading(true)
-            const { data } = await axios.post(`${import.meta.env.VITE_API}/password/forgot`, formData, config)
-            setLoading(false)
-            successMsg(data.message)
+        if (message) {
+            successMsg(message)
+            dispatch({ type: FORGOT_PASSWORD_RESET })
             navigate('/login')
-        } catch (error) {
-            setLoading(false)
-            errMsg(error.response ? error.response.data.message : error.message)
         }
-    }
+    }, [dispatch, error, message, navigate])
 
-    const submitHandler = (e) => {
-        e.preventDefault();
-        forgotPassword({ email })
-    }
+    const formik = useFormik({
+        initialValues: { email: '' },
+        validationSchema: forgotSchema,
+        onSubmit: (values) => {
+            dispatch(forgotPassword(values.email.trim()))
+        }
+    })
 
     return (
         <>
             <MetaData title={'Forgot Password'} />
-            <div className="row wrapper">
-                <div className="col-10 col-lg-5">
-                    <form className="shadow-lg" onSubmit={submitHandler}>
-                        <h1 className="mb-3">Forgot Password</h1>
-                        <div className="form-group">
-                            <label htmlFor="email_field">Enter Email</label>
-                            <input
-                                type="email"
-                                id="email_field"
-                                className="form-control"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
 
-                        <button
-                            id="forgot_password_button"
-                            type="submit"
-                            className="btn btn-block py-3"
-                            disabled={loading ? true : false} >
-                            Send Email
-                        </button>
-                    </form>
-                </div>
-            </div>
+            <AuthCard title="Forgot Password" subtitle="We will email you a link to set a new password." onSubmit={formik.handleSubmit}>
+                <TextField
+                    id="email_field"
+                    label="Enter Email"
+                    type="email"
+                    autoComplete="email"
+                    {...formik.getFieldProps('email')}
+                    error={formik.touched.email && Boolean(formik.errors.email)}
+                    helperText={formik.touched.email && formik.errors.email}
+                />
+
+                <Button id="forgot_password_button" type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ mt: 2 }}>
+                    Send Email
+                </Button>
+            </AuthCard>
         </>
     )
 }

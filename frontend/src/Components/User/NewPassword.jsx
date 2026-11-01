@@ -1,82 +1,60 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import Button from '@mui/material/Button'
 import MetaData from '../Layout/MetaData'
-import axios from 'axios';
-import { useDispatch } from 'react-redux'
-import { loadUser } from '../../actions/userActions'
-import { errMsg, successMsg } from '../Utils/helpers'
+import AuthCard from './AuthCard'
+import PasswordField from './PasswordField'
+import { clearErrors, loadUser, resetPassword } from '../../actions/userActions'
+import { NEW_PASSWORD_RESET } from '../../constants/userConstants'
+import { confirmPasswordSchema, errMsg, passwordSchema, successMsg } from '../Utils/helpers'
+
+const newPasswordSchema = Yup.object({
+    password: passwordSchema,
+    confirmPassword: confirmPasswordSchema,
+})
 
 const NewPassword = () => {
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
-
-    let navigate = useNavigate();
     const dispatch = useDispatch()
+    const { loading, error, success } = useSelector(state => state.forgotPassword)
+    let navigate = useNavigate();
     let { token } = useParams();
 
-    const resetPassword = async (token, passwords) => {
-        try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                withCredentials: true
-            }
-            const { data } = await axios.put(`${import.meta.env.VITE_API}/password/reset/${token}`, passwords, config)
-            if (data.success) {
-                successMsg('password updated')
-                dispatch(loadUser())
-                navigate('/')
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+    useEffect(() => {
+        if (error) {
+            errMsg(error)
+            dispatch(clearErrors())
         }
-    }
+        if (success) {
+            successMsg('password updated')
+            dispatch({ type: NEW_PASSWORD_RESET })
+            dispatch(loadUser())
+            navigate('/')
+        }
+    }, [dispatch, error, success, navigate])
 
-    const submitHandler = (e) => {
-        e.preventDefault();
-        resetPassword(token, { password, confirmPassword })
-    }
+    const formik = useFormik({
+        initialValues: { password: '', confirmPassword: '' },
+        validationSchema: newPasswordSchema,
+        onSubmit: (values) => {
+            dispatch(resetPassword(token, values))
+        }
+    })
 
     return (
         <>
             <MetaData title={'New Password Reset'} />
-            <div className="row wrapper">
-                <div className="col-10 col-lg-5">
-                    <form className="shadow-lg" onSubmit={submitHandler}>
-                        <h1 className="mb-3">New Password</h1>
 
-                        <div className="form-group">
-                            <label htmlFor="password_field">Password</label>
-                            <input
-                                type="password"
-                                id="password_field"
-                                className="form-control"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+            <AuthCard title="New Password" onSubmit={formik.handleSubmit}>
+                <PasswordField formik={formik} name="password" id="password_field" label="Password" autoComplete="new-password" />
+                <PasswordField formik={formik} name="confirmPassword" id="confirm_password_field" label="Confirm password" autoComplete="new-password" />
 
-                        <div className="form-group">
-                            <label htmlFor="confirm_password_field">Confirm Password</label>
-                            <input
-                                type="password"
-                                id="confirm_password_field"
-                                className="form-control"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                            />
-                        </div>
-
-                        <button
-                            id="new_password_button"
-                            type="submit"
-                            className="btn btn-block py-3">
-                            Set Password
-                        </button>
-                    </form>
-                </div>
-            </div>
+                <Button id="new_password_button" type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ mt: 2 }}>
+                    Set Password
+                </Button>
+            </AuthCard>
         </>
     )
 }

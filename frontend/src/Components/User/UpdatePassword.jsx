@@ -1,74 +1,75 @@
-import { useState } from 'react'
-import { useNavigate } from "react-router-dom";
+import { useEffect } from 'react'
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import EmptyState from '../Layout/EmptyState'
 import MetaData from '../Layout/MetaData';
-import axios from 'axios';
-import { errMsg, successMsg } from '../Utils/helpers'
+import AuthCard from './AuthCard'
+import PasswordField from './PasswordField'
+import { clearErrors, updatePassword } from '../../actions/userActions'
+import { UPDATE_PASSWORD_RESET } from '../../constants/userConstants'
+import { confirmPasswordSchema, errMsg, passwordSchema, successMsg } from '../Utils/helpers'
+
+const updatePasswordSchema = Yup.object({
+    oldPassword: Yup.string().required('Please enter your old password'),
+    password: passwordSchema,
+    confirmPassword: confirmPasswordSchema,
+})
 
 const UpdatePassword = () => {
-    const [oldPassword, setOldPassword] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
+    const dispatch = useDispatch()
+    const { user } = useSelector(state => state.auth)
+    const { loading, error, isUpdated } = useSelector(state => state.user)
     let navigate = useNavigate();
 
-    const updatePassword = async (formData) => {
-        try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
-
-            setLoading(true)
-            await axios.put(`${import.meta.env.VITE_API}/password/update`, formData, config)
-            setLoading(false)
-            successMsg('password updated')
-            navigate('/me')
-        } catch (error) {
-            setLoading(false)
-            errMsg(error.response ? error.response.data.message : error.message)
+    useEffect(() => {
+        if (error) {
+            errMsg(error)
+            dispatch(clearErrors())
         }
-    }
+        if (isUpdated) {
+            successMsg('password updated')
+            dispatch({ type: UPDATE_PASSWORD_RESET })
+            navigate('/me')
+        }
+    }, [dispatch, error, isUpdated, navigate])
 
-    const submitHandler = (e) => {
-        e.preventDefault();
-        updatePassword({ oldPassword, password })
-    }
+    const formik = useFormik({
+        initialValues: { oldPassword: '', password: '', confirmPassword: '' },
+        validationSchema: updatePasswordSchema,
+        onSubmit: (values) => {
+            dispatch(updatePassword(values))
+        }
+    })
 
     return (
         <>
             <MetaData title={'Change Password'} />
 
-            <div className="row wrapper">
-                <div className="col-10 col-lg-5">
-                    <form className="shadow-lg" onSubmit={submitHandler} >
-                        <h1 className="mt-2 mb-5">Update Password</h1>
-                        <div className="form-group">
-                            <label htmlFor="old_password_field">Old Password</label>
-                            <input
-                                type="password"
-                                id="old_password_field"
-                                className="form-control"
-                                value={oldPassword}
-                                onChange={(e) => setOldPassword(e.target.value)}
-                            />
-                        </div>
+            {user.authProvider === 'google' ? (
+                <Box sx={{ mt: { xs: 3, md: 5 } }}>
+                    <EmptyState
+                        icon={<LockOutlinedIcon />}
+                        title="No password to change"
+                        message="This account uses Google sign-in."
+                        action={<Button component={Link} to="/me" variant="contained">Back to My Profile</Button>}
+                    />
+                </Box>
+            ) : (
+                <AuthCard title="Update Password" onSubmit={formik.handleSubmit}>
+                    <PasswordField formik={formik} name="oldPassword" id="old_password_field" label="Old password" autoComplete="current-password" />
+                    <PasswordField formik={formik} name="password" id="new_password_field" label="New password" autoComplete="new-password" />
+                    <PasswordField formik={formik} name="confirmPassword" id="confirm_password_field" label="Confirm password" autoComplete="new-password" />
 
-                        <div className="form-group">
-                            <label htmlFor="new_password_field">New Password</label>
-                            <input
-                                type="password"
-                                id="new_password_field"
-                                className="form-control"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-
-                        <button type="submit" className="btn update-btn btn-block mt-4 mb-3" disabled={loading ? true : false} >Update Password</button>
-                    </form>
-                </div>
-            </div>
+                    <Button type="submit" variant="contained" size="large" fullWidth disabled={loading} sx={{ mt: 2 }}>
+                        Update Password
+                    </Button>
+                </AuthCard>
+            )}
         </>
     )
 }

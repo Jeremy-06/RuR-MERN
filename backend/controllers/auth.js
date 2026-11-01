@@ -6,21 +6,20 @@ const sendEmail = require('../utils/sendEmail')
 const sendToken = require('../utils/jwtToken');
 const { getFirebaseAuth } = require('../config/firebase')
 
+const MIN_PASSWORD_LENGTH = 6
+const USER_ROLES = ['user', 'admin']
+
 const DEFAULT_AVATAR = {
     public_id: 'default_avatar',
     url: '/images/default_avatar.svg'
 }
 
 // Same rules as the Yup schemas on the frontend; returns the first error message
-const validateUser = ({ name, email, password, avatar }, checkPassword) => {
+const validateUser = ({ name, email, avatar }) => {
     if (!name || !String(name).trim()) return 'Please enter your name'
     if (String(name).trim().length > 30) return 'Your name cannot exceed 30 characters'
     if (!email || !String(email).trim()) return 'Please enter your email'
     if (!validator.isEmail(String(email).trim())) return 'Please enter valid email address'
-    if (checkPassword) {
-        if (!password) return 'Please enter your password'
-        if (String(password).length < 6) return 'Your password must be at least 6 characters'
-    }
     if (avatar) {
         // Avatars arrive as base64 data URLs from FileReader
         if (!/^data:image\/(jpeg|png|webp);base64,/.test(avatar)) return 'Avatar must be a jpg, jpeg, png or webp image'
@@ -29,11 +28,20 @@ const validateUser = ({ name, email, password, avatar }, checkPassword) => {
     return null
 }
 
+// Same rules as the password fields on the frontend; confirmPassword is only compared, never stored
+const validatePasswords = ({ password, confirmPassword }) => {
+    if (!password || typeof password !== 'string') return 'Please enter your password'
+    if (password.length < MIN_PASSWORD_LENGTH) return `Your password must be at least ${MIN_PASSWORD_LENGTH} characters`
+    if (!confirmPassword) return 'Please confirm your password'
+    if (password !== confirmPassword) return 'Passwords do not match'
+    return null
+}
+
 exports.registerUser = async (req, res, next) => {
     const { name, email, password, } = req.body || {};
 
     // Validate before uploading the avatar so a bad form does not leave files in Cloudinary
-    const errorMessage = validateUser(req.body || {}, true)
+    const errorMessage = validateUser(req.body || {}) || validatePasswords(req.body || {})
     if (errorMessage) {
         return res.status(400).json({ message: errorMessage })
     }
@@ -180,8 +188,9 @@ exports.resetPassword = async (req, res, next) => {
         return res.status(400).json({ message: 'Password reset token is invalid or has been expired' })
     }
 
-    if (req.body.password !== req.body.confirmPassword) {
-        return res.status(400).json({ message: 'Password does not match' })
+    const errorMessage = validatePasswords(req.body || {})
+    if (errorMessage) {
+        return res.status(400).json({ message: errorMessage })
     }
 
     // Setup new password
@@ -204,7 +213,7 @@ exports.getUserProfile = async (req, res, next) => {
 }
 
 exports.updateProfile = async (req, res, next) => {
-    const errorMessage = validateUser(req.body || {}, false)
+    const errorMessage = validateUser(req.body || {})
     if (errorMessage) {
         return res.status(400).json({ message: errorMessage })
     }
@@ -256,6 +265,14 @@ exports.updatePassword = async (req, res, next) => {
         return res.status(400).json({ message: 'This account uses Google sign-in and has no password to change' })
     }
 
+    if (!req.body.oldPassword || typeof req.body.oldPassword !== 'string') {
+        return res.status(400).json({ message: 'Please enter your old password' })
+    }
+    const errorMessage = validatePasswords(req.body)
+    if (errorMessage) {
+        return res.status(400).json({ message: errorMessage })
+    }
+
     // Check previous user password
     const isMatched = await user.comparePassword(req.body.oldPassword)
     if (!isMatched) {
@@ -290,10 +307,28 @@ exports.getUserDetails = async (req, res, next) => {
 }
 
 exports.updateUser = async (req, res, next) => {
+    const { name, email, role } = req.body || {}
+
+    const errorMessage = validateUser({ name, email })
+    if (errorMessage) {
+        return res.status(400).json({ message: errorMessage })
+    }
+    if (!USER_ROLES.includes(role)) {
+        return res.status(400).json({ message: 'Please select a valid role' })
+    }
+    if (req.params.id === req.user._id.toString() && role !== 'admin') {
+        return res.status(400).json({ message: 'You cannot remove your own admin role' })
+    }
+
     const newUserData = {
-        name: req.body.name,
-        email: req.body.email,
-        role: req.body.role
+        name: String(name).trim(),
+        email: String(email).trim().toLowerCase(),
+        role
+    }
+
+    // Email must stay unique across accounts
+    if (await User.exists({ email: newUserData.email, _id: { $ne: req.params.id } })) {
+        return res.status(400).json({ message: 'Email is already registered' })
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, newUserData, {

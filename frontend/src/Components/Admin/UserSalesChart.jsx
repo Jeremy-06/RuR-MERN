@@ -1,63 +1,11 @@
-import { useState, useEffect } from 'react'
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    Cell,
-} from "recharts";
-import axios from "axios";
-import Loader from '../Layout/Loader';
-import { errMsg } from '../Utils/helpers'
+import { useMemo } from 'react'
+import RankedBars from './RankedBars'
+import { formatCompactMoney, formatMoney } from '../Utils/helpers'
 
-const UserSalesChart = () => {
-    const [sales, setSales] = useState([])
-    const [loading, setLoading] = useState(true)
+const UserSalesChart = ({ sales }) => {
+    const data = useMemo(() => sales.map(item => ({ name: item.userDetails.name, value: item.total })), [sales])
 
-    const userSales = async () => {
-        try {
-            const config = {
-                withCredentials: true
-            }
-
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/customer-sales`, config)
-            setSales(data.customerSales)
-            setLoading(false)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
-
-    const barColors = ["#0f6be0", "#fb334b", "#14b8a6"]
-
-    useEffect(() => {
-        userSales()
-    }, [])
-
-    if (loading) return <Loader />
-    if (sales.length === 0) return <p className="text-center text-muted my-5">No sales yet.</p>
-
-    return (
-        <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={sales}>
-                <CartesianGrid strokeDasharray="2 2" />
-                <XAxis dataKey="userDetails.name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total">
-                    {
-                        sales.map((item, index) => (
-                            <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
-                        ))
-                    }
-                </Bar>
-            </BarChart>
-        </ResponsiveContainer>
-    );
+    return <RankedBars data={data} format={formatMoney} axisFormat={formatCompactMoney} />
 }
+
 export default UserSalesChart

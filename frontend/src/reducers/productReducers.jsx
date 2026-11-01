@@ -5,6 +5,9 @@ import {
     PRODUCT_DETAILS_REQUEST,
     PRODUCT_DETAILS_SUCCESS,
     PRODUCT_DETAILS_FAIL,
+    ADMIN_PRODUCTS_REQUEST,
+    ADMIN_PRODUCTS_SUCCESS,
+    ADMIN_PRODUCTS_FAIL,
     NEW_REVIEW_REQUEST,
     NEW_REVIEW_SUCCESS,
     NEW_REVIEW_FAIL,
@@ -279,6 +282,30 @@ export const reviewReducer = (state = {}, action) => {
             return {
                 ...state,
                 error: null
+            }
+        default:
+            return state
+    }
+}
+
+export const adminProductsReducer = (state = { loading: true, products: [] }, action) => {
+    switch (action.type) {
+        case ADMIN_PRODUCTS_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null
+            }
+        case ADMIN_PRODUCTS_SUCCESS:
+            return {
+                loading: false,
+                products: action.payload
+            }
+        case ADMIN_PRODUCTS_FAIL:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
             }
         default:
             return state

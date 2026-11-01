@@ -1,157 +1,121 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-
-import MetaData from '../Layout/MetaData'
-import Loader from '../Layout/Loader'
+import { useCallback, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
 import Grid from '@mui/material/Grid'
+import Typography from '@mui/material/Typography'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
+
+import EmptyState from '../Layout/EmptyState'
+import Loader from '../Layout/Loader'
+import MetaData from '../Layout/MetaData'
+import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
-import axios from 'axios'
-import { errMsg } from '../Utils/helpers'
-import ProductSalesChart from './ProductSalesChart';
-import UserSalesChart from './UserSalesChart';
-import MonthlySalesChart from './MonthlySalesChart';
+import StatCard from './StatCard'
+import MonthlySalesChart from './MonthlySalesChart'
+import ProductSalesChart from './ProductSalesChart'
+import UserSalesChart from './UserSalesChart'
+import { getAdminProducts } from '../../actions/productActions'
+import { allOrders, getDashboardSales } from '../../actions/orderActions'
+import { allUsers } from '../../actions/userActions'
+import { formatMoney } from '../Utils/helpers'
+
+const ChartCard = ({ title, hasData, children }) => (
+    <Card sx={{ height: 'auto', p: { xs: 2, sm: 2.5 } }}>
+        <Typography variant="h5" component="h2" sx={{ mb: 2 }}>{title}</Typography>
+        {hasData ? children : <Typography color="textSecondary" sx={{ textAlign: 'center', py: 6 }}>No sales yet.</Typography>}
+    </Card>
+)
 
 const Dashboard = () => {
-    const [products, setProducts] = useState([])
-    const [users, setUsers] = useState([])
-    const [orders, setOrders] = useState([])
-    const [totalAmount, setTotalAmount] = useState(0)
-    const [loading, setLoading] = useState(true)
+    const dispatch = useDispatch()
+    const products = useSelector(state => state.adminProducts)
+    const orders = useSelector(state => state.allOrders)
+    const users = useSelector(state => state.allUsers)
+    const sales = useSelector(state => state.dashboardSales)
 
-    let outOfStock = 0;
-    products.forEach(product => {
-        if (product.stock === 0) {
-            outOfStock += 1;
-        }
-    })
-
-    const getDashboardData = async () => {
-        try {
-            const config = {
-                withCredentials: true
-            }
-
-            const [productsRes, ordersRes, usersRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API}/admin/products`, config),
-                axios.get(`${import.meta.env.VITE_API}/admin/orders`, config),
-                axios.get(`${import.meta.env.VITE_API}/admin/users`, config),
-            ])
-            setProducts(productsRes.data.products)
-            setOrders(ordersRes.data.orders)
-            setTotalAmount(ordersRes.data.totalAmount)
-            setUsers(usersRes.data.users)
-            setLoading(false)
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
-        }
-    }
+    const loadDashboard = useCallback(() => {
+        dispatch(getAdminProducts())
+        dispatch(allOrders())
+        dispatch(allUsers())
+        dispatch(getDashboardSales())
+    }, [dispatch])
 
     useEffect(() => {
-        getDashboardData()
-    }, [])
+        loadDashboard()
+    }, [loadDashboard])
+
+    const error = products.error || orders.error || users.error || sales.error
+    const loading = products.loading || orders.loading || users.loading || sales.loading
+    const outOfStock = products.products.filter(product => product.stock === 0).length
+
+    let content
+    if (error) {
+        content = (
+            <EmptyState
+                icon={<ErrorOutlinedIcon />}
+                title="Could not load the dashboard"
+                message={error}
+                action={<Button variant="contained" onClick={loadDashboard}>Try again</Button>}
+            />
+        )
+    } else if (loading) {
+        content = <Loader />
+    } else {
+        content = (
+            <>
+                <Box sx={{ mb: 2 }}>
+                    <StatCard label="Total Amount" value={formatMoney(orders.totalAmount)} dark />
+                </Box>
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid size={{ xs: 6, lg: 3 }}>
+                        <StatCard label="Products" value={products.products.length} to="/admin/products" />
+                    </Grid>
+                    <Grid size={{ xs: 6, lg: 3 }}>
+                        <StatCard label="Orders" value={orders.orders.length} to="/admin/orders" />
+                    </Grid>
+                    <Grid size={{ xs: 6, lg: 3 }}>
+                        <StatCard label="Users" value={users.users.length} to="/admin/users" />
+                    </Grid>
+                    <Grid size={{ xs: 6, lg: 3 }}>
+                        <StatCard label="Out of Stock" value={outOfStock} />
+                    </Grid>
+                </Grid>
+
+                <Grid container spacing={3}>
+                    <Grid size={12}>
+                        <ChartCard title="Monthly Sales" hasData={sales.monthly.length > 0}>
+                            <MonthlySalesChart sales={sales.monthly} />
+                        </ChartCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, xl: 6 }}>
+                        <ChartCard title="Sales per Customer" hasData={sales.customers.length > 0}>
+                            <UserSalesChart sales={sales.customers} />
+                        </ChartCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, xl: 6 }}>
+                        <ChartCard title="Sales per Product (%)" hasData={sales.products.length > 0}>
+                            <ProductSalesChart sales={sales.products} />
+                        </ChartCard>
+                    </Grid>
+                </Grid>
+            </>
+        )
+    }
 
     return (
         <>
+            <MetaData title={'Admin Dashboard'} />
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 2 }}>
                     <Sidebar />
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 10 }}>
-                    <h1 className="my-4">Dashboard</h1>
-
-                    {loading ? <Loader /> : (
-                        <>
-                            <MetaData title={'Admin Dashboard'} />
-
-                            <div className="row pr-4">
-                                <div className="col-xl-12 col-sm-12 mb-3">
-                                    <div className="card text-white bg-primary o-hidden h-100">
-                                        <div className="card-body">
-                                            <div className="text-center card-font-size">Total Amount<br /> <b>${totalAmount && totalAmount.toFixed(2)}</b>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="row pr-4">
-                                <div className="col-xl-3 col-sm-6 mb-3">
-                                    <div className="card text-white bg-success o-hidden h-100">
-                                        <div className="card-body">
-                                            <div className="text-center card-font-size">Products<br /> <b>{products && products.length}</b></div>
-                                        </div>
-
-                                        <Link className="card-footer text-white clearfix small z-1" to="/admin/products">
-                                            <span className="float-left">View Details</span>
-                                            <span className="float-right">
-                                                <i className="fa fa-angle-right"></i>
-                                            </span>
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="col-xl-3 col-sm-6 mb-3">
-                                    <div className="card text-white bg-danger o-hidden h-100">
-                                        <div className="card-body">
-                                            <div className="text-center card-font-size">Orders<br /> <b>{orders && orders.length}</b></div>
-                                        </div>
-
-                                        <Link className="card-footer text-white clearfix small z-1" to="/admin/orders">
-                                            <span className="float-left">View Details</span>
-                                            <span className="float-right">
-                                                <i className="fa fa-angle-right"></i>
-                                            </span>
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="col-xl-3 col-sm-6 mb-3">
-                                    <div className="card text-white bg-info o-hidden h-100">
-                                        <div className="card-body">
-                                            <div className="text-center card-font-size">Users<br /> <b>{users && users.length}</b></div>
-                                        </div>
-
-                                        <Link className="card-footer text-white clearfix small z-1" to="/admin/users">
-                                            <span className="float-left">View Details</span>
-                                            <span className="float-right">
-                                                <i className="fa fa-angle-right"></i>
-                                            </span>
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="col-xl-3 col-sm-6 mb-3">
-                                    <div className="card text-white bg-warning o-hidden h-100">
-                                        <div className="card-body">
-                                            <div className="text-center card-font-size">Out of Stock<br /> <b>{outOfStock}</b></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="row pr-4">
-                                <div className="col-12 mb-4">
-                                    <div className="chart-card">
-                                        <h4>Monthly Sales</h4>
-                                        <MonthlySalesChart />
-                                    </div>
-                                </div>
-                                <div className="col-12 col-xl-6 mb-4">
-                                    <div className="chart-card">
-                                        <h4>Sales per Customer</h4>
-                                        <UserSalesChart />
-                                    </div>
-                                </div>
-                                <div className="col-12 col-xl-6 mb-4">
-                                    <div className="chart-card">
-                                        <h4>Sales per Product (%)</h4>
-                                        <ProductSalesChart />
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
+                    <PageHeader title="Dashboard" />
+                    {content}
                 </Grid>
             </Grid>
         </>

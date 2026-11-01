@@ -10,9 +10,14 @@ import {
     myReviewReducer,
     newReviewReducer,
     reviewReducer,
+    adminProductsReducer,
 } from './reducers/productReducers'
 import {
     authReducer,
+    userReducer,
+    forgotPasswordReducer,
+    allUsersReducer,
+    userDetailsReducer,
 } from './reducers/userReducers'
 import { cartReducer } from './reducers/cartReducers'
 import {
@@ -21,6 +26,8 @@ import {
     orderDetailsReducer,
     allOrdersReducer,
     orderReducer,
+    dashboardSalesReducer,
+    salesReportReducer,
 } from './reducers/orderReducers'
 
 let initialState = {
@@ -40,13 +47,20 @@ const reducer = combineReducers({
     myReview: myReviewReducer,
     newReview: newReviewReducer,
     review: reviewReducer,
+    adminProducts: adminProductsReducer,
     auth: authReducer,
+    user: userReducer,
+    forgotPassword: forgotPasswordReducer,
+    allUsers: allUsersReducer,
+    userDetails: userDetailsReducer,
     cart: cartReducer,
     newOrder: newOrderReducer,
     myOrders: myOrdersReducer,
     orderDetails: orderDetailsReducer,
     allOrders: allOrdersReducer,
     order: orderReducer,
+    dashboardSales: dashboardSalesReducer,
+    salesReport: salesReportReducer,
 })
 
 const middlware = [thunk]

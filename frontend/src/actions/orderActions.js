@@ -18,6 +18,12 @@ import {
     DELETE_ORDER_REQUEST,
     DELETE_ORDER_SUCCESS,
     DELETE_ORDER_FAIL,
+    DASHBOARD_SALES_REQUEST,
+    DASHBOARD_SALES_SUCCESS,
+    DASHBOARD_SALES_FAIL,
+    SALES_REPORT_REQUEST,
+    SALES_REPORT_SUCCESS,
+    SALES_REPORT_FAIL,
     CLEAR_ERRORS
 } from '../constants/orderConstants'
 
@@ -121,6 +127,50 @@ export const deleteOrder = (id) => async (dispatch) => {
     } catch (error) {
         dispatch({
             type: DELETE_ORDER_FAIL,
+            payload: errorMessage(error)
+        })
+    }
+}
+
+// The three charts on the dashboard
+export const getDashboardSales = () => async (dispatch) => {
+    try {
+        dispatch({ type: DASHBOARD_SALES_REQUEST })
+        const [monthly, customers, products] = await Promise.all([
+            axios.get(`${import.meta.env.VITE_API}/admin/sales-per-month`, config),
+            axios.get(`${import.meta.env.VITE_API}/admin/customer-sales`, config),
+            axios.get(`${import.meta.env.VITE_API}/admin/product-sales`, config),
+        ])
+        dispatch({
+            type: DASHBOARD_SALES_SUCCESS,
+            payload: {
+                monthly: monthly.data.salesPerMonth,
+                customers: customers.data.customerSales,
+                products: products.data.totalPercentage
+            }
+        })
+    } catch (error) {
+        dispatch({
+            type: DASHBOARD_SALES_FAIL,
+            payload: errorMessage(error)
+        })
+    }
+}
+
+// key names the filters so the reducer can drop late answers
+export const getSalesReport = (key, params) => async (dispatch) => {
+    try {
+        dispatch({ type: SALES_REPORT_REQUEST, key })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/sales-by-date`, { params, withCredentials: true })
+        dispatch({
+            type: SALES_REPORT_SUCCESS,
+            key,
+            payload: data
+        })
+    } catch (error) {
+        dispatch({
+            type: SALES_REPORT_FAIL,
+            key,
             payload: errorMessage(error)
         })
     }

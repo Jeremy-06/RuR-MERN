@@ -13,7 +13,7 @@ import dayjs from 'dayjs'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-import { formatMoney, formatPeriod } from '../Utils/helpers'
+import { formatCompactMoney, formatMoney, formatPeriod } from '../Utils/helpers'
 
 // One series in the theme blue; grid and axes stay quiet grays.
 // Animation is off so a new range swaps in place instead of redrawing from the left
@@ -21,8 +21,6 @@ const SERIES_COLOR = '#0f6be0'
 const GRID_COLOR = '#e6e9ef'
 const AXIS_COLOR = '#c9ced6'
 const TICK_COLOR = '#5f6774'
-
-const compactMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 })
 
 // The value leads; the period and order count follow
 const SalesTooltip = ({ active, payload }) => {
@@ -53,7 +51,7 @@ export default function SalesChart({ sales, groupBy, type }) {
         minTickGap: 24,
     }
     const yAxisProps = {
-        tickFormatter: value => compactMoney.format(value),
+        tickFormatter: formatCompactMoney,
         tick: { fill: TICK_COLOR, fontSize: 12 },
         axisLine: false,
         tickLine: false,
@@ -68,7 +66,7 @@ export default function SalesChart({ sales, groupBy, type }) {
                     <CartesianGrid vertical={false} stroke={GRID_COLOR} />
                     <XAxis {...xAxisProps} />
                     <YAxis {...yAxisProps} />
-                    <Tooltip content={<SalesTooltip />} cursor={{ fill: 'rgba(22, 119, 255, 0.06)' }} />
+                    <Tooltip content={<SalesTooltip />} cursor={{ fill: 'rgba(15, 107, 224, 0.06)' }} />
                     <Bar dataKey="total" name="Sales" fill={SERIES_COLOR} radius={[4, 4, 0, 0]} maxBarSize={24} activeBar={{ fill: '#4d97ff' }} isAnimationActive={false} />
                 </BarChart>
             </ResponsiveContainer>

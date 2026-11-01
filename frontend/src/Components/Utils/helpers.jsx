@@ -11,6 +11,15 @@ export const MAX_IMAGES = 10
 export const isAllowedImage = (file) => IMAGE_TYPES.includes(file.type)
 export const isAllowedSize = (file) => file.size <= MAX_IMAGE_SIZE
 
+// Same rules as validatePasswords in backend/controllers/auth.js
+export const MIN_PASSWORD_LENGTH = 6
+export const passwordSchema = Yup.string()
+    .required('Please enter your password')
+    .min(MIN_PASSWORD_LENGTH, `Your password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+export const confirmPasswordSchema = Yup.string()
+    .required('Please confirm your password')
+    .oneOf([Yup.ref('password')], 'Passwords do not match')
+
 export const avatarSchema = Yup.mixed()
     .nullable()
     .test('fileType', 'Avatar must be a jpg, jpeg, png or webp image', file => !file || isAllowedImage(file))
@@ -47,6 +56,10 @@ export const isProductId = (value) => /^[a-f\d]{24}$/i.test(value)
 
 // $1,234.50
 export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+
+// $3.2K, for chart axes
+const compactMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 })
+export const formatCompactMoney = (value) => compactMoney.format(value)
 
 // Same prices on every checkout page
 export const orderPrices = (cartItems) => {
