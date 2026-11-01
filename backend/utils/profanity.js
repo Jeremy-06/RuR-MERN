@@ -42,4 +42,4 @@ const isProfane = text => {
     return tagalogPatterns.some(pattern => pattern.test(normalized))
 }
 
-module.exports = { isProfane, TAGALOG_WORDS }
+module.exports = { isProfane }

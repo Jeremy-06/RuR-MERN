@@ -289,9 +289,7 @@ const AdminDataGrid = ({ label, rows, columns, loading, error, onRetry, empty, r
                     '& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': { px: 1.5 },
                     '& .MuiDataGrid-cell--flex': { alignItems: 'center' },
                     '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(15, 107, 224, 0.04)' },
-                    // Bootstrap gives these <p> tags a bottom margin that pushes them off center
                     '& .MuiTablePagination-toolbar': { alignItems: 'center', minHeight: 52 },
-                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { my: 0, lineHeight: 1.5 },
                     // DataGrid hides the page size on phones
                     '& .MuiTablePagination-root .MuiTablePagination-selectLabel': { display: 'block' },
                     '& .MuiTablePagination-root .MuiTablePagination-input': { display: 'inline-flex', mr: { xs: 1, sm: 4 } },

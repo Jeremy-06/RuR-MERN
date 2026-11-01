@@ -1,18 +1,17 @@
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import * as Yup from 'yup'
 import dayjs from 'dayjs'
 
 // Same limits as backend/utils/multer.js
-export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 export const MAX_IMAGES = 10
 
 export const isAllowedImage = (file) => IMAGE_TYPES.includes(file.type)
 export const isAllowedSize = (file) => file.size <= MAX_IMAGE_SIZE
 
 // Same rules as validatePasswords in backend/controllers/auth.js
-export const MIN_PASSWORD_LENGTH = 6
+const MIN_PASSWORD_LENGTH = 6
 export const passwordSchema = Yup.string()
     .required('Please enter your password')
     .min(MIN_PASSWORD_LENGTH, `Your password must be at least ${MIN_PASSWORD_LENGTH} characters`)

@@ -14,7 +14,7 @@ import RadioGroup from '@mui/material/RadioGroup'
 import Radio from '@mui/material/Radio'
 import Rating from '@mui/material/Rating'
 
-export const PRICE_MAX = 1000
+const PRICE_MAX = 1000
 const PRICE_DEBOUNCE = 500
 const RATING_OPTIONS = ['4', '3', '2', '1']
 
