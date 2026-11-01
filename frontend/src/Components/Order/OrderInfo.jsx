@@ -22,7 +22,6 @@ const Detail = ({ label, children }) => (
     </Typography>
 )
 
-// Order sections shared by the customer's order page and the admin's process order page
 const OrderInfo = ({ order, showPaymentId }) => {
     const { shippingInfo, orderItems, paymentInfo, user, totalPrice, orderStatus, createdAt, deliveredAt } = order
     const shippingDetails = `${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.postalCode}, ${shippingInfo.country}`

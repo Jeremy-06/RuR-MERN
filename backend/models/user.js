@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         validate: [validator.isEmail, 'Please enter valid email address']
     },
-    // Google accounts sign in through Firebase and have no password
+    // Walang password ang Google accounts, sa Firebase sila dumadaan
     authProvider: {
         type: String,
         enum: {
@@ -72,13 +72,10 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 }
 
 userSchema.methods.getResetPasswordToken = function () {
-    // Generate token
     const resetToken = crypto.randomBytes(20).toString('hex');
 
-    // Hash and set to resetPasswordToken
     this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex')
 
-    // Set token expire time
     this.resetPasswordExpire = Date.now() + 30 * 60 * 1000
 
     return resetToken

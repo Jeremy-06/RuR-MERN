@@ -4,7 +4,6 @@ import Typography from '@mui/material/Typography'
 import SectionTitle from '../Layout/SectionTitle'
 import { accentTop } from '../../theme'
 
-// Centered form card used by the login, register, password and profile forms
 const AuthCard = ({ title, subtitle, onSubmit, children }) => {
     return (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: { xs: 3, md: 6 } }}>

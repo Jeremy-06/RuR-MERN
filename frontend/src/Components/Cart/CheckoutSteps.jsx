@@ -10,7 +10,6 @@ const steps = [
     { key: 'payment', label: 'Payment', path: '/payment' },
 ]
 
-// Steps already reached can be clicked to go back, the same as the old links
 const CheckoutSteps = (props) => {
     const navigate = useNavigate()
     const activeStep = steps.filter(step => props[step.key]).length - 1

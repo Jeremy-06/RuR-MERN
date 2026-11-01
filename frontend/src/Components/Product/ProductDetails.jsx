@@ -48,7 +48,7 @@ const ProductDetails = () => {
     const { loading: savingReview, error: reviewError } = useSelector(state => state.newReview)
     const dispatch = useDispatch()
 
-    // Opening another product starts from 1 again
+    // Bagong product, balik sa 1
     if (quantityProduct !== id) {
         setQuantityProduct(id)
         setQuantity(1)
@@ -68,7 +68,7 @@ const ProductDetails = () => {
         dispatch(addItemToCart(id, quantity));
     }
 
-    // Opening the form for an existing review starts from what they wrote
+    // Laman ng form ang existing review pag binuksan
     const openReviewForm = () => {
         const { myReview } = myReviewStatus
         setRating(myReview ? myReview.rating : 0)
@@ -114,7 +114,7 @@ const ProductDetails = () => {
         if (user) dispatch(getMyReview(id))
     }, [dispatch, id, user])
 
-    // Only this product's answers count, and a logged out visitor has no review status
+    // Sa product na ito lang; walang review status ang logged out
     const reviews = productReviews.productId === id ? productReviews.reviews : []
     const myReviewStatus = user && myReview.productId === id
         ? { canReview: myReview.canReview, myReview: myReview.review }

@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography'
 import { isProductId } from '../Utils/helpers'
 import useSearchSuggestions, { MAX_LENGTH } from '../Utils/useSearchSuggestions'
 
-// Finds a product by part of its name, or by pasting its id
 const ProductPicker = ({ onSelect }) => {
     const [keyword, setKeyword] = useState('')
     const [open, setOpen] = useState(false)
@@ -34,7 +33,7 @@ const ProductPicker = ({ onSelect }) => {
         setInvalid(false)
     }
 
-    // Enter with no suggestion highlighted, or the search button
+    // Enter na walang naka-highlight, o yung search button
     const submitHandler = (e) => {
         e.preventDefault()
         setOpen(false)

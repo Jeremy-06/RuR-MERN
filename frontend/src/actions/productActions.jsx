@@ -46,16 +46,15 @@ import {
 const RES_PER_PAGE = 12
 const TOP_RATED_COUNT = 4
 
-// Same filters always give the same key, so old answers can be told apart
+// Parehong filters, parehong key, para ma-spot ang lumang answers
 export const productsKey = ({ keyword = '', minPrice = '', maxPrice = '', categories = [], minRating = '' }) =>
     JSON.stringify([keyword, minPrice, maxPrice, [...categories].sort(), minRating])
 
-// Loads one page of the shop list; page 1 starts a new list for these filters
 export const getProducts = (filters, currentPage = 1) => async (dispatch, getState) => {
     const key = productsKey(filters)
     const { products: state } = getState()
 
-    // Only one request for the same page at a time, and only the next page
+    // Isang request lang kada page, at next page lang
     if (state.loading && state.key === key && state.requestedPage === currentPage) return
     if (currentPage > 1 && (state.loading || state.key !== key || !state.hasMore || currentPage !== state.page + 1)) return
 
@@ -210,7 +209,7 @@ export const getCategories = () => async (dispatch) => {
     }
 }
 
-// The keyword travels with each action so the reducer can drop late answers
+// Kasama ang keyword para ma-drop ng reducer ang late answers
 export const getSearchSuggestions = (keyword) => async (dispatch) => {
     try {
         dispatch({ type: SEARCH_SUGGESTIONS_REQUEST, keyword })
@@ -235,7 +234,7 @@ export const clearSearchSuggestions = () => async (dispatch) => {
     })
 }
 
-// The shop list has no rating sort, so the best of the 4-star products are picked here
+// Walang rating sort ang shop list kaya dito sina-sort
 export const getTopRatedProducts = () => async (dispatch) => {
     try {
         dispatch({ type: TOP_RATED_PRODUCTS_REQUEST })
@@ -254,7 +253,7 @@ export const getTopRatedProducts = () => async (dispatch) => {
     }
 }
 
-// The product id travels with each action so the reducer can drop late answers
+// Kasama ang product id para ma-drop ng reducer ang late answers
 export const getProductReviews = (id) => async (dispatch) => {
     try {
         dispatch({ type: GET_REVIEWS_REQUEST, productId: id })
@@ -273,7 +272,6 @@ export const getProductReviews = (id) => async (dispatch) => {
     }
 }
 
-// Whether the logged in user can review a product, and their review if they have one
 export const getMyReview = (id) => async (dispatch) => {
     try {
         dispatch({ type: MY_REVIEW_REQUEST, productId: id })
@@ -288,7 +286,7 @@ export const getMyReview = (id) => async (dispatch) => {
     }
 }
 
-// New review is a POST, editing their own review is a PUT; answers whether it was saved
+// POST pag bago, PUT pag edit; binabalik kung na-save
 export const newReview = (reviewData, reviewId) => async (dispatch) => {
     try {
         dispatch({ type: NEW_REVIEW_REQUEST })

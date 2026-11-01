@@ -2,7 +2,6 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 
-// Shown when a page or section has nothing to list
 const EmptyState = ({ icon, title, message, action, flat }) => {
     return (
         <Paper sx={{ px: 3, py: 6, textAlign: 'center', ...(flat && { border: 0, boxShadow: 'none', bgcolor: 'transparent' }) }}>

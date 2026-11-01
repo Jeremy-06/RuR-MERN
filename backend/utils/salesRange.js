@@ -1,10 +1,10 @@
 const GROUP_BY = ['day', 'week', 'month']
 const DEFAULT_DAYS = 30
-// One year of days; also keeps the chart readable
+// Isang taon ng days; para mabasa pa ang chart
 const MAX_PERIODS = 366
 
-// Calendar dates stay 'YYYY-MM-DD' strings and are only turned into UTC midnights for math,
-// so the server's own time zone never shifts them
+// String lang ang dates; sa math lang ginagawang UTC midnight
+// para hindi magbago dahil sa timezone ng server
 const toDate = value => new Date(`${value}T00:00:00Z`)
 const toKey = date => date.toISOString().slice(0, 10)
 
@@ -14,7 +14,7 @@ const addDays = (value, days) => {
     return toKey(date)
 }
 
-// Rejects 2026-13-01 and also 2026-02-30, which Date would roll over to March 2
+// Reject ang 2026-13-01 at 2026-02-30 (nagro-roll over yan sa March 2)
 const isValidDate = value => {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
     const date = toDate(value)
@@ -31,10 +31,9 @@ const isValidTimezone = timezone => {
     }
 }
 
-// Today's date where the admin is, e.g. 2026-10-24 in Asia/Manila
 const todayIn = timezone => new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date())
 
-// First day of the day, week (Monday, like MongoDB's $dateTrunc with startOfWeek) or month a date is in
+// Monday ang simula ng week, katulad ng $dateTrunc startOfWeek
 const periodStart = (value, groupBy) => {
     if (groupBy === 'week') return addDays(value, -((toDate(value).getUTCDay() + 6) % 7))
     if (groupBy === 'month') return `${value.slice(0, 8)}01`
@@ -51,8 +50,7 @@ const nextPeriod = (value, groupBy) => {
     return addDays(value, 1)
 }
 
-// Checks the sales query and lists every period in the range, so periods without orders can be shown as 0.
-// Returns { error } or { startDate, endDate, groupBy, timezone, periods }
+// Nililista lahat ng period para may 0 ang walang order
 exports.parseSalesRange = (query) => {
     const { groupBy = 'day', timezone = 'UTC' } = query
 
@@ -63,7 +61,6 @@ exports.parseSalesRange = (query) => {
         return { error: 'timezone must be a time zone name such as Asia/Manila' }
     }
 
-    // Without dates, show the last 30 days
     const endDate = query.endDate || todayIn(timezone)
     const startDate = query.startDate || (isValidDate(endDate) ? addDays(endDate, 1 - DEFAULT_DAYS) : endDate)
 
@@ -74,7 +71,7 @@ exports.parseSalesRange = (query) => {
         return { error: 'startDate cannot be after endDate' }
     }
 
-    // key matches the _id the aggregation groups by; start/end are clamped to the range for labels
+    // key = _id sa aggregation; clamped sa range ang start/end para sa labels
     const periods = []
     for (let key = periodStart(startDate, groupBy); key <= endDate; key = nextPeriod(key, groupBy)) {
         if (periods.length === MAX_PERIODS) {

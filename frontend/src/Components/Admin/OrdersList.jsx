@@ -58,7 +58,7 @@ const columns = [
         type: 'singleSelect',
         valueOptions: ORDER_STATUSES,
         width: 130,
-        // Sorts by progress, not alphabetically
+        // Sort by progress, hindi alphabetical
         sortComparator: (a, b) => ORDER_STATUSES.indexOf(a) - ORDER_STATUSES.indexOf(b),
         renderCell: ({ value }) => <OrderStatusChip status={value} />
     },
@@ -114,7 +114,7 @@ const OrdersList = () => {
         return {
             id: order._id,
             date: new Date(order.createdAt),
-            // Name and email together so search and filters match either one
+            // Pinagsama para mag-match ang search at filters sa dalawa
             customer: `${customerName} ${customerEmail}`.trim(),
             customerName,
             customerEmail,

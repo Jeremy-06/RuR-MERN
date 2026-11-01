@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 import * as Yup from 'yup'
 import dayjs from 'dayjs'
 
-// Same limits as backend/utils/multer.js
+// Parehong limits sa backend/utils/multer.js
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 export const MAX_IMAGES = 10
@@ -10,7 +10,7 @@ export const MAX_IMAGES = 10
 export const isAllowedImage = (file) => IMAGE_TYPES.includes(file.type)
 export const isAllowedSize = (file) => file.size <= MAX_IMAGE_SIZE
 
-// Same rules as validatePasswords in backend/controllers/auth.js
+// Parehong rules sa validatePasswords sa backend
 const MIN_PASSWORD_LENGTH = 6
 export const passwordSchema = Yup.string()
     .required('Please enter your password')
@@ -50,17 +50,14 @@ export const categories = [
 
 export const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered']
 
-// A MongoDB id, as pasted from the product page
 export const isProductId = (value) => /^[a-f\d]{24}$/i.test(value)
 
-// $1,234.50
 export const formatMoney = (value) => Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 
-// $3.2K, for chart axes
 const compactMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 })
 export const formatCompactMoney = (value) => compactMoney.format(value)
 
-// Same prices on every checkout page
+// Iisang compute ng prices sa lahat ng checkout pages
 export const orderPrices = (cartItems) => {
     const itemsPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
     const shippingPrice = itemsPrice > 200 ? 0 : 25
@@ -68,17 +65,15 @@ export const orderPrices = (cartItems) => {
     return { itemsPrice, shippingPrice, taxPrice, totalPrice: itemsPrice + shippingPrice + taxPrice }
 }
 
-// Oct 31, 2026
 export const formatDate = (value) => value ? dayjs(value).format('MMM D, YYYY') : ''
 
-// Oct 31, 2026 · 11:05 PM
 export const formatDateTime = (value) => value ? dayjs(value).format('MMM D, YYYY · h:mm A') : ''
 
 const NEW_PRODUCT_DAYS = 14
 export const LOW_STOCK = 5
 const TOP_RATED = 4.5
 
-// Card badges, all worked out from the product's own data; at most two show
+// Galing sa data ng product; max two badges
 export const productBadges = ({ stock, averageRating, reviewCount, createdAt }) => {
     const badges = []
     if (stock === 0) badges.push({ label: 'Sold out', tone: 'dark' })
@@ -88,7 +83,6 @@ export const productBadges = ({ stock, averageRating, reviewCount, createdAt }) 
     return badges.slice(0, 2)
 }
 
-// Oct 24, 2026 for one day, Oct 20 – Oct 26, 2026 for a longer period
 export const formatPeriod = ({ start, end }) => {
     const from = dayjs(start)
     const to = dayjs(end)

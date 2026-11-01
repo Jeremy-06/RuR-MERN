@@ -124,8 +124,8 @@ const TableToolbar = ({ onPanelHost }) => {
     )
 }
 
-// The filter and columns panels sit in the page flow under the toolbar, so they push the
-// table down instead of floating over the column headers
+// Nasa page flow ang filter at columns panels para itulak ang table,
+// hindi tatakpan ang column headers
 const InlinePanel = ({ open, host, id, target, onClose, children, 'aria-label': label, 'aria-labelledby': labelledBy }) => {
     if (!open || !host) return null
 
@@ -162,7 +162,6 @@ const InlinePanel = ({ open, host, id, target, onClose, children, 'aria-label': 
 
 const NoMatches = () => <EmptyState flat title="No matching rows" message="Try a different search or filter." />
 
-// Shortened id with the full one in a tooltip and a copy button
 export const IdCell = ({ id, label }) => {
     const copyHandler = async () => {
         try {
@@ -187,7 +186,6 @@ export const IdCell = ({ id, label }) => {
     )
 }
 
-// Name with smaller text below, optionally with an avatar
 export const PersonCell = ({ name, detail, avatar, hideDetail }) => {
     return (
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25, minWidth: 0 }}>
@@ -216,8 +214,6 @@ export const RowAction = ({ label, subject, icon, color = 'primary', to, onClick
     )
 }
 
-// Shared table: same toolbar, panels, footer, sizes and states everywhere.
-// Columns may set hideOnSmall; renderActions adds the fixed Actions column.
 const AdminDataGrid = ({ label, rows, columns, loading, error, onRetry, empty, renderActions, sortField }) => {
     const [panelHost, setPanelHost] = useState(null)
     const [visibility, setVisibility] = useState({})
@@ -290,7 +286,7 @@ const AdminDataGrid = ({ label, rows, columns, loading, error, onRetry, empty, r
                     '& .MuiDataGrid-cell--flex': { alignItems: 'center' },
                     '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(15, 107, 224, 0.04)' },
                     '& .MuiTablePagination-toolbar': { alignItems: 'center', minHeight: 52 },
-                    // DataGrid hides the page size on phones
+                    // Tinatago ng DataGrid ang page size sa phones
                     '& .MuiTablePagination-root .MuiTablePagination-selectLabel': { display: 'block' },
                     '& .MuiTablePagination-root .MuiTablePagination-input': { display: 'inline-flex', mr: { xs: 1, sm: 4 } },
                 }}

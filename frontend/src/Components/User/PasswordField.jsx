@@ -5,7 +5,6 @@ import TextField from '@mui/material/TextField'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 
-// Password input for a Formik form, with a show/hide button
 const PasswordField = ({ formik, name, id, label, autoComplete }) => {
     const [visible, setVisible] = useState(false)
     const failed = formik.touched[name] && Boolean(formik.errors[name])

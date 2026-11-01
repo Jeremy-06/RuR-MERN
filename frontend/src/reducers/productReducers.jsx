@@ -46,11 +46,10 @@ import {
     CLEAR_ERRORS
 } from '../constants/productConstants'
 
-// page = last page loaded for the current filter key
+// page = huling page na na-load para sa filter key
 export const productsReducer = (state = { products: [], page: 0, hasMore: true, key: null }, action) => {
     switch (action.type) {
         case ALL_PRODUCTS_REQUEST: {
-            // A new filter key (or page 1) starts a fresh list
             const reset = action.page === 1 || action.key !== state.key
             return {
                 ...state,
@@ -65,7 +64,7 @@ export const productsReducer = (state = { products: [], page: 0, hasMore: true, 
             }
         }
         case ALL_PRODUCTS_SUCCESS: {
-            // Ignore answers for filters that are no longer active
+            // Wag pansinin ang answers ng lumang filters
             if (action.key !== state.key) return state
 
             const loadedIds = new Set(state.products.map(product => product._id))
@@ -100,7 +99,7 @@ export const productsReducer = (state = { products: [], page: 0, hasMore: true, 
 
 const noSuggestions = { products: [], categories: [], keyword: '' }
 
-// keyword = text the list belongs to; answers for any other text are ignored
+// keyword = text ng list; ibang text, ignored
 export const searchSuggestionsReducer = (state = noSuggestions, action) => {
     switch (action.type) {
         case SEARCH_SUGGESTIONS_REQUEST:
@@ -221,7 +220,7 @@ export const newProductReducer = (state = { product: {} }, action) => {
     }
 }
 
-// deletedIds and message come from a single delete or a bulk delete
+// Galing sa single o bulk delete ang deletedIds at message
 export const productReducer = (state = { deletedIds: [] }, action) => {
     switch (action.type) {
         case DELETE_PRODUCT_REQUEST:
@@ -297,7 +296,7 @@ export const categoriesReducer = (state = { categories: null }, action) => {
     }
 }
 
-// productId = product the list belongs to; a refresh of the same product keeps its rows
+// productId = may-ari ng list; refresh ng parehong product, naiiwan ang rows
 export const productReviewsReducer = (state = { reviews: [], productId: null }, action) => {
     switch (action.type) {
         case GET_REVIEWS_REQUEST:

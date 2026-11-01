@@ -5,7 +5,6 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { darkTexture } from '../../theme'
 
-// One number with its label; dark is for the headline figure, to links to the page behind it
 const StatCard = ({ label, value, to, dark }) => {
     return (
         <Paper

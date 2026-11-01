@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-// Waits before each retry when Mailtrap says too many emails were sent
+// Retry kapag na-rate limit ng Mailtrap
 const RETRY_DELAYS = [5000, 10000, 15000];
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -26,7 +26,7 @@ const sendEmail = async options => {
         attachments: options.attachments
     }
 
-    // Only rate limit errors are retried; anything else is thrown right away
+    // Rate limit lang ang nire-retry; ibang error, throw agad
     for (let retry = 0; ; retry++) {
         try {
             return await transporter.sendMail(message)

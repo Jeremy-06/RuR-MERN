@@ -47,7 +47,7 @@ function App() {
     dispatch(loadUser())
   }, [dispatch])
 
-  // Each account keeps its own cart; wait for the login check so a refresh does not start as a guest
+  // Hintayin ang login check para hindi maging guest pag nag-refresh
   useEffect(() => {
     if (!loading) dispatch(setCartOwner(user ? user._id : 'guest'))
   }, [dispatch, loading, user])
@@ -58,7 +58,6 @@ function App() {
         <Header />
         <Container component="main" sx={{ flex: '1 0 auto', pb: 4 }}>
           <Routes>
-            {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/search/:keyword" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetails />} />
@@ -68,7 +67,6 @@ function App() {
             <Route path="/password/reset/:token" element={<NewPassword />} />
             <Route path="/cart" element={<Cart />} />
 
-            {/* User routes (login required) */}
             <Route path="/me" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/me/update" element={<ProtectedRoute><UpdateProfile /></ProtectedRoute>} />
             <Route path="/password/update" element={<ProtectedRoute><UpdatePassword /></ProtectedRoute>} />
@@ -79,7 +77,6 @@ function App() {
             <Route path="/orders/me" element={<ProtectedRoute><ListOrders /></ProtectedRoute>} />
             <Route path="/order/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
 
-            {/* Admin routes (admin role required) */}
             <Route path="/dashboard" element={<ProtectedRoute isAdmin={true}><Dashboard /></ProtectedRoute>} />
             <Route path="/admin/sales" element={<ProtectedRoute isAdmin={true}><SalesDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute isAdmin={true}><ProductsList /></ProtectedRoute>} />

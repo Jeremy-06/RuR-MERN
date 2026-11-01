@@ -24,7 +24,7 @@ const ProcessOrder = () => {
     const dispatch = useDispatch()
     const { loading, error, order } = useSelector(state => state.orderDetails)
     const { loading: updating, error: updateError, isUpdated } = useSelector(state => state.order)
-    // null until the admin picks a status
+    // null hanggang pumili ang admin
     const [status, setStatus] = useState(null)
     let navigate = useNavigate()
 

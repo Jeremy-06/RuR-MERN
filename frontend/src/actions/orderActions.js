@@ -132,7 +132,6 @@ export const deleteOrder = (id) => async (dispatch) => {
     }
 }
 
-// The three charts on the dashboard
 export const getDashboardSales = () => async (dispatch) => {
     try {
         dispatch({ type: DASHBOARD_SALES_REQUEST })
@@ -157,7 +156,7 @@ export const getDashboardSales = () => async (dispatch) => {
     }
 }
 
-// key names the filters so the reducer can drop late answers
+// key para ma-drop ng reducer ang late answers
 export const getSalesReport = (key, params) => async (dispatch) => {
     try {
         dispatch({ type: SALES_REPORT_REQUEST, key })

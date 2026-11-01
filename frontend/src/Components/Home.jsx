@@ -37,7 +37,6 @@ const Home = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const sentinelRef = useRef(null)
 
-    // Active filters live in the URL: /?minPrice=10&maxPrice=200&category=Mice&category=Headsets&minRating=4
     const minPrice = searchParams.get('minPrice') || ''
     const maxPrice = searchParams.get('maxPrice') || ''
     const categoryParam = searchParams.getAll('category').join(',')
@@ -50,7 +49,7 @@ const Home = () => {
         minRating,
     }), [keyword, minPrice, maxPrice, categoryParam, minRating])
 
-    // The store may still hold products for older filters
+    // Baka sa lumang filters pa ang products sa store
     const isCurrent = key === productsKey(filters)
 
     useEffect(() => {
@@ -58,7 +57,6 @@ const Home = () => {
         dispatch(getTopRatedProducts())
     }, [dispatch])
 
-    // Any filter change starts again from page 1
     useEffect(() => {
         dispatch(getProducts(filters, 1))
     }, [dispatch, filters])
@@ -67,7 +65,6 @@ const Home = () => {
         dispatch(getProducts(filters, page + 1))
     }, [dispatch, filters, page])
 
-    // Load the next page when the sentinel below the grid comes near the screen
     const canLoadMore = isCurrent && page > 0 && hasMore && !loading && !error
     useEffect(() => {
         const sentinel = sentinelRef.current
@@ -112,7 +109,7 @@ const Home = () => {
         })
     }
 
-    // The cart stores a set quantity, so one more is added to what is already there
+    // Set quantity ang cart, kaya plus one sa kung ano na ang nandoon
     const quickAdd = (product) => {
         const inCart = cartItems.find(item => item.product === product._id)
         dispatch(addItemToCart(product._id, inCart ? Math.min(inCart.quantity + 1, product.stock) : 1))
@@ -214,8 +211,7 @@ const Home = () => {
             <Grid container spacing={3} id="products">
                 {!isMobile && (
                     <Grid size={{ md: 3 }}>
-                        {/* Stays below the sticky header and scrolls on its own, so reaching the
-                            last filters never scrolls the page and triggers infinite scroll */}
+                        {/* Sariling scroll para hindi ma-trigger ang infinite scroll sa dulo ng filters */}
                         <Paper sx={{
                             p: 3,
                             position: 'sticky',
@@ -239,7 +235,6 @@ const Home = () => {
                         ))}
                     </Grid>
 
-                    {/* List states below the grid */}
                     <Box sx={{ py: 5, textAlign: 'center' }} aria-live="polite">
                         {(loading || (!isCurrent && !error)) && <Loader label="Loading products" sx={{ py: 0 }} />}
 

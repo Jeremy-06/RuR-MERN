@@ -102,7 +102,7 @@ const UsersList = () => {
     const renderActions = useCallback((row) => (
         <>
             <RowAction label="Edit" subject={row.name} icon={<EditOutlinedIcon fontSize="small" />} to={`/admin/user/${row.id}`} />
-            {/* An admin cannot delete their own account */}
+            {/* Wag i-delete ang sariling admin account */}
             {row.id !== me._id && (
                 <RowAction label="Delete" subject={row.name} icon={<DeleteOutlinedIcon fontSize="small" />} color="error" onClick={() => deleteUserHandler(row.id)} />
             )}

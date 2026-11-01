@@ -7,14 +7,13 @@ body {
   overflow-x: hidden;
 }
 
-/* Keep the footer at the bottom on short pages */
+/* Para nasa baba ang footer sa maikling page */
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Scroll Bar */
 
 ::-webkit-scrollbar-track {
   background-color: #f5f5f5;
@@ -32,7 +31,6 @@ body {
   border-radius: 5px;
 }
 
-/* Logo in the header and footer */
 
 .brand-logo {
   display: inline-flex;
@@ -62,7 +60,7 @@ body {
   letter-spacing: 0.12em;
 }
 
-/* SweetAlert2 delete dialogs: same look as the MUI dialogs */
+/* SweetAlert2: kapareho ng MUI dialogs */
 
 .swal2-popup.swal2-modal {
   border-radius: 4px;
@@ -97,7 +95,7 @@ body {
   background-color: #5b6573;
 }
 
-/* Admin products DataTable: same look as AdminDataGrid */
+/* Products DataTable: kapareho ng AdminDataGrid */
 
 .products-table-card {
   overflow: hidden;
@@ -280,7 +278,7 @@ body {
   cursor: pointer;
 }
 
-/* Matches a small MUI IconButton */
+/* Kasing laki ng small MUI IconButton */
 .products-table .dt-action {
   display: inline-flex;
   align-items: center;
@@ -323,7 +321,7 @@ body {
     padding: 0 8px;
   }
 
-  /* DataTables stacks the footer below 768px */
+  /* Pinapatong ng DataTables ang footer below 768px */
   .products-table-card div.dt-container .dt-layout-table + .dt-layout-row .dt-layout-cell {
     display: flex !important;
     flex-wrap: nowrap;

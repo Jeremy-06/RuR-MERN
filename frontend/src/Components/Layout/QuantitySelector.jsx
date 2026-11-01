@@ -4,7 +4,6 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 
-// Minus / amount / plus control for the cart and the product page
 const QuantitySelector = ({ quantity, stock, onDecrease, onIncrease, label = 'quantity' }) => {
     return (
         <Box sx={{ display: 'inline-flex', alignItems: 'center', border: 1, borderColor: 'rur.muted', borderRadius: 1 }}>

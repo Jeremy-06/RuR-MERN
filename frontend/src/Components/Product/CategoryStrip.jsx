@@ -35,7 +35,6 @@ const icons = {
     Accessories: <CableOutlinedIcon />,
 }
 
-// Shortcut row for the same category filter as the sidebar
 const CategoryStrip = ({ categories, selected, onToggle }) => {
     return (
         <Box

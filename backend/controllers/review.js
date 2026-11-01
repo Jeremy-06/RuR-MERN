@@ -3,7 +3,7 @@ const Review = require('../models/review')
 const Product = require('../models/product')
 const Order = require('../models/order')
 
-// Orders count as completed once they are delivered
+// Delivered lang ang pwedeng mag-review
 const COMPLETED_ORDER_STATUS = 'Delivered'
 
 const hasCompletedOrder = (userId, productId) => Order.exists({
@@ -14,7 +14,6 @@ const hasCompletedOrder = (userId, productId) => Order.exists({
 
 const notFound = (res, message) => res.status(404).json({ success: false, message })
 
-// Create a review   =>  /api/v1/review
 exports.createReview = async (req, res, next) => {
     const { productId, rating, comment } = req.body
 
@@ -36,7 +35,7 @@ exports.createReview = async (req, res, next) => {
         })
     }
 
-    // Bad-words check and the product rating update run in the model hooks
+    // Nasa model hooks ang bad-words check at rating update
     const review = await Review.create({
         user: req.user._id,
         product: productId,
@@ -50,7 +49,6 @@ exports.createReview = async (req, res, next) => {
     })
 }
 
-// Edit your own review   =>  /api/v1/review/:id
 exports.updateReview = async (req, res, next) => {
     if (!mongoose.isValidObjectId(req.params.id)) return notFound(res, 'Review not found')
 
@@ -74,7 +72,6 @@ exports.updateReview = async (req, res, next) => {
     })
 }
 
-// Delete any review (admin)   =>  /api/v1/admin/review/:id
 exports.deleteReview = async (req, res, next) => {
     if (!mongoose.isValidObjectId(req.params.id)) return notFound(res, 'Review not found')
 
@@ -89,7 +86,6 @@ exports.deleteReview = async (req, res, next) => {
     })
 }
 
-// Reviews of one product, newest first   =>  /api/v1/reviews?id=
 exports.getProductReviews = async (req, res, next) => {
     if (!mongoose.isValidObjectId(req.query.id)) return notFound(res, 'Product not found')
 
@@ -103,7 +99,6 @@ exports.getProductReviews = async (req, res, next) => {
     })
 }
 
-// Whether the logged in user can review a product, and their review if they have one   =>  /api/v1/review/me?productId=
 exports.getMyReview = async (req, res, next) => {
     const { productId } = req.query
     if (!mongoose.isValidObjectId(productId)) return notFound(res, 'Product not found')

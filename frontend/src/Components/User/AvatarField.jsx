@@ -7,7 +7,6 @@ import { readAsDataURL } from '../Utils/helpers'
 
 const DEFAULT_AVATAR = '/images/default_avatar.svg'
 
-// Avatar picker for a Formik form with an avatar value
 const AvatarField = ({ formik, current }) => {
     const [preview, setPreview] = useState(null)
 

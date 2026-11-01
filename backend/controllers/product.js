@@ -11,7 +11,6 @@ const MAX_SUGGEST_LENGTH = 100
 const MAX_SUGGESTED_PRODUCTS = 6
 const MAX_SUGGESTED_CATEGORIES = 3
 
-// Streams one multer memory file to Cloudinary
 const uploadImage = (file) => {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.v2.uploader.upload_stream({
@@ -29,7 +28,7 @@ const uploadImage = (file) => {
     })
 }
 
-// Only images in our Cloudinary folder are destroyed
+// Yung nasa folder lang natin ang pwedeng burahin
 const destroyImages = async (images = []) => {
     const cloudinaryImages = images.filter(image => image.public_id && image.public_id.startsWith(`${PRODUCTS_FOLDER}/`))
     await Promise.all(cloudinaryImages.map(image => cloudinary.v2.uploader.destroy(image.public_id)))
@@ -43,7 +42,7 @@ const uploadImages = async (files = []) => {
             imagesLinks.push(await uploadImage(file))
         }
     } catch (error) {
-        // Remove the images that already went up before the failure
+        // Burahin yung mga na-upload na bago pumalya
         await destroyImages(imagesLinks)
         throw error
     }
@@ -51,10 +50,10 @@ const uploadImages = async (files = []) => {
 }
 
 exports.newProduct = async (req, res, next) => {
-    // Ratings only come from reviews
+    // Sa reviews lang galing ang ratings
     const product = new Product({ ...req.body, images: [], averageRating: 0, reviewCount: 0, user: req.user.id })
 
-    // Validate before uploading so a bad form does not leave images in Cloudinary
+    // I-validate muna bago mag-upload para walang maiwang image sa Cloudinary
     await product.validate()
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({
@@ -91,7 +90,7 @@ exports.getSingleProduct = async (req, res, next) => {
     })
 }
 
-// Categories come from the model enum, same list the admin form uses
+// Galing sa model enum para iisa lang ang listahan
 const productCategories = () => Product.schema.path('category').enumValues
 
 exports.getCategories = async (req, res, next) => {
@@ -101,8 +100,6 @@ exports.getCategories = async (req, res, next) => {
     })
 }
 
-// http://localhost:4002/api/v1/products?page=2&limit=12&minPrice=10&maxPrice=200&category=Mice&category=Headsets&minRating=4&minReviews=1
-// Suggestions for the search box   =>  /api/v1/products/suggest?keyword=key
 exports.getProductSuggestions = async (req, res, next) => {
     const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim() : ''
 
@@ -147,7 +144,7 @@ exports.getProducts = async (req, res) => {
     const currentPage = Number(req.query.page) || 1;
     const productsCount = await Product.countDocuments();
 
-    // One query: search + filters, counted before paging so the total matches the filters
+    // Bilangin bago mag-page para tama ang total sa filters
     const apiFeatures = new APIFeatures(Product.find(), req.query).search().filter()
     const filteredProductsCount = await apiFeatures.query.clone().countDocuments();
 
@@ -176,7 +173,6 @@ exports.updateProduct = async (req, res, next) => {
         })
     }
 
-    // public_ids of existing images the admin removed
     let removeImages = req.body.removeImages || []
     if (typeof removeImages === 'string') {
         removeImages = [removeImages]
@@ -197,7 +193,6 @@ exports.updateProduct = async (req, res, next) => {
         })
     }
 
-    // New images are added to the ones that were kept
     const newImages = await uploadImages(req.files)
     product.images = [...keptImages, ...newImages]
 
@@ -268,7 +263,7 @@ exports.deleteProducts = async (req, res, next) => {
     })
 }
 
-// Serves the DataTables admin table; without DataTables params it returns every product (dashboard)
+// Walang DataTables params, lahat ng product ang balik (para sa dashboard)
 exports.getAdminProducts = async (req, res, next) => {
     const productsCount = await Product.countDocuments();
 

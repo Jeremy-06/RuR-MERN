@@ -3,7 +3,6 @@ import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import OrderSummary from './OrderSummary'
 
-// Page content on the left and the sticky summary on the right; on smaller screens the summary comes first
 const CheckoutLayout = ({ children, hideItems, action }) => {
     const { cartItems } = useSelector(state => state.cart)
 

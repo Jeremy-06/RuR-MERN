@@ -27,7 +27,7 @@ const shippingSchema = Yup.object({
             const digits = (value || '').replace(/\D/g, '').length
             return digits >= 7 && digits <= 15
         }),
-    // Letters are allowed because the country list is international
+    // May letters kasi international ang country list
     postalCode: Yup.string().trim().required('Please enter your postal code')
         .matches(/^[A-Za-z0-9][A-Za-z0-9 -]{1,9}$/, 'Please enter a valid postal code'),
     country: Yup.string().required('Please select your country').oneOf(countryNames, 'Please select your country'),

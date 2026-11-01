@@ -10,7 +10,6 @@ const receiptsDir = path.join(__dirname, '..', 'storage', 'receipts');
 
 const formatMoney = value => `$${Number(value || 0).toFixed(2)}`;
 
-// Builds the receipt PDF, saves it in storage/receipts, then emails it to the customer   =>  emitted by newOrder and updateOrder
 const sendOrderReceipt = async ({ order, previousStatus }) => {
     const data = {
         order,
@@ -21,14 +20,14 @@ const sendOrderReceipt = async ({ order, previousStatus }) => {
         formatMoney
     };
 
-    // Same template for both; the email version mentions the attached PDF
+    // Iisang template; sa email version binabanggit ang naka-attach na PDF
     const [emailHtml, pdfHtml] = await Promise.all([
         ejs.renderFile(receiptTemplate, { ...data, isEmail: true }),
         ejs.renderFile(receiptTemplate, { ...data, isEmail: false })
     ]);
     const pdf = await generatePdf(pdfHtml);
 
-    // One file per order; a status update replaces it with the latest receipt
+    // Isang file kada order; napapalitan tuwing may status update
     const filename = `RuR-receipt-${order._id}.pdf`;
     await fs.mkdir(receiptsDir, { recursive: true });
     await fs.writeFile(path.join(receiptsDir, filename), pdf);

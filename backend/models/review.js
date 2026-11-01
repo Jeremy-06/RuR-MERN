@@ -28,7 +28,7 @@ const reviewSchema = new mongoose.Schema({
         trim: true,
         maxLength: [1000, 'Comment cannot exceed 1000 characters'],
         validate: {
-            // Blocked instead of masked so the customer can reword it
+            // Block imbes na i-mask para mabago ng customer
             validator: value => !isProfane(value),
             message: 'Please remove offensive language from your review'
         }
@@ -42,10 +42,9 @@ const reviewSchema = new mongoose.Schema({
     }
 })
 
-// One review per customer per product; they edit it instead of posting again
+// Isang review lang kada customer kada product
 reviewSchema.index({ product: 1, user: 1 }, { unique: true })
 
-// Recalculates averageRating and reviewCount on the product from its reviews
 reviewSchema.statics.updateProductRating = async function (productId) {
     const [stats] = await this.aggregate([
         { $match: { product: new mongoose.Types.ObjectId(String(productId)) } },
@@ -53,7 +52,7 @@ reviewSchema.statics.updateProductRating = async function (productId) {
     ])
 
     await mongoose.model('Product').findByIdAndUpdate(productId, {
-        // Rounded to one decimal so the stars shown and the rating filter agree
+        // One decimal para magtugma ang stars at rating filter
         averageRating: stats ? Math.round(stats.averageRating * 10) / 10 : 0,
         reviewCount: stats ? stats.reviewCount : 0
     })
@@ -63,7 +62,7 @@ reviewSchema.pre('save', function () {
     if (!this.isNew && this.isModified()) this.updatedAt = Date.now()
 })
 
-// Runs after create/update (review.save()) and delete (review.deleteOne())
+// Tumatakbo after save() at deleteOne()
 reviewSchema.post('save', async function () {
     await this.constructor.updateProductRating(this.product)
 })

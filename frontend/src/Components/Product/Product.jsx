@@ -33,7 +33,6 @@ const Product = ({ product, onAddToCart }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 transition: 'transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease',
-                // Blue-to-red line that wipes across the top of the card
                 '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -80,7 +79,7 @@ const Product = ({ product, onAddToCart }) => {
                 </CardContent>
             </CardActionArea>
 
-            {/* Same height as the image, so these sit over it without being inside the link */}
+            {/* Kasing taas ng image para nasa ibabaw nito pero wala sa loob ng link */}
             <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, aspectRatio: IMAGE_RATIO, pointerEvents: 'none', p: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
                 {productBadges(product).map(badge => (
                     <Box
@@ -103,7 +102,7 @@ const Product = ({ product, onAddToCart }) => {
                 ))}
             </Box>
 
-            {/* Under the details on phones, where it would cover a small image; over the image from sm up */}
+            {/* Sa phones nasa baba ng details para hindi matakpan ang image */}
             {onAddToCart && !soldOut && (
                 <Box sx={{
                     px: 1.5,

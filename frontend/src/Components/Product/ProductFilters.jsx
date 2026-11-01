@@ -18,7 +18,6 @@ const PRICE_MAX = 1000
 const PRICE_DEBOUNCE = 500
 const RATING_OPTIONS = ['4', '3', '2', '1']
 
-// Returns an error message for the typed prices, or ''
 const priceError = (min, max) => {
     if ((min !== '' && (!Number.isFinite(Number(min)) || Number(min) < 0)) ||
         (max !== '' && (!Number.isFinite(Number(max)) || Number(max) < 0))) {
@@ -31,11 +30,11 @@ const priceError = (min, max) => {
 }
 
 const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPrice, maxPrice, selectedCategories, onPriceChange, onCategoryToggle, minRating, onRatingChange, onClear }) => {
-    // Typed values; they reach the URL after a short pause
+    // Papasok sa URL after a short pause
     const [price, setPrice] = useState({ min: minPrice, max: maxPrice })
     const [urlPrice, setUrlPrice] = useState({ min: minPrice, max: maxPrice })
 
-    // Follow the URL when it changes from outside (clear filters, back button)
+    // Sundan ang URL pag nagbago sa labas (clear filters, back button)
     if (urlPrice.min !== minPrice || urlPrice.max !== maxPrice) {
         setUrlPrice({ min: minPrice, max: maxPrice })
         setPrice({ min: minPrice, max: maxPrice })
@@ -58,14 +57,14 @@ const ProductFilters = ({ categories, categoriesError, onRetryCategories, minPri
     const onSliderChange = (e, [min, max]) => {
         setPrice({
             min: min === 0 ? '' : String(min),
-            // The top of the slider means "no max"
+            // Pinaka-taas ng slider = walang max
             max: max === PRICE_MAX ? '' : String(max),
         })
     }
 
     const hasFilters = minPrice !== '' || maxPrice !== '' || price.min !== '' || price.max !== '' || selectedCategories.length > 0 || minRating !== ''
 
-    // Also drops prices that were typed but not applied yet
+    // Kasama ang prices na na-type pero di pa na-apply
     const clearHandler = () => {
         setPrice({ min: '', max: '' })
         onClear()

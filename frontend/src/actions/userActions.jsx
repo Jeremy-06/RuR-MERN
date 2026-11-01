@@ -84,7 +84,6 @@ export const login = (email, password) => async (dispatch) => {
     }
 }
 
-// Sends the Firebase ID token; the backend answers with the same cookie as normal login
 export const googleLogin = (idToken) => async (dispatch) => {
     try {
         dispatch({ type: LOGIN_REQUEST })

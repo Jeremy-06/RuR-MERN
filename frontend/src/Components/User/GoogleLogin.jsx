@@ -27,7 +27,7 @@ const GoogleLogin = ({ label = 'Sign in with Google' }) => {
             const idToken = await result.user.getIdToken()
             await dispatch(googleLogin(idToken))
         } catch (error) {
-            // Backend errors arrive through the auth state; these are Firebase popup errors
+            // Firebase popup errors lang ito; sa auth state dumadaan ang backend errors
             if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
                 errMsg('Google sign-in was cancelled')
             } else if (error.code === 'auth/popup-blocked') {
@@ -36,7 +36,7 @@ const GoogleLogin = ({ label = 'Sign in with Google' }) => {
                 errMsg(error.message)
             }
         } finally {
-            // The app uses its own cookie session, not the Firebase session
+            // Sariling cookie session ang gamit, hindi Firebase session
             await signOut(auth).catch(() => { })
             setLoading(false)
         }

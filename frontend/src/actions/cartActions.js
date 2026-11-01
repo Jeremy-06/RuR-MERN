@@ -2,7 +2,6 @@ import axios from 'axios'
 import { toast } from 'react-toastify';
 import { ADD_TO_CART, REMOVE_ITEM_CART, SAVE_SHIPPING_INFO, CLEAR_CART, SET_CART_OWNER } from '../constants/cartConstants'
 
-// Reads a JSON value from localStorage, falling back when it is missing or broken
 const readStorage = (key, fallback) => {
     try {
         const value = localStorage.getItem(key)
@@ -12,22 +11,21 @@ const readStorage = (key, fallback) => {
     }
 }
 
-// Each account keeps its own cart under its own key
+// Bawat account may sariling cart key
 const saveCartItems = ({ owner, cartItems }) => {
     if (!owner) return
     localStorage.setItem(`cartItems_${owner}`, JSON.stringify(cartItems))
 }
 
-// Switches to the cart and shipping info of whoever is logged in; owner is the user id or 'guest'
 export const setCartOwner = (owner) => async (dispatch, getState) => {
     const { cart } = getState()
     if (cart.owner === owner) return
 
     const merged = readStorage(`cartItems_${owner}`, [])
     const incoming = [
-        // Items added before logging in move into the account's cart
+        // Nililipat sa account cart ang items bago mag-login
         ...(owner !== 'guest' ? readStorage('cartItems_guest', []) : []),
-        // Items added before the first owner was known
+        // Items na na-add bago makilala ang owner
         ...(cart.owner ? [] : cart.cartItems),
     ]
     incoming.forEach(item => {
@@ -44,10 +42,10 @@ export const setCartOwner = (owner) => async (dispatch, getState) => {
     })
     saveCartItems(getState().cart)
 
-    // Guest items now live in the account's cart
+    // Nasa account cart na ang guest items
     if (owner !== 'guest') localStorage.removeItem('cartItems_guest')
 
-    // Old keys that are no longer used
+    // Mga lumang keys na hindi na gamit
     localStorage.removeItem('cartItems')
     localStorage.removeItem('shippingInfo')
     localStorage.removeItem('rur_theme_variant')

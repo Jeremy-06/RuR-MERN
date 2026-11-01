@@ -3,7 +3,6 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import SectionTitle from './SectionTitle'
 
-// Title row used at the top of every page
 const PageHeader = ({ title, subtitle, actions }) => {
     return (
         <Stack

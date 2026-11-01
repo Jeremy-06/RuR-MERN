@@ -21,7 +21,7 @@ import { clearErrors, getProductDetails, newProduct, updateProduct } from '../..
 import { NEW_PRODUCT_RESET, UPDATE_PRODUCT_RESET } from '../../constants/productConstants'
 import { categories, errMsg, successMsg, isAllowedImage, isAllowedSize, MAX_IMAGES } from '../Utils/helpers'
 
-// Empty number inputs should say "required", not "must be a number"
+// Para "required" ang lumabas, hindi "must be a number"
 const emptyToUndefined = (value, originalValue) => originalValue === '' ? undefined : value
 
 const productSchema = Yup.object({
@@ -58,7 +58,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
 
     const isEdit = Boolean(productId)
 
-    // The store may still hold the product of another page
+    // Baka product ng ibang page pa ang nasa store
     const product = isEdit && details._id === productId ? details : null
 
     useEffect(() => {
@@ -94,7 +94,6 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
             formData.set('stock', values.stock);
             values.images.forEach(image => formData.append('images', image))
 
-            // Existing images that were removed in the dialog
             if (isEdit) {
                 product.images
                     .filter(image => !values.oldImages.some(kept => kept.public_id === image.public_id))
@@ -116,7 +115,6 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
         }
     }, [dispatch, success, isUpdated, resetForm, onSaved])
 
-    // Previews for newly picked files
     const previews = useMemo(() => formik.values.images.map(file => ({
         file,
         url: URL.createObjectURL(file),
@@ -137,7 +135,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
         const files = Array.from(e.target.files)
         formik.setFieldTouched('images', true, false)
         formik.setFieldValue('images', [...formik.values.images, ...files])
-        // Allow picking the same file again after removing it
+        // Para mapili ulit ang parehong file pagka-remove
         e.target.value = ''
     }
 

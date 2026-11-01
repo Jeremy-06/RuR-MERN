@@ -17,14 +17,14 @@ import { clearErrors, deleteProduct, deleteProducts } from '../../actions/produc
 import { DELETE_PRODUCT_RESET } from '../../constants/productConstants'
 import { errMsg, successMsg } from '../Utils/helpers'
 
-// Errors are shown with our toast instead of DataTables' alert()
+// Toast natin ang gamit, hindi alert() ng DataTables
 DataTable.ext.errMode = 'none'
 
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 })[char])
 
-// Same paths as the MUI EditOutlined and DeleteOutlined icons used by the other admin tables
+// Parehong paths ng MUI icons sa ibang admin tables
 const actionIcon = (path) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="${path}"></path></svg>`
 const EDIT_ICON = actionIcon('m14.06 9.02.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z')
 const DELETE_ICON = actionIcon('M16 9v10H8V9zm-1.5-6h-5l-1 1H5v2h14V4h-3.5zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2z')
@@ -37,7 +37,7 @@ const ProductsList = () => {
     const { error: productError, isDeleted, deletedIds, message } = useSelector(state => state.product)
     const tableRef = useRef(null)
     const dataTableRef = useRef(null)
-    // Selected ids survive paging, searching and sorting
+    // Hindi nawawala ang selection sa paging, search at sort
     const selectedRef = useRef(new Set())
     const [selectedCount, setSelectedCount] = useState(0)
     const [dialog, setDialog] = useState({ open: false, productId: null })
@@ -58,7 +58,6 @@ const ProductsList = () => {
             pageLength: 10,
             lengthMenu: [10, 25, 50],
             order: [],
-            // Search on the left; rows per page, count and arrows together in the footer
             layout: {
                 topStart: 'search',
                 topEnd: null,
@@ -83,7 +82,7 @@ const ProductsList = () => {
                 xhrFields: {
                     withCredentials: true
                 },
-                // Map the reference response shape to what DataTables reads
+                // I-map sa hinahanap ng DataTables
                 dataSrc: (json) => {
                     json.recordsTotal = json.productsCount
                     json.recordsFiltered = json.filteredProductsCount
@@ -131,7 +130,6 @@ const ProductsList = () => {
 
         const updateSelection = () => setSelectedCount(selectedRef.current.size)
 
-        // Header checkbox shows whether every row on this page is selected
         const syncCheckAll = () => {
             const checkAll = tableElement.querySelector('.dt-check-all')
             const rowChecks = Array.from(tableElement.querySelectorAll('.dt-row-check'))
@@ -197,7 +195,7 @@ const ProductsList = () => {
         table.on('draw', () => {
             syncCheckAll()
             updateSelection()
-            // Deleting the only row of the last page leaves that page empty
+            // Nabura ang nag-iisang row ng last page, balik sa previous
             if (table.page() > 0 && !tableElement.querySelector('.dt-row-check')) {
                 table.page('last').draw('page')
             }
@@ -215,7 +213,7 @@ const ProductsList = () => {
         }
     }, [dispatch])
 
-    // The dialog stays open on a failed save, so all product errors show from here
+    // Bukas pa ang dialog pag pumalya ang save, kaya dito lahat ng error toast
     useEffect(() => {
         const error = createError || productError
         if (error) {

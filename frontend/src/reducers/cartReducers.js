@@ -1,6 +1,6 @@
 import { ADD_TO_CART, REMOVE_ITEM_CART, SAVE_SHIPPING_INFO, CLEAR_CART, SET_CART_OWNER } from '../constants/cartConstants'
 
-// owner stays undefined until the login check has finished
+// undefined ang owner hanggang matapos ang login check
 export const cartReducer = (state = { cartItems: [], shippingInfo: {} }, action) => {
     switch (action.type) {
         case SET_CART_OWNER:
@@ -29,7 +29,7 @@ export const cartReducer = (state = { cartItems: [], shippingInfo: {} }, action)
                 ...state,
                 shippingInfo: action.payload
             }
-        // Shipping info stays for the next order
+        // Naiiwan ang shipping info para sa next order
         case CLEAR_CART:
             return {
                 ...state,

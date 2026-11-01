@@ -6,7 +6,6 @@ const MIN_LENGTH = 2
 const DEBOUNCE = 300
 export const MAX_LENGTH = 100
 
-// Loads suggestions for the typed text, debounced, into the searchSuggestions state
 const useSearchSuggestions = (text) => {
     const dispatch = useDispatch()
     const suggestions = useSelector(state => state.searchSuggestions)

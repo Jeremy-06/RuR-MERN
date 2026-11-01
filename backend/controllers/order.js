@@ -3,7 +3,6 @@ const Product = require('../models/product');
 const { orderEvents, ORDER_CREATED, ORDER_STATUS_UPDATED } = require('../events/orderEvents');
 const { parseSalesRange } = require('../utils/salesRange');
 
-// Create a new order   =>  /api/v1/order/new
 exports.newOrder = async (req, res, next) => {
     const {
         orderItems,
@@ -32,7 +31,7 @@ exports.newOrder = async (req, res, next) => {
         order
     })
 
-    // Receipt PDF and confirmation email are built after responding so checkout stays fast
+    // After response ang PDF at email para mabilis ang checkout
     orderEvents.emit(ORDER_CREATED, {
         order: { ...order.toObject(), user: { _id: req.user._id, name: req.user.name, email: req.user.email } }
     })
@@ -92,7 +91,6 @@ exports.deleteOrder = async (req, res, next) => {
     })
 }
 
-// Update order status, then email the receipt in the background   =>  /api/v1/admin/order/:id
 exports.updateOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('user', 'name email')
     if (!order) {
@@ -106,7 +104,7 @@ exports.updateOrder = async (req, res, next) => {
         })
     }
 
-    // Deduct stock once, when the order is delivered
+    // Isang beses lang ang bawas ng stock, pag na-deliver
     if (req.body.status === 'Delivered') {
         for (const item of order.orderItems) {
             await updateStock(item.product, item.quantity)
@@ -121,7 +119,7 @@ exports.updateOrder = async (req, res, next) => {
         success: true,
     })
 
-    // Emitted after responding so the PDF and email never delay the admin; a plain copy keeps listeners off the live document
+    // After response para di mabagal ang admin; plain copy para di magalaw ng listener ang live document
     if (previousStatus !== order.orderStatus) {
         orderEvents.emit(ORDER_STATUS_UPDATED, { order: order.toObject(), previousStatus })
     }
@@ -250,7 +248,6 @@ exports.salesPerMonth = async (req, res, next) => {
     })
 }
 
-// Sales per day, week or month in a date range   =>  /api/v1/admin/sales-by-date?startDate=2026-10-01&endDate=2026-10-24&groupBy=day&timezone=Asia/Manila
 exports.salesByDate = async (req, res, next) => {
     const range = parseSalesRange(req.query)
     if (range.error) {
@@ -261,7 +258,7 @@ exports.salesByDate = async (req, res, next) => {
     }
     const { startDate, endDate, groupBy, timezone, periods } = range
 
-    // An order counts on the day it was paid, in the admin's time zone (createdAt if paidAt is missing)
+    // Binibilang sa araw na nabayaran, sa timezone ng admin (createdAt kung walang paidAt)
     const soldAt = { $ifNull: ['$paidAt', '$createdAt'] }
     const periodStart = {
         $dateTrunc: { date: soldAt, unit: groupBy, timezone, ...(groupBy === 'week' && { startOfWeek: 'monday' }) }
@@ -284,7 +281,7 @@ exports.salesByDate = async (req, res, next) => {
         },
     ])
 
-    // Periods without orders are filled in with 0 so the chart has no gaps
+    // Lagyan ng 0 ang walang order para walang butas sa chart
     const salesByPeriod = new Map(sales.map(period => [period._id, period]))
     const salesByDate = periods.map(({ key, start, end }) => {
         const period = salesByPeriod.get(key)

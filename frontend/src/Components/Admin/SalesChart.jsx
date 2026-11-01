@@ -16,14 +16,12 @@ import Typography from '@mui/material/Typography'
 import { formatCompactMoney, formatMoney, formatPeriod } from '../Utils/helpers'
 import { chartColors } from '../../theme'
 
-// One series in the theme blue; grid and axes stay quiet grays.
-// Animation is off so a new range swaps in place instead of redrawing from the left
+// Walang animation para palit agad ang range, hindi redraw mula kaliwa
 const SERIES_COLOR = chartColors.series
 const GRID_COLOR = chartColors.grid
 const AXIS_COLOR = chartColors.grid
 const TICK_COLOR = chartColors.axis
 
-// The value leads; the period and order count follow
 const SalesTooltip = ({ active, payload }) => {
     if (!active || !payload || payload.length === 0) return null
     const period = payload[0].payload

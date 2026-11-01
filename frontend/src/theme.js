@@ -9,7 +9,6 @@ const softShadow = '0 1px 2px rgba(9, 11, 15, 0.04), 0 6px 20px rgba(9, 11, 15, 
 
 export const chartColors = { series: '#0f6be0', grid: borderColor, axis: '#5b6573' }
 
-// Shared gaming look; used through sx on the few elements that need it
 export const accentGradient = 'linear-gradient(90deg, #0f6be0, #fb334b)'
 export const darkTexture = 'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 12px)'
 export const clipCorners = (size = 10) =>
@@ -31,7 +30,7 @@ const theme = createTheme({
             main: '#fb334b',
             contrastText: '#fff'
         },
-        // Darker than the accent red so small text stays readable on white
+        // Mas dark sa accent red para mabasa ang maliit na text sa white
         error: {
             main: '#d6203a',
             contrastText: '#fff'
@@ -104,7 +103,7 @@ const theme = createTheme({
                 root: {
                     transition: `background-color ${FAST}, color ${FAST}, border-color ${FAST}, transform ${FAST}`
                 },
-                // clip-path cuts an outer outline, so clipped buttons focus with an inner one
+                // Pinuputol ng clip-path ang outer outline kaya inner ang focus
                 contained: {
                     borderRadius: 0,
                     clipPath: clipCorners(8),

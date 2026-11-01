@@ -19,8 +19,7 @@ const PriceRow = ({ label, value }) => (
     </Stack>
 )
 
-// Items and prices from the cart: a sticky card on desktop, a collapsible panel on smaller screens.
-// hideItems is for pages that already list the items; action shows on the card only
+// hideItems: para sa pages na naka-lista na ang items
 const OrderSummary = ({ hideItems, action }) => {
     const { cartItems } = useSelector(state => state.cart)
     const isSmall = useMediaQuery(theme => theme.breakpoints.down('md'))

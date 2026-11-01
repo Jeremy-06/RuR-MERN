@@ -11,7 +11,6 @@ import SearchIcon from '@mui/icons-material/Search'
 import { formatMoney } from '../Utils/helpers'
 import useSearchSuggestions, { MAX_LENGTH } from '../Utils/useSearchSuggestions'
 
-// Wraps the typed text in <mark> wherever it appears in the name
 const highlight = (name, text) => {
     const pattern = new RegExp(`(${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig')
     return name.split(pattern).map((part, index) => index % 2 === 1
@@ -43,7 +42,7 @@ const Search = () => {
         finish(option.type === 'product' ? `/product/${option._id}` : `/?category=${encodeURIComponent(option.name)}`)
     }
 
-    // Enter with no suggestion highlighted, or the search button
+    // Enter na walang naka-highlight, o yung search button
     const searchHandler = (e) => {
         e.preventDefault()
         setOpen(false)

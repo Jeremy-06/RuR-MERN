@@ -66,7 +66,7 @@ export const newOrderReducer = (state = {}, action) => {
 
 export const myOrdersReducer = (state = { loading: true, orders: [] }, action) => {
     switch (action.type) {
-        // Starts empty so another account's orders never show after a login change
+        // Empty muna para hindi makita ang orders ng ibang account
         case MY_ORDERS_REQUEST:
             return {
                 loading: true,
@@ -113,7 +113,7 @@ export const orderDetailsReducer = (state = { loading: true, order: null }, acti
 
 export const allOrdersReducer = (state = { loading: true, orders: [], totalAmount: 0 }, action) => {
     switch (action.type) {
-        // Keeps the rows so filters and paging survive a refresh after a delete
+        // Naiiwan ang rows para hindi mawala ang filters at paging after delete
         case ALL_ORDERS_REQUEST:
             return {
                 ...state,
@@ -137,7 +137,6 @@ export const allOrdersReducer = (state = { loading: true, orders: [], totalAmoun
     }
 }
 
-// Admin update and delete
 export const orderReducer = (state = {}, action) => {
     switch (action.type) {
         case UPDATE_ORDER_REQUEST:
@@ -209,7 +208,7 @@ export const dashboardSalesReducer = (state = { loading: true, monthly: [], cust
     }
 }
 
-// The previous numbers stay while a new range loads, so the page can dim them instead of blanking
+// Naiiwan ang lumang numbers para ma-dim, hindi blank
 export const salesReportReducer = (state = { key: null, data: null }, action) => {
     switch (action.type) {
         case SALES_REPORT_REQUEST:

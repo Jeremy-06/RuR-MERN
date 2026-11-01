@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 
-// One headless browser is shared by every PDF; each PDF gets its own page
+// Isang browser lang para sa lahat ng PDF
 let browserPromise = null;
 
 const getBrowser = () => {

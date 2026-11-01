@@ -83,7 +83,7 @@ const ProductReviews = () => {
     const productReviews = useSelector(state => state.productReviews)
     const { error: deleteError, isDeleted } = useSelector(state => state.review)
 
-    // The chosen product lives in the URL so a refresh keeps it
+    // Nasa URL para hindi mawala pag nag-refresh
     const productId = searchParams.get('product') || ''
     const validId = isProductId(productId)
     const selected = product._id === productId ? product : null
@@ -109,7 +109,7 @@ const ProductReviews = () => {
         }
     }, [dispatch, deleteError, isDeleted, loadReviews])
 
-    // A not found message must not follow the admin to the product page
+    // Para hindi madala ang not found message sa product page
     useEffect(() => () => {
         dispatch(clearErrors())
     }, [dispatch])

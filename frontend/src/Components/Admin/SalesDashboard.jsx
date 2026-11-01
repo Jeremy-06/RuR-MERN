@@ -30,7 +30,7 @@ import StatCard from './StatCard'
 import { getSalesReport } from '../../actions/orderActions'
 import { formatMoney, formatPeriod } from '../Utils/helpers'
 
-// Each preset also picks a grouping, so long ranges are not drawn day by day
+// May kasamang grouping ang preset para hindi day-by-day ang mahabang range
 const presets = [
     { value: '7d', label: 'Last 7 days', groupBy: 'day', start: today => today.subtract(6, 'day') },
     { value: '30d', label: 'Last 30 days', groupBy: 'day', start: today => today.subtract(29, 'day') },
@@ -42,14 +42,13 @@ const presets = [
 
 const groupLabels = { day: 'Day', week: 'Week', month: 'Month' }
 
-// Same limit as backend/utils/salesRange.js
+// Parehong limit sa backend/utils/salesRange.js
 const MAX_PERIODS = 366
 
-// Sent with every request so each day starts at midnight where the admin is
+// Para midnight sa lugar ng admin nagsisimula ang araw
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const cardSx = { p: { xs: 2, sm: 2.5 } }
-// Full width on phones, side by side from tablets up
 const fieldWidth = { width: { xs: '100%', sm: 170 } }
 const pickerProps = { textField: { size: 'small', margin: 'none', fullWidth: false, sx: fieldWidth } }
 
@@ -91,7 +90,6 @@ const SalesDashboard = () => {
         const value = event.target.value
         setPreset(value)
 
-        // Custom range keeps the dates as they are
         const option = presets.find(item => item.value === value)
         if (!option) return
         const today = dayjs()
@@ -171,7 +169,6 @@ const SalesDashboard = () => {
                 <Grid size={{ xs: 12, md: 10 }}>
                     <PageHeader title="Sales" />
 
-                    {/* Filters: everything below follows this range */}
                     <Paper sx={{ ...cardSx, mb: 3 }}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
@@ -234,7 +231,7 @@ const SalesDashboard = () => {
                             ? <EmptyState icon={<ErrorOutlinedIcon />} title="Sales could not be loaded" message={report.error} />
                             : <Loader />
                     ) : (
-                        // The previous numbers stay, dimmed, while new ones load
+                        // Naiiwan ang lumang numbers, dimmed, habang naglo-load
                         <Box aria-busy={refreshing} sx={{ opacity: refreshing ? 0.5 : 1, transition: 'opacity 0.2s' }}>
                             <Grid container spacing={2} sx={{ mb: 3 }}>
                                 {stats.map(stat => (

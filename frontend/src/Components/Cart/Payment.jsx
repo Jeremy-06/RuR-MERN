@@ -16,7 +16,7 @@ import { CREATE_ORDER_RESET } from '../../constants/orderConstants'
 import { errMsg, formatMoney, successMsg } from '../Utils/helpers'
 import { accentTop } from '../../theme'
 
-// Demo checkout: every payment succeeds
+// Demo checkout lang, laging success
 const paymentResult = () => ({
     id: `pi_${Date.now()}`,
     status: 'succeeded'

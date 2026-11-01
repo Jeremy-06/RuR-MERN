@@ -15,21 +15,21 @@ const DEFAULT_AVATAR = {
     url: '/images/default_avatar.svg'
 }
 
-// Same rules as the Yup schemas on the frontend; returns the first error message
+// Kapareho ng Yup schemas sa frontend
 const validateUser = ({ name, email, avatar }) => {
     if (!name || !String(name).trim()) return 'Please enter your name'
     if (String(name).trim().length > 30) return 'Your name cannot exceed 30 characters'
     if (!email || !String(email).trim()) return 'Please enter your email'
     if (!validator.isEmail(String(email).trim())) return 'Please enter valid email address'
     if (avatar) {
-        // Avatars arrive as base64 data URLs from FileReader
+        // Base64 data URL galing FileReader ang avatar
         if (!/^data:image\/(jpeg|png|webp);base64,/.test(avatar)) return 'Avatar must be a jpg, jpeg, png or webp image'
         if ((avatar.length - avatar.indexOf(',') - 1) * 0.75 > 5 * 1024 * 1024) return 'Avatar must be 5MB or smaller'
     }
     return null
 }
 
-// Same rules as the password fields on the frontend; confirmPassword is only compared, never stored
+// Pang-compare lang ang confirmPassword, hindi sine-save
 const validatePasswords = ({ password, confirmPassword }) => {
     if (!password || typeof password !== 'string') return 'Please enter your password'
     if (password.length < MIN_PASSWORD_LENGTH) return `Your password must be at least ${MIN_PASSWORD_LENGTH} characters`
@@ -41,7 +41,7 @@ const validatePasswords = ({ password, confirmPassword }) => {
 exports.registerUser = async (req, res, next) => {
     const { name, email, password, } = req.body || {};
 
-    // Validate before uploading the avatar so a bad form does not leave files in Cloudinary
+    // I-validate muna bago mag-upload para walang maiwang file sa Cloudinary
     const errorMessage = validateUser(req.body || {}) || validatePasswords(req.body || {})
     if (errorMessage) {
         return res.status(400).json({ message: errorMessage })
@@ -77,7 +77,6 @@ exports.registerUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
     const { email, password } = req.body;
 
-    // Checks if email and password is entered by user
     if (!email || !password) {
         return res.status(400).json({ message: 'Please enter email & password' })
     }
@@ -85,18 +84,16 @@ exports.loginUser = async (req, res, next) => {
         return res.status(400).json({ message: 'Please enter valid email address' })
     }
 
-    // Finding user in database
     let user = await User.findOne({ email: String(email).toLowerCase() }).select('+password')
     if (!user) {
         return res.status(401).json({ message: 'Invalid Email or Password' })
     }
 
-    // Google-only accounts have no password to check
+    // Walang password ang Google-only accounts
     if (!user.password) {
         return res.status(400).json({ message: GOOGLE_ACCOUNT_MESSAGE })
     }
 
-    // Checks if password is correct or not
     const isPasswordMatched = await user.comparePassword(password);
     if (!isPasswordMatched) {
         return res.status(401).json({ message: 'Invalid Email or Password' })
@@ -117,7 +114,6 @@ exports.googleLogin = async (req, res, next) => {
         return res.status(400).json({ message: 'Google ID token is required' })
     }
 
-    // Verify the Firebase ID token sent by the frontend
     let decoded
     try {
         decoded = await firebaseAuth.verifyIdToken(idToken)
@@ -128,7 +124,6 @@ exports.googleLogin = async (req, res, next) => {
         return res.status(400).json({ message: 'Your Google account has no verified email address' })
     }
 
-    // Find the user by email or create a Google-only account
     const email = decoded.email.toLowerCase()
     let user = await User.findOne({ email })
     if (!user) {
@@ -150,16 +145,14 @@ exports.forgotPassword = async (req, res, next) => {
         return res.status(404).json({ message: 'User not found with this email' })
     }
 
-    // Google-only accounts have no password to reset
+    // Walang password na ire-reset ang Google-only accounts
     if (!user.password) {
         return res.status(400).json({ message: GOOGLE_ACCOUNT_MESSAGE })
     }
 
-    // Get reset token
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    // Create reset password url
     const resetUrl = `${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}/password/reset/${resetToken}`;
     const message = `Your password reset token is as follow:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it.`
     try {
@@ -183,7 +176,6 @@ exports.forgotPassword = async (req, res, next) => {
 }
 
 exports.resetPassword = async (req, res, next) => {
-    // Hash URL token
     const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
     const user = await User.findOne({
         resetPasswordToken,
@@ -199,7 +191,6 @@ exports.resetPassword = async (req, res, next) => {
         return res.status(400).json({ message: errorMessage })
     }
 
-    // Setup new password
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -229,12 +220,11 @@ exports.updateProfile = async (req, res, next) => {
         email: String(req.body.email).trim().toLowerCase()
     }
 
-    // Email must stay unique across accounts
+    // Dapat unique ang email
     if (await User.exists({ email: newUserData.email, _id: { $ne: req.user._id } })) {
         return res.status(400).json({ message: 'Email is already registered' })
     }
 
-    // Update avatar
     if (req.body.avatar) {
         const user = await User.findById(req.user.id)
         if (user.avatar && user.avatar.public_id.startsWith('rur/avatars/')) {
@@ -279,7 +269,6 @@ exports.updatePassword = async (req, res, next) => {
         return res.status(400).json({ message: errorMessage })
     }
 
-    // Check previous user password
     const isMatched = await user.comparePassword(req.body.oldPassword)
     if (!isMatched) {
         return res.status(400).json({ message: 'Old password is incorrect' })
@@ -332,7 +321,7 @@ exports.updateUser = async (req, res, next) => {
         role
     }
 
-    // Email must stay unique across accounts
+    // Dapat unique ang email
     if (await User.exists({ email: newUserData.email, _id: { $ne: req.params.id } })) {
         return res.status(400).json({ message: 'Email is already registered' })
     }
@@ -360,7 +349,6 @@ exports.deleteUser = async (req, res, next) => {
         return res.status(400).json({ message: 'You cannot delete your own account' })
     }
 
-    // Remove avatar from cloudinary
     if (user.avatar && user.avatar.public_id.startsWith('rur/avatars/')) {
         await cloudinary.v2.uploader.destroy(user.avatar.public_id);
     }

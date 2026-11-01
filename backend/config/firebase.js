@@ -6,7 +6,7 @@ const { getAuth } = require('firebase-admin/auth');
 let firebaseAuth = null
 
 const connectFirebase = () => {
-    // Relative paths in .env are resolved from the backend folder
+    // Relative sa backend folder ang path sa .env
     const serviceAccountPath = path.resolve(__dirname, '..', process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './config/firebase-service-account.json')
 
     if (!fs.existsSync(serviceAccountPath)) {
@@ -23,7 +23,7 @@ const connectFirebase = () => {
     }
 }
 
-// Returns null when Google login is disabled
+// null kapag naka-disable ang Google login
 const getFirebaseAuth = () => firebaseAuth
 
 module.exports = { connectFirebase, getFirebaseAuth }

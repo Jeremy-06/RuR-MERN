@@ -71,7 +71,7 @@ export const authReducer = (state = { user: {} }, action) => {
                 user: null,
                 error: action.payload
             }
-        // Not being logged in on page load is not an error worth showing
+        // Hindi error na dapat ipakita ang hindi naka-login sa page load
         case LOAD_USER_FAIL:
             return {
                 ...state,
@@ -101,7 +101,6 @@ export const authReducer = (state = { user: {} }, action) => {
     }
 }
 
-// Saving your own profile or password, and the admin's update and delete
 export const userReducer = (state = {}, action) => {
     switch (action.type) {
         case UPDATE_PROFILE_REQUEST:
@@ -204,7 +203,7 @@ export const forgotPasswordReducer = (state = {}, action) => {
     }
 }
 
-// Keeps the rows so filters and paging survive a refresh after a delete
+// Naiiwan ang rows para hindi mawala ang filters at paging after delete
 export const allUsersReducer = (state = { loading: true, users: [] }, action) => {
     switch (action.type) {
         case ALL_USERS_REQUEST:

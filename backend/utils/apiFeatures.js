@@ -6,7 +6,7 @@ class APIFeatures {
         this.queryStr = queryStr;
     }
 
-    // ?category=Mice&category=Headsets or ?category=Mice,Headsets
+    // Pwedeng ?category=Mice&category=Headsets o ?category=Mice,Headsets
     static categoryList(queryStr) {
         return [].concat(queryStr.category || [])
             .flatMap(value => String(value).split(','))
@@ -14,7 +14,6 @@ class APIFeatures {
             .filter(Boolean)
     }
 
-    // Checks the shop list params; returns the first error message or null
     static validateShopQuery(queryStr, categories) {
         const { minPrice, maxPrice, minRating, minReviews, page, limit } = queryStr
 
@@ -50,7 +49,6 @@ class APIFeatures {
     }
 
     search() {
-        // http://localhost:5173/search/keyboard
         const keyword = this.queryStr.keyword ? {
             name: {
                 $regex: String(this.queryStr.keyword).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
@@ -63,8 +61,6 @@ class APIFeatures {
     }
 
     filter() {
-        // { minPrice: '10', maxPrice: '200', category: ['Mice', 'Headsets'], minRating: '4', minReviews: '1' }
-        // Each filter adds its own conditions, so more filters plug in here
         const conditions = {
             ...this.priceFilter(),
             ...this.categoryFilter(),
@@ -94,7 +90,6 @@ class APIFeatures {
         return categories.length > 0 ? { category: { $in: categories } } : {}
     }
 
-    // averageRating and reviewCount are kept up to date by the Review model
     ratingFilter() {
         const { minRating, minReviews } = this.queryStr
         const conditions = {}
@@ -109,7 +104,7 @@ class APIFeatures {
     }
 
     sort() {
-        // Newest first; _id keeps the order stable between pages
+        // _id para stable ang order sa bawat page
         this.query = this.query.sort({ createdAt: -1, _id: -1 });
         return this;
     }
@@ -122,7 +117,7 @@ class APIFeatures {
         return this;
     }
 
-    // DataTables server-side params stay flat like price[gte]:
+    // Flat ang DataTables params, katulad ng price[gte]:
     // { 'search[value]': 'mouse', 'order[0][column]': '2', 'order[0][dir]': 'asc', 'columns[2][data]': 'name', start: '0', length: '10' }
     dataTableSearch(fields) {
         const value = this.queryStr['search[value]'] ? String(this.queryStr['search[value]']).trim() : ''
@@ -138,12 +133,12 @@ class APIFeatures {
     }
 
     dataTableSort(sortableFields) {
-        // The column index points at columns[i][data], which is the field name
+        // Index lang ang dumarating; nasa columns[i][data] ang field name
         const column = this.queryStr['order[0][column]']
         const field = this.queryStr[`columns[${column}][data]`]
         const direction = this.queryStr['order[0][dir]'] === 'desc' ? -1 : 1
 
-        // Only allow known fields; newest first otherwise
+        // Known fields lang ang pwede
         if (sortableFields.includes(field)) {
             this.query = this.query.sort({ [field]: direction, _id: 1 });
         } else {
@@ -156,7 +151,7 @@ class APIFeatures {
         const start = Math.max(Number(this.queryStr.start) || 0, 0);
         const length = Number(this.queryStr.length);
 
-        // length -1 means "All" in DataTables; no length means a plain list request
+        // length -1 = All sa DataTables; walang length = plain list
         if (length > 0) {
             this.query = this.query.skip(start).limit(Math.min(length, maxLength));
         }

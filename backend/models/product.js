@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please enter product description'],
     },
-    // Kept up to date by the Review model hooks
+    // Ina-update ng hooks ng Review model
     averageRating: {
         type: Number,
         default: 0
@@ -61,7 +61,7 @@ const productSchema = new mongoose.Schema({
             message: 'Please select correct category for product'
         }
     },
-    // Optional: the admin form only asks for the fields in the product spec
+    // Optional kasi hindi ito tinatanong sa admin form
     seller: {
         type: String,
         default: 'RuR Gear'
@@ -86,7 +86,6 @@ const productSchema = new mongoose.Schema({
     }
 })
 
-// Shop list filters on rating and review count
 productSchema.index({ averageRating: -1, reviewCount: -1 })
 
 module.exports = mongoose.model('Product', productSchema);

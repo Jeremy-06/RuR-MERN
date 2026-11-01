@@ -16,7 +16,6 @@ const arrowStyle = {
     '&:hover': { bgcolor: 'primary.dark' },
 }
 
-// Large image with arrows and thumbnails
 const ProductGallery = ({ images = [], name }) => {
     const [active, setActive] = useState(0)
     const count = images.length

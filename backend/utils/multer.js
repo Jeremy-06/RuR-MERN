@@ -4,7 +4,6 @@ const path = require("path");
 const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp']
 const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp']
 
-// Files stay in memory and are streamed to Cloudinary by the controller
 module.exports = multer({
     limits: {
         fileSize: 5 * 1024 * 1024,

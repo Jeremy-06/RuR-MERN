@@ -5,7 +5,7 @@ import { chartColors } from '../../theme'
 const MAX_BARS = 8
 const BAR_HEIGHT = 40
 
-// Biggest first in one color; anything past the top bars folds into Other
+// Sobra sa top bars, sa Other na
 const RankedBars = ({ data, format, axisFormat = format }) => {
     const rows = useMemo(() => {
         const sorted = [...data].sort((a, b) => b.value - a.value)

@@ -2,7 +2,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, 'config', '.env') })
 
-// Stop early with a clear message when a required env variable is missing
+// Huminto agad kapag may kulang na env variable
 const requiredEnv = [
     'PORT',
     'DB_URI',

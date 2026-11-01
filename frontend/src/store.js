@@ -70,7 +70,7 @@ const reducer = combineReducers({
 })
 
 const middlware = [thunk]
-// Uses the Redux DevTools extension when the browser has it
+// DevTools extension kung meron sa browser
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 const store = createStore(reducer, initialState, composeEnhancers(applyMiddleware(...middlware)))
 export default store;

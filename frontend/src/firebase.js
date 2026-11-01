@@ -10,7 +10,7 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-// Name the missing key so a bad frontend/.env is easy to spot
+// Sabihin kung anong key ang kulang sa frontend/.env
 const envNames = {
     apiKey: 'VITE_FIREBASE_API_KEY',
     authDomain: 'VITE_FIREBASE_AUTH_DOMAIN',

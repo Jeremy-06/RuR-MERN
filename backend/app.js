@@ -28,20 +28,19 @@ app.use((err, req, res, next) => {
         message = Object.values(err.errors).map(value => value.message).join(', ')
     }
 
-    // Unique index hit by two identical requests at once (e.g. the same review posted twice)
+    // Dalawang sabay na request, tumama sa unique index (hal. parehong review)
     if (err.code === 11000) {
         statusCode = 409
         message = 'This record already exists'
     }
 
-    // Upload limits from utils/multer.js
     if (err.name === 'MulterError') {
         statusCode = 400
         if (err.code === 'LIMIT_FILE_SIZE') message = 'Each image must be 5MB or smaller'
         if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') message = 'You can upload up to 10 images at a time in the "images" field'
     }
 
-    // Client errors are answered with a message; only server errors need a stack trace
+    // Server errors lang ang kailangan ng stack trace
     if (statusCode >= 500) console.log(err)
     return res.status(statusCode).json({ message })
 })
