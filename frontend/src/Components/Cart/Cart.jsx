@@ -48,7 +48,7 @@ const Cart = () => {
     const units = cartItems.reduce((acc, item) => acc + Number(item.quantity), 0)
     const total = cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0)
 
-    if (!owner) return <Loader />
+    if (!owner) return <Loader fullPage />
 
     return (
         <>

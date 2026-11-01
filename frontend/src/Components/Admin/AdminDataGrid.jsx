@@ -251,7 +251,7 @@ const AdminDataGrid = ({ label, rows, columns, loading, error, onRetry, empty, r
             />
         )
     }
-    if (rows.length === 0) return loading ? <Loader /> : <EmptyState {...empty} />
+    if (rows.length === 0) return loading ? <Loader fullPage /> : <EmptyState {...empty} />
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>

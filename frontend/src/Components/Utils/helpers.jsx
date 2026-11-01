@@ -90,6 +90,15 @@ export const formatPeriod = ({ start, end }) => {
     return `${from.format(from.year() === to.year() ? 'MMM D' : 'MMM D, YYYY')} – ${to.format('MMM D, YYYY')}`
 }
 
+export const isShop = (pathname) => pathname === '/' || pathname.startsWith('/search/')
+
+// Body o #root ang nag-i-scroll dito, hindi laging window
+export const scrollPageToTop = () => {
+    [document.scrollingElement, document.body, document.getElementById('root')].forEach(element => {
+        if (element) element.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    })
+}
+
 export const errMsg = (message = '') => toast.error(message, {
     position: 'bottom-center'
 });

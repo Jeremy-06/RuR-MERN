@@ -86,7 +86,7 @@ const UpdateUser = () => {
             </Box>
         )
     } else if (loading || !user) {
-        content = <Loader />
+        content = <Loader fullPage />
     } else {
         content = (
             <>

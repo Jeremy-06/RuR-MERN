@@ -16,6 +16,7 @@ import Swal from 'sweetalert2'
 import { clearErrors, deleteProduct, deleteProducts } from '../../actions/productActions'
 import { DELETE_PRODUCT_RESET } from '../../constants/productConstants'
 import { errMsg, successMsg } from '../Utils/helpers'
+import { PAGE_MIN_HEIGHT } from '../../theme'
 
 // Toast natin ang gamit, hindi alert() ng DataTables
 DataTable.ext.errMode = 'none'
@@ -30,6 +31,16 @@ const EDIT_ICON = actionIcon('m14.06 9.02.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.
 const DELETE_ICON = actionIcon('M16 9v10H8V9zm-1.5-6h-5l-1 1H5v2h14V4h-3.5zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2z')
 const PREVIOUS_ICON = actionIcon('M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z')
 const NEXT_ICON = actionIcon('M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z')
+const COPY_ICON = actionIcon('M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m0 16H8V7h11z')
+
+const copyProductId = async (id) => {
+    try {
+        await navigator.clipboard.writeText(id)
+        successMsg('Product ID copied')
+    } catch {
+        errMsg('Could not copy the ID')
+    }
+}
 
 const ProductsList = () => {
     const dispatch = useDispatch()
@@ -109,6 +120,17 @@ const ProductsList = () => {
                         ? `<img src="${escapeHtml(images[0].url)}" alt="" class="dt-thumb">`
                         : '<span class="dt-thumb dt-thumb-empty"></span>'
                 },
+                {
+                    data: '_id',
+                    title: 'ID',
+                    orderable: false,
+                    searchable: false,
+                    className: 'dt-id-column dt-nowrap',
+                    width: '124px',
+                    render: (id) => `
+                        <span class="dt-id-text" title="${id}">…${id.slice(-8)}</span>
+                        <button type="button" class="dt-action dt-copy-id" data-id="${id}" title="Copy ID" aria-label="Copy product ID ${id}">${COPY_ICON}</button>`
+                },
                 { data: 'name', title: 'Name', render: DataTable.render.text() },
                 { data: 'category', title: 'Category', render: DataTable.render.text() },
                 { data: 'price', title: 'Price', className: 'dt-right', render: DataTable.render.number(',', '.', 2, '$') },
@@ -181,12 +203,16 @@ const ProductsList = () => {
         const onClick = (e) => {
             const editButton = e.target.closest('.dt-edit')
             const deleteButton = e.target.closest('.dt-delete')
+            const copyButton = e.target.closest('.dt-copy-id')
 
             if (editButton) {
                 setDialog({ open: true, productId: editButton.dataset.id })
             }
             if (deleteButton) {
                 deleteProductHandler(deleteButton.dataset.id)
+            }
+            if (copyButton) {
+                copyProductId(copyButton.dataset.id)
             }
         }
 
@@ -261,7 +287,7 @@ const ProductsList = () => {
                     <Sidebar />
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 10 }}>
+                <Grid size={{ xs: 12, md: 10 }} sx={{ minHeight: PAGE_MIN_HEIGHT }}>
                     <PageHeader
                         title="All Products"
                         actions={(

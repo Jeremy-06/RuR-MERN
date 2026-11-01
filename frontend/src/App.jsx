@@ -9,6 +9,7 @@ import { setCartOwner } from './actions/cartActions'
 
 import { Header } from './Components/Layout/Header'
 import Footer from './Components/Layout/Footer'
+import ScrollToTop from './Components/Layout/ScrollToTop'
 
 import './App.css'
 import Home from './Components/Home'
@@ -55,6 +56,7 @@ function App() {
   return (
     <>
       <Router>
+        <ScrollToTop />
         <Header />
         <Container component="main" sx={{ flex: '1 0 auto', pb: 4 }}>
           <Routes>

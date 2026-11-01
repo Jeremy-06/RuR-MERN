@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children, isAdmin = false }) => {
         }
         return children
     }
-    return <Loader />;
+    return <Loader fullPage />;
 };
 
 export default ProtectedRoute;

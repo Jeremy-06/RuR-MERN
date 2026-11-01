@@ -9,6 +9,7 @@ const SORT_OPTIONS = {
 }
 const RATING_STEPS = [4, 3, 2, 1]
 const REVIEW_STEPS = [1, 5, 10]
+const OBJECT_ID = /^[0-9a-f]{24}$/i
 
 const countAtLeast = (field, steps) => Object.fromEntries(steps.map(step => [
     step,
@@ -179,7 +180,10 @@ class APIFeatures {
                 $regex: value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
                 $options: 'i'
             }
-            this.query = this.query.find({ $or: fields.map(field => ({ [field]: regex })) });
+            const conditions = fields.map(field => ({ [field]: regex }))
+            // Buong product ID: exact match
+            if (OBJECT_ID.test(value)) conditions.push({ _id: value })
+            this.query = this.query.find({ $or: conditions });
         }
         return this;
     }

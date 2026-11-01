@@ -70,7 +70,7 @@ const ProcessOrder = () => {
                                 action={<Button component={Link} to="/admin/orders" variant="contained">Back to All Orders</Button>}
                             />
                         </Box>
-                    ) : (loading || !order) ? <Loader /> : (
+                    ) : (loading || !order) ? <Loader fullPage /> : (
                         <>
                             <PageHeader title={`Order # ${order._id}`} />
                             <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>

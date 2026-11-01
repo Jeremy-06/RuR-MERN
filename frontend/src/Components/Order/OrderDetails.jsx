@@ -30,7 +30,7 @@ const OrderDetails = () => {
                     message={error}
                     action={<Button component={Link} to="/orders/me" variant="contained">Back to My Orders</Button>}
                 />
-            ) : (loading || !order) ? <Loader /> : (
+            ) : (loading || !order) ? <Loader fullPage /> : (
                 <>
                     <PageHeader title={`Order # ${order._id}`} />
                     <OrderInfo order={order} />

@@ -148,7 +148,7 @@ const ProductDetails = () => {
     }, [dispatch, reviewError])
 
     if (error) return <Box sx={{ mt: 5 }}><EmptyState icon={<ErrorOutlinedIcon />} title={error} /></Box>
-    if (loading || product._id !== id) return <Loader />
+    if (loading || product._id !== id) return <Loader fullPage />
 
     const inStock = product.stock > 0
     const lowStock = inStock && product.stock <= LOW_STOCK

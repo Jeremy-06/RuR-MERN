@@ -26,8 +26,16 @@ import { getCategories, getProductFacets, getProducts, getTopRatedProducts, prod
 import { addItemToCart } from '../actions/cartActions'
 
 const PAGE_SKELETONS = 12
-const MORE_SKELETONS = 3
+const MORE_SKELETONS = 6
 const HERO_PRODUCTS = 3
+
+// Hindi umaabot ang rootMargin sa labas ng scroller, kaya siya ang root
+const scrollParent = (element) => {
+    for (let node = element.parentElement; node && node !== document.documentElement; node = node.parentElement) {
+        if (node.scrollHeight > node.clientHeight && /auto|scroll/.test(getComputedStyle(node).overflowY)) return node
+    }
+    return null
+}
 
 const Home = () => {
     let { keyword } = useParams();
@@ -90,7 +98,7 @@ const Home = () => {
 
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) loadMore()
-        }, { rootMargin: '600px 0px' })
+        }, { root: scrollParent(sentinel), rootMargin: '1200px 0px' })
         observer.observe(sentinel)
         return () => observer.disconnect()
     }, [canLoadMore, loadMore])
@@ -178,7 +186,7 @@ const Home = () => {
 
     let skeletons = 0
     if (firstLoad) skeletons = PAGE_SKELETONS
-    else if (loading) skeletons = MORE_SKELETONS
+    else if (loading || canLoadMore) skeletons = MORE_SKELETONS
 
     const heroProducts = useMemo(() => {
         const seen = new Set()

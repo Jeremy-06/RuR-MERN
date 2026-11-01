@@ -229,7 +229,7 @@ const SalesDashboard = () => {
                     {!data ? (
                         report.error
                             ? <EmptyState icon={<ErrorOutlinedIcon />} title="Sales could not be loaded" message={report.error} />
-                            : <Loader />
+                            : <Loader fullPage />
                     ) : (
                         // Naiiwan ang lumang numbers, dimmed, habang naglo-load
                         <Box aria-busy={refreshing} sx={{ opacity: refreshing ? 0.5 : 1, transition: 'opacity 0.2s' }}>

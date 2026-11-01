@@ -86,7 +86,7 @@ const Dashboard = () => {
             />
         )
     } else if (loading) {
-        content = <Loader />
+        content = <Loader fullPage />
     } else {
         content = (
             <>

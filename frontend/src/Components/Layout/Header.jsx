@@ -31,9 +31,8 @@ import SportsEsportsOutlinedIcon from '@mui/icons-material/SportsEsportsOutlined
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
 
 import { accentGradient, darkTexture } from '../../theme'
+import { isShop } from '../Utils/helpers'
 import Search from './Search'
-
-const isShop = (pathname) => pathname === '/' || pathname.startsWith('/search/')
 
 export const Header = () => {
     const dispatch = useDispatch();

@@ -278,6 +278,10 @@ body {
   cursor: pointer;
 }
 
+.products-table .dt-id-text {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Kasing laki ng small MUI IconButton */
 .products-table .dt-action {
   display: inline-flex;
@@ -313,6 +317,13 @@ body {
 .products-table .dt-action:focus-visible {
   outline: 2px solid var(--rur-blue);
   outline-offset: 2px;
+}
+
+/* Pareho sa hideOnSmall ng AdminDataGrid */
+@media (max-width: 899px) {
+  .products-table .dt-id-column {
+    display: none;
+  }
 }
 
 @media (max-width: 599px) {

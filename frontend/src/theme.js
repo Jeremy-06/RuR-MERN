@@ -7,6 +7,9 @@ const borderColor = '#e3e7ee'
 const inputBorderColor = '#8993a1'
 const softShadow = '0 1px 2px rgba(9, 11, 15, 0.04), 0 6px 20px rgba(9, 11, 15, 0.05)'
 
+// Viewport minus header, para hindi lumiit ang page habang naglo-load
+export const PAGE_MIN_HEIGHT = 'calc(100vh - 88px)'
+
 export const chartColors = { series: '#0f6be0', grid: borderColor, axis: '#5b6573' }
 
 export const accentGradient = 'linear-gradient(90deg, #0f6be0, #fb334b)'
