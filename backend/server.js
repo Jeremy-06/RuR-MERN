@@ -7,6 +7,7 @@ const requiredEnv = [
     'PORT',
     'DB_URI',
     'JWT_SECRET',
+    'FRONTEND_ORIGIN',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
     'CLOUDINARY_API_SECRET',

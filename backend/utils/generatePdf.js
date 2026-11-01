@@ -5,7 +5,10 @@ let browserPromise = null;
 
 const getBrowser = () => {
     if (!browserPromise) {
-        browserPromise = puppeteer.launch({ headless: true }).catch(error => {
+        browserPromise = puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        }).catch(error => {
             browserPromise = null;
             throw error;
         });

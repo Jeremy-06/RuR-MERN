@@ -1,3 +1,13 @@
+// Magkaibang site ang frontend at backend sa production, kaya sameSite none
+const cookieFlags = () => {
+    const isProduction = String(process.env.NODE_ENV).toUpperCase() === 'PRODUCTION'
+    return {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+    }
+}
+
 const sendToken = (user, statusCode, res) => {
 
     const token = user.getJwtToken();
@@ -6,9 +16,7 @@ const sendToken = (user, statusCode, res) => {
         expires: new Date(
             Date.now() + (process.env.COOKIE_EXPIRES_TIME || 7) * 24 * 60 * 60 * 1000
         ),
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'PRODUCTION',
-        sameSite: 'lax',
+        ...cookieFlags(),
     }
     res.status(statusCode).cookie('token', token, options).json({
         success: true,
@@ -17,3 +25,4 @@ const sendToken = (user, statusCode, res) => {
 }
 
 module.exports = sendToken;
+module.exports.cookieFlags = cookieFlags;

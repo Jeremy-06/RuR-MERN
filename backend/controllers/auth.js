@@ -153,7 +153,7 @@ exports.forgotPassword = async (req, res, next) => {
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}/password/reset/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_ORIGIN}/password/reset/${resetToken}`;
     const message = `Your password reset token is as follow:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it.`
     try {
         await sendEmail({
@@ -362,7 +362,7 @@ exports.deleteUser = async (req, res, next) => {
 exports.logout = async (req, res, next) => {
     res.cookie('token', null, {
         expires: new Date(Date.now()),
-        httpOnly: true
+        ...sendToken.cookieFlags()
     })
 
     return res.status(200).json({

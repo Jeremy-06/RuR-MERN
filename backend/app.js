@@ -8,12 +8,16 @@ const order = require('./routes/order');
 const review = require('./routes/review');
 
 app.use(cors({
-    origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+    origin: process.env.FRONTEND_ORIGIN,
     credentials: true
 }));
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Pang-gising sa free server bago mag-demo, walang DB call
+app.get('/api/v1/health', (req, res) => res.status(200).json({ success: true }));
+
 app.use('/api/v1', products);
 app.use('/api/v1', auth);
 app.use('/api/v1', order);
