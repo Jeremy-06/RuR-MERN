@@ -8,6 +8,21 @@ import {
     ADMIN_PRODUCTS_REQUEST,
     ADMIN_PRODUCTS_SUCCESS,
     ADMIN_PRODUCTS_FAIL,
+    NEW_PRODUCT_REQUEST,
+    NEW_PRODUCT_SUCCESS,
+    NEW_PRODUCT_RESET,
+    NEW_PRODUCT_FAIL,
+    UPDATE_PRODUCT_REQUEST,
+    UPDATE_PRODUCT_SUCCESS,
+    UPDATE_PRODUCT_RESET,
+    UPDATE_PRODUCT_FAIL,
+    DELETE_PRODUCT_REQUEST,
+    DELETE_PRODUCT_SUCCESS,
+    DELETE_PRODUCT_RESET,
+    DELETE_PRODUCT_FAIL,
+    ALL_CATEGORIES_REQUEST,
+    ALL_CATEGORIES_SUCCESS,
+    ALL_CATEGORIES_FAIL,
     NEW_REVIEW_REQUEST,
     NEW_REVIEW_SUCCESS,
     NEW_REVIEW_FAIL,
@@ -166,6 +181,116 @@ export const productDetailsReducer = (state = { product: {} }, action) => {
             return {
                 ...state,
                 error: null
+            }
+        default:
+            return state
+    }
+}
+
+export const newProductReducer = (state = { product: {} }, action) => {
+    switch (action.type) {
+        case NEW_PRODUCT_REQUEST:
+            return {
+                ...state,
+                loading: true
+            }
+        case NEW_PRODUCT_SUCCESS:
+            return {
+                loading: false,
+                success: action.payload.success,
+                product: action.payload.product
+            }
+        case NEW_PRODUCT_FAIL:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
+        case NEW_PRODUCT_RESET:
+            return {
+                ...state,
+                success: false
+            }
+        case CLEAR_ERRORS:
+            return {
+                ...state,
+                error: null
+            }
+        default:
+            return state
+    }
+}
+
+// deletedIds and message come from a single delete or a bulk delete
+export const productReducer = (state = { deletedIds: [] }, action) => {
+    switch (action.type) {
+        case DELETE_PRODUCT_REQUEST:
+        case UPDATE_PRODUCT_REQUEST:
+            return {
+                ...state,
+                loading: true
+            }
+        case DELETE_PRODUCT_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                isDeleted: true,
+                deletedIds: action.payload.ids,
+                message: action.payload.message
+            }
+        case UPDATE_PRODUCT_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                isUpdated: action.payload
+            }
+        case DELETE_PRODUCT_FAIL:
+        case UPDATE_PRODUCT_FAIL:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
+        case DELETE_PRODUCT_RESET:
+            return {
+                ...state,
+                isDeleted: false,
+                deletedIds: [],
+                message: null
+            }
+        case UPDATE_PRODUCT_RESET:
+            return {
+                ...state,
+                isUpdated: false
+            }
+        case CLEAR_ERRORS:
+            return {
+                ...state,
+                error: null
+            }
+        default:
+            return state
+    }
+}
+
+export const categoriesReducer = (state = { categories: null }, action) => {
+    switch (action.type) {
+        case ALL_CATEGORIES_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null
+            }
+        case ALL_CATEGORIES_SUCCESS:
+            return {
+                loading: false,
+                categories: action.payload
+            }
+        case ALL_CATEGORIES_FAIL:
+            return {
+                loading: false,
+                categories: null,
+                error: action.payload
             }
         default:
             return state

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import axios from 'axios'
+import { useEffect, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import Dialog from '@mui/material/Dialog'
@@ -14,8 +14,11 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import FormHelperText from '@mui/material/FormHelperText'
-import CircularProgress from '@mui/material/CircularProgress'
+import CloseIcon from '@mui/icons-material/Close'
 
+import Loader from '../Layout/Loader'
+import { clearErrors, getProductDetails, newProduct, updateProduct } from '../../actions/productActions'
+import { NEW_PRODUCT_RESET, UPDATE_PRODUCT_RESET } from '../../constants/productConstants'
 import { categories, errMsg, successMsg, isAllowedImage, isAllowedSize, MAX_IMAGES } from '../Utils/helpers'
 
 // Empty number inputs should say "required", not "must be a number"
@@ -48,31 +51,27 @@ const emptyProduct = {
 }
 
 const ProductDialog = ({ open, productId, onClose, onSaved }) => {
-    const [product, setProduct] = useState(null)
-    const [loading, setLoading] = useState(false)
+    const dispatch = useDispatch()
+    const { loading, error, product: details } = useSelector(state => state.productDetails)
+    const { success } = useSelector(state => state.newProduct)
+    const { isUpdated } = useSelector(state => state.product)
 
     const isEdit = Boolean(productId)
 
-    useEffect(() => {
-        if (!open || !productId) return
+    // The store may still hold the product of another page
+    const product = isEdit && details._id === productId ? details : null
 
-        // Load the product being edited
-        let ignore = false
-        const getProductDetails = async () => {
-            try {
-                setLoading(true)
-                const { data } = await axios.get(`${import.meta.env.VITE_API}/product/${productId}`)
-                if (!ignore) setProduct(data.product)
-            } catch (error) {
-                errMsg(error.response ? error.response.data.message : error.message)
-                onClose()
-            } finally {
-                if (!ignore) setLoading(false)
-            }
+    useEffect(() => {
+        if (open && productId) dispatch(getProductDetails(productId))
+    }, [dispatch, open, productId])
+
+    useEffect(() => {
+        if (open && productId && error) {
+            errMsg(error)
+            dispatch(clearErrors())
+            onClose()
         }
-        getProductDetails()
-        return () => { ignore = true }
-    }, [open, productId, onClose])
+    }, [dispatch, open, productId, error, onClose])
 
     const formik = useFormik({
         initialValues: isEdit && product ? {
@@ -86,7 +85,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
         } : emptyProduct,
         enableReinitialize: true,
         validationSchema: productSchema,
-        onSubmit: async (values) => {
+        onSubmit: (values) => {
             const formData = new FormData();
             formData.set('name', values.name.trim());
             formData.set('price', values.price);
@@ -102,28 +101,20 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
                     .forEach(image => formData.append('removeImages', image.public_id))
             }
 
-            try {
-                const config = {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    withCredentials: true
-                }
-                const { data } = isEdit
-                    ? await axios.put(`${import.meta.env.VITE_API}/admin/product/${productId}`, formData, config)
-                    : await axios.post(`${import.meta.env.VITE_API}/admin/product/new`, formData, config)
-
-                if (data.success) {
-                    successMsg(isEdit ? 'Product updated successfully' : 'Product created successfully')
-                    formik.resetForm({ values: emptyProduct })
-                    setProduct(null)
-                    onSaved()
-                }
-            } catch (error) {
-                errMsg(error.response ? error.response.data.message : error.message)
-            }
+            return dispatch(isEdit ? updateProduct(productId, formData) : newProduct(formData))
         }
     })
+
+    const { resetForm } = formik
+
+    useEffect(() => {
+        if (success || isUpdated) {
+            successMsg(isUpdated ? 'Product updated successfully' : 'Product created successfully')
+            resetForm({ values: emptyProduct })
+            dispatch({ type: isUpdated ? UPDATE_PRODUCT_RESET : NEW_PRODUCT_RESET })
+            onSaved()
+        }
+    }, [dispatch, success, isUpdated, resetForm, onSaved])
 
     // Previews for newly picked files
     const previews = useMemo(() => formik.values.images.map(file => ({
@@ -139,7 +130,6 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
     const handleClose = () => {
         if (formik.isSubmitting) return
         formik.resetForm({ values: emptyProduct })
-        setProduct(null)
         onClose()
     }
 
@@ -180,7 +170,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
                 onClick={onRemove}
                 sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'secondary.main', color: '#fff', width: 24, height: 24, '&:hover': { bgcolor: 'secondary.dark' } }}
             >
-                <i className="fa fa-times" style={{ fontSize: 12 }}></i>
+                <CloseIcon sx={{ fontSize: 16 }} />
             </IconButton>
         </Box>
     )
@@ -191,7 +181,7 @@ const ProductDialog = ({ open, productId, onClose, onSaved }) => {
 
             <DialogContent dividers>
                 {isEdit && (loading || !product) ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+                    <Loader />
                 ) : (
                     <form id="product-form" noValidate onSubmit={formik.handleSubmit}>
                         <TextField id="name_field" label="Name" {...formik.getFieldProps('name')} {...fieldError('name')} />

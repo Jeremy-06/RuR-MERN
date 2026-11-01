@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import DataTable from 'datatables.net-dt'
 import 'datatables.net-dt/css/dataTables.dataTables.css'
 import Grid from '@mui/material/Grid'
@@ -11,8 +12,9 @@ import MetaData from '../Layout/MetaData'
 import PageHeader from '../Layout/PageHeader'
 import Sidebar from './SideBar'
 import ProductDialog from './ProductDialog'
-import axios from 'axios'
 import Swal from 'sweetalert2'
+import { clearErrors, deleteProduct, deleteProducts } from '../../actions/productActions'
+import { DELETE_PRODUCT_RESET } from '../../constants/productConstants'
 import { errMsg, successMsg } from '../Utils/helpers'
 
 // Errors are shown with our toast instead of DataTables' alert()
@@ -30,6 +32,9 @@ const PREVIOUS_ICON = actionIcon('M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z'
 const NEXT_ICON = actionIcon('M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z')
 
 const ProductsList = () => {
+    const dispatch = useDispatch()
+    const { error: createError } = useSelector(state => state.newProduct)
+    const { error: productError, isDeleted, deletedIds, message } = useSelector(state => state.product)
     const tableRef = useRef(null)
     const dataTableRef = useRef(null)
     // Selected ids survive paging, searching and sorting
@@ -37,11 +42,11 @@ const ProductsList = () => {
     const [selectedCount, setSelectedCount] = useState(0)
     const [dialog, setDialog] = useState({ open: false, productId: null })
 
-    const reloadTable = (resetPaging = false) => {
+    const reloadTable = useCallback((resetPaging = false) => {
         if (dataTableRef.current) {
             dataTableRef.current.ajax.reload(null, resetPaging)
         }
-    }
+    }, [])
 
     useEffect(() => {
         const tableElement = tableRef.current
@@ -137,20 +142,6 @@ const ProductsList = () => {
             }
         }
 
-        const deleteProduct = async (id) => {
-            try {
-                const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/product/${id}`, { withCredentials: true })
-                if (data.success) {
-                    successMsg('Product deleted successfully')
-                    selectedRef.current.delete(id)
-                    updateSelection()
-                    table.ajax.reload(null, false)
-                }
-            } catch (error) {
-                errMsg(error.response ? error.response.data.message : error.message)
-            }
-        }
-
         const deleteProductHandler = (id) => {
             Swal.fire({
                 title: 'Delete Product',
@@ -160,7 +151,7 @@ const ProductsList = () => {
                 showCancelButton: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    deleteProduct(id)
+                    dispatch(deleteProduct(id))
                 }
             })
         }
@@ -203,7 +194,14 @@ const ProductsList = () => {
 
         tableElement.addEventListener('change', onChange)
         tableElement.addEventListener('click', onClick)
-        table.on('draw', syncCheckAll)
+        table.on('draw', () => {
+            syncCheckAll()
+            updateSelection()
+            // Deleting the only row of the last page leaves that page empty
+            if (table.page() > 0 && !tableElement.querySelector('.dt-row-check')) {
+                table.page('last').draw('page')
+            }
+        })
         table.on('dt-error', (e, settings, techNote, message) => {
             const response = settings.jqXHR && settings.jqXHR.responseJSON
             errMsg(response && response.message ? response.message : message)
@@ -215,24 +213,25 @@ const ProductsList = () => {
             table.destroy()
             dataTableRef.current = null
         }
-    }, [])
+    }, [dispatch])
 
-    const deleteSelected = async (ids) => {
-        try {
-            const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/products`, {
-                data: { ids },
-                withCredentials: true
-            })
-            if (data.success) {
-                successMsg(data.message)
-                selectedRef.current.clear()
-                setSelectedCount(0)
-                reloadTable(true)
-            }
-        } catch (error) {
-            errMsg(error.response ? error.response.data.message : error.message)
+    // The dialog stays open on a failed save, so all product errors show from here
+    useEffect(() => {
+        const error = createError || productError
+        if (error) {
+            errMsg(error)
+            dispatch(clearErrors())
         }
-    }
+    }, [dispatch, createError, productError])
+
+    useEffect(() => {
+        if (isDeleted) {
+            successMsg(message)
+            deletedIds.forEach(id => selectedRef.current.delete(id))
+            dispatch({ type: DELETE_PRODUCT_RESET })
+            reloadTable(deletedIds.length > 1)
+        }
+    }, [dispatch, isDeleted, deletedIds, message, reloadTable])
 
     const deleteSelectedHandler = () => {
         const ids = Array.from(selectedRef.current)
@@ -244,17 +243,17 @@ const ProductsList = () => {
             showCancelButton: true
         }).then((result) => {
             if (result.isConfirmed) {
-                deleteSelected(ids)
+                dispatch(deleteProducts(ids))
             }
         })
     }
 
     const closeDialog = useCallback(() => setDialog({ open: false, productId: null }), [])
 
-    const productSaved = () => {
+    const productSaved = useCallback(() => {
         closeDialog()
         reloadTable()
-    }
+    }, [closeDialog, reloadTable])
 
     return (
         <>

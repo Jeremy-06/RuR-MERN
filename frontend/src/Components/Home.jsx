@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -8,19 +7,19 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
 import Alert from '@mui/material/Alert'
-import CircularProgress from '@mui/material/CircularProgress'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
 import Product from './Product/Product'
 import CategoryStrip from './Product/CategoryStrip'
 import ProductFilters from './Product/ProductFilters'
+import Loader from './Layout/Loader'
 import MetaData from './Layout/MetaData'
 import SectionTitle from './Layout/SectionTitle'
 import { clipCorners, darkTexture } from '../theme'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { getProducts, getTopRatedProducts, productsKey } from '../actions/productActions'
+import { getCategories, getProducts, getTopRatedProducts, productsKey } from '../actions/productActions'
 import { addItemToCart } from '../actions/cartActions'
 
 const heroImage = 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1400&q=80'
@@ -32,9 +31,7 @@ const Home = () => {
     const { loading, products, error, page, hasMore, filteredProductsCount, key } = useSelector(state => state.products);
     const { products: topRated } = useSelector(state => state.topRatedProducts)
     const { cartItems } = useSelector(state => state.cart)
-    const [categories, setCategories] = useState(null)
-    const [categoriesError, setCategoriesError] = useState('')
-    const [categoriesAttempt, setCategoriesAttempt] = useState(0)
+    const { categories, error: categoriesError } = useSelector(state => state.categories)
     const [drawerOpen, setDrawerOpen] = useState(false)
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -57,20 +54,7 @@ const Home = () => {
     const isCurrent = key === productsKey(filters)
 
     useEffect(() => {
-        let ignore = false
-        axios.get(`${import.meta.env.VITE_API}/categories`)
-            .then(({ data }) => { if (!ignore) setCategories(data.categories) })
-            .catch(error => { if (!ignore) setCategoriesError(error.response ? error.response.data.message : 'Could not load categories') })
-        return () => { ignore = true }
-    }, [categoriesAttempt])
-
-    const retryCategories = () => {
-        setCategories(null)
-        setCategoriesError('')
-        setCategoriesAttempt(attempt => attempt + 1)
-    }
-
-    useEffect(() => {
+        dispatch(getCategories())
         dispatch(getTopRatedProducts())
     }, [dispatch])
 
@@ -151,7 +135,7 @@ const Home = () => {
         <ProductFilters
             categories={categories}
             categoriesError={categoriesError}
-            onRetryCategories={retryCategories}
+            onRetryCategories={() => dispatch(getCategories())}
             minPrice={minPrice}
             maxPrice={maxPrice}
             selectedCategories={filters.categories}
@@ -257,7 +241,7 @@ const Home = () => {
 
                     {/* List states below the grid */}
                     <Box sx={{ py: 5, textAlign: 'center' }} aria-live="polite">
-                        {(loading || (!isCurrent && !error)) && <CircularProgress aria-label="Loading products" />}
+                        {(loading || (!isCurrent && !error)) && <Loader label="Loading products" sx={{ py: 0 }} />}
 
                         {isCurrent && error && (
                             <Alert

@@ -11,6 +11,9 @@ import {
     newReviewReducer,
     reviewReducer,
     adminProductsReducer,
+    newProductReducer,
+    productReducer,
+    categoriesReducer,
 } from './reducers/productReducers'
 import {
     authReducer,
@@ -48,6 +51,9 @@ const reducer = combineReducers({
     newReview: newReviewReducer,
     review: reviewReducer,
     adminProducts: adminProductsReducer,
+    newProduct: newProductReducer,
+    product: productReducer,
+    categories: categoriesReducer,
     auth: authReducer,
     user: userReducer,
     forgotPassword: forgotPasswordReducer,

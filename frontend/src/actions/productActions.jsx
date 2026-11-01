@@ -9,6 +9,18 @@ import {
     ADMIN_PRODUCTS_REQUEST,
     ADMIN_PRODUCTS_SUCCESS,
     ADMIN_PRODUCTS_FAIL,
+    NEW_PRODUCT_REQUEST,
+    NEW_PRODUCT_SUCCESS,
+    NEW_PRODUCT_FAIL,
+    UPDATE_PRODUCT_REQUEST,
+    UPDATE_PRODUCT_SUCCESS,
+    UPDATE_PRODUCT_FAIL,
+    DELETE_PRODUCT_REQUEST,
+    DELETE_PRODUCT_SUCCESS,
+    DELETE_PRODUCT_FAIL,
+    ALL_CATEGORIES_REQUEST,
+    ALL_CATEGORIES_SUCCESS,
+    ALL_CATEGORIES_FAIL,
     NEW_REVIEW_REQUEST,
     NEW_REVIEW_SUCCESS,
     NEW_REVIEW_FAIL,
@@ -31,7 +43,7 @@ import {
     CLEAR_ERRORS
 } from '../constants/productConstants';
 
-export const RES_PER_PAGE = 12
+const RES_PER_PAGE = 12
 const TOP_RATED_COUNT = 4
 
 // Same filters always give the same key, so old answers can be told apart
@@ -107,6 +119,93 @@ export const getAdminProducts = () => async (dispatch) => {
         dispatch({
             type: ADMIN_PRODUCTS_FAIL,
             payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+const productFormConfig = {
+    headers: {
+        'Content-Type': 'multipart/form-data'
+    },
+    withCredentials: true
+}
+
+export const newProduct = (productData) => async (dispatch) => {
+    try {
+        dispatch({ type: NEW_PRODUCT_REQUEST })
+        const { data } = await axios.post(`${import.meta.env.VITE_API}/admin/product/new`, productData, productFormConfig)
+        dispatch({
+            type: NEW_PRODUCT_SUCCESS,
+            payload: data
+        })
+    } catch (error) {
+        dispatch({
+            type: NEW_PRODUCT_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const updateProduct = (id, productData) => async (dispatch) => {
+    try {
+        dispatch({ type: UPDATE_PRODUCT_REQUEST })
+        const { data } = await axios.put(`${import.meta.env.VITE_API}/admin/product/${id}`, productData, productFormConfig)
+        dispatch({
+            type: UPDATE_PRODUCT_SUCCESS,
+            payload: data.success
+        })
+    } catch (error) {
+        dispatch({
+            type: UPDATE_PRODUCT_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const deleteProduct = (id) => async (dispatch) => {
+    try {
+        dispatch({ type: DELETE_PRODUCT_REQUEST })
+        await axios.delete(`${import.meta.env.VITE_API}/admin/product/${id}`, { withCredentials: true })
+        dispatch({
+            type: DELETE_PRODUCT_SUCCESS,
+            payload: { ids: [id], message: 'Product deleted successfully' }
+        })
+    } catch (error) {
+        dispatch({
+            type: DELETE_PRODUCT_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const deleteProducts = (ids) => async (dispatch) => {
+    try {
+        dispatch({ type: DELETE_PRODUCT_REQUEST })
+        const { data } = await axios.delete(`${import.meta.env.VITE_API}/admin/products`, { data: { ids }, withCredentials: true })
+        dispatch({
+            type: DELETE_PRODUCT_SUCCESS,
+            payload: { ids, message: data.message }
+        })
+    } catch (error) {
+        dispatch({
+            type: DELETE_PRODUCT_FAIL,
+            payload: error.response ? error.response.data.message : error.message
+        })
+    }
+}
+
+export const getCategories = () => async (dispatch) => {
+    try {
+        dispatch({ type: ALL_CATEGORIES_REQUEST })
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/categories`)
+        dispatch({
+            type: ALL_CATEGORIES_SUCCESS,
+            payload: data.categories
+        })
+    } catch (error) {
+        dispatch({
+            type: ALL_CATEGORIES_FAIL,
+            payload: error.response ? error.response.data.message : 'Could not load categories'
         })
     }
 }

@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
-const Loader = () => {
+const Loader = ({ label = 'Loading', sx }) => {
     return (
-        <Box role="status" sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-            <CircularProgress aria-label="Loading" />
+        <Box role="status" sx={{ display: 'flex', justifyContent: 'center', py: 10, ...sx }}>
+            <CircularProgress aria-label={label} />
         </Box>
     )
 }
