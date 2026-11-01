@@ -96,3 +96,6 @@ export const errMsg = (message = '') => toast.error(message, {
 export const successMsg = (message = '') => toast.success(message, {
     position: 'bottom-center'
 });
+export const infoMsg = (message = '') => toast.info(message, {
+    position: 'bottom-center'
+});

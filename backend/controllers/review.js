@@ -35,7 +35,7 @@ exports.createReview = async (req, res, next) => {
         })
     }
 
-    // Nasa model hooks ang bad-words check at rating update
+    // Nasa model hooks ang bad-words masking at rating update
     const review = await Review.create({
         user: req.user._id,
         product: productId,
@@ -45,7 +45,8 @@ exports.createReview = async (req, res, next) => {
 
     return res.status(201).json({
         success: true,
-        review
+        review,
+        masked: Boolean(review.$locals.masked)
     })
 }
 
@@ -68,7 +69,8 @@ exports.updateReview = async (req, res, next) => {
 
     return res.status(200).json({
         success: true,
-        review
+        review,
+        masked: Boolean(review.$locals.masked)
     })
 }
 

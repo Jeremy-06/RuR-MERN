@@ -286,7 +286,7 @@ export const getMyReview = (id) => async (dispatch) => {
     }
 }
 
-// POST pag bago, PUT pag edit; binabalik kung na-save
+// POST pag bago, PUT pag edit; binabalik ang response kung na-save
 export const newReview = (reviewData, reviewId) => async (dispatch) => {
     try {
         dispatch({ type: NEW_REVIEW_REQUEST })
@@ -303,7 +303,7 @@ export const newReview = (reviewData, reviewId) => async (dispatch) => {
             type: NEW_REVIEW_SUCCESS,
             payload: data.success
         })
-        return data.success
+        return data
     } catch (error) {
         dispatch({
             type: NEW_REVIEW_FAIL,

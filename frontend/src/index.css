@@ -3,8 +3,13 @@
   --rur-blue: #0f6be0;
   --rur-muted: #8993a1;
   --rur-display: 'Barlow Condensed', Impact, sans-serif;
+}
+
+/* Mas specific sa :root, kasi nauuna itong file sa CSS ng toastify */
+html:root {
   --toastify-font-family: 'DM Sans', sans-serif;
   --toastify-toast-bd-radius: 4px;
+  --toastify-color-info: #0f6be0;
   --toastify-color-success: #17693a;
   --toastify-color-error: #d6203a;
 }

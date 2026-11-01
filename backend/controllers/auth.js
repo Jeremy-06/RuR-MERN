@@ -171,7 +171,8 @@ exports.forgotPassword = async (req, res, next) => {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save({ validateBeforeSave: false });
-        return res.status(500).json({ message: error.message })
+        console.log(`Password reset email failed: ${error.message}`)
+        return res.status(500).json({ message: "We couldn't send the email right now. Please try again in a minute." })
     }
 }
 

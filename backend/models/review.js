@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const { isProfane } = require('../utils/profanity')
+const { maskProfanity } = require('../utils/profanity')
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -26,12 +26,7 @@ const reviewSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please write a comment'],
         trim: true,
-        maxLength: [1000, 'Comment cannot exceed 1000 characters'],
-        validate: {
-            // Block imbes na i-mask para mabago ng customer
-            validator: value => !isProfane(value),
-            message: 'Please remove offensive language from your review'
-        }
+        maxLength: [1000, 'Comment cannot exceed 1000 characters']
     },
     createdAt: {
         type: Date,
@@ -57,6 +52,15 @@ reviewSchema.statics.updateProductRating = async function (productId) {
         reviewCount: stats ? stats.reviewCount : 0
     })
 }
+
+// Dito nagma-mask para masked lang ang napupunta sa database, sa create at update
+reviewSchema.pre('validate', function () {
+    if (!this.isModified('comment') || !this.comment) return
+
+    const masked = maskProfanity(this.comment)
+    this.$locals.masked = masked !== this.comment
+    this.comment = masked
+})
 
 reviewSchema.pre('save', function () {
     if (!this.isNew && this.isModified()) this.updatedAt = Date.now()

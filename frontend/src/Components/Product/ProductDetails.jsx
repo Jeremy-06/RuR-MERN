@@ -28,7 +28,7 @@ import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 
-import { successMsg, errMsg, formatMoney, LOW_STOCK } from '../Utils/helpers'
+import { successMsg, errMsg, infoMsg, formatMoney, LOW_STOCK } from '../Utils/helpers'
 import { accentTop } from '../../theme'
 import { useDispatch, useSelector } from 'react-redux'
 import { clearErrors, getMyReview, getProductDetails, getProductReviews, newReview } from '../../actions/productActions'
@@ -81,6 +81,7 @@ const ProductDetails = () => {
         const saved = await dispatch(newReview(reviewData, myReview && myReview._id))
         if (saved) {
             successMsg(myReview ? 'Review updated successfully' : 'Review posted successfully')
+            if (saved.masked) infoMsg('Some words in your review were masked.')
             setReviewOpen(false)
             setRating(0)
             setComment('')
