@@ -14,13 +14,14 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { formatCompactMoney, formatMoney, formatPeriod } from '../Utils/helpers'
+import { chartColors } from '../../theme'
 
 // One series in the theme blue; grid and axes stay quiet grays.
 // Animation is off so a new range swaps in place instead of redrawing from the left
-const SERIES_COLOR = '#0f6be0'
-const GRID_COLOR = '#e6e9ef'
-const AXIS_COLOR = '#c9ced6'
-const TICK_COLOR = '#5f6774'
+const SERIES_COLOR = chartColors.series
+const GRID_COLOR = chartColors.grid
+const AXIS_COLOR = chartColors.grid
+const TICK_COLOR = chartColors.axis
 
 // The value leads; the period and order count follow
 const SalesTooltip = ({ active, payload }) => {

@@ -1,12 +1,13 @@
 import { createTheme } from '@mui/material/styles'
 
-// Same colors and fonts as the --rur-* variables in index.css
 const displayFont = "'Barlow Condensed', Impact, sans-serif"
 const CONTENT_MAX_WIDTH = 1320
 const FAST = '180ms ease'
 const borderColor = '#e3e7ee'
 const inputBorderColor = '#8993a1'
 const softShadow = '0 1px 2px rgba(9, 11, 15, 0.04), 0 6px 20px rgba(9, 11, 15, 0.05)'
+
+export const chartColors = { series: '#0f6be0', grid: borderColor, axis: '#5b6573' }
 
 // Shared gaming look; used through sx on the few elements that need it
 export const accentGradient = 'linear-gradient(90deg, #0f6be0, #fb334b)'
@@ -110,10 +111,6 @@ const theme = createTheme({
                     paddingLeft: 20,
                     paddingRight: 20,
                     '&.Mui-focusVisible': { outline: '2px solid #fff', outlineOffset: -5 }
-                },
-                // Keeps link buttons white on hover while the Bootstrap CSS is still loaded
-                containedPrimary: {
-                    '&:hover': { color: '#fff' }
                 },
                 outlined: {
                     borderWidth: 2,

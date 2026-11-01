@@ -17,7 +17,7 @@ const canAnimate = '@media (hover: hover) and (prefers-reduced-motion: no-prefer
 const badgeTones = {
     blue: { bgcolor: 'primary.dark', color: '#fff' },
     gold: { bgcolor: '#ffc23d', color: '#11151b' },
-    alert: { bgcolor: '#d6203a', color: '#fff' },
+    alert: { bgcolor: 'error.main', color: '#fff' },
     dark: { bgcolor: 'rur.black', color: '#fff' },
 }
 
