@@ -7,7 +7,6 @@ import SectionTitle from '../Layout/SectionTitle'
 import QuantitySelector from '../Layout/QuantitySelector'
 import ProductGallery from './ProductGallery'
 
-import 'react-toastify/dist/ReactToastify.css';
 import ListReviews from '../Review/ListReviews';
 
 import Alert from '@mui/material/Alert'
@@ -36,17 +35,24 @@ import { clearErrors, getMyReview, getProductDetails, getProductReviews, newRevi
 import { addItemToCart } from '../../actions/cartActions'
 
 const ProductDetails = () => {
+    let { id } = useParams()
     const { loading, error, product } = useSelector(state => state.productDetails);
     const { user } = useSelector(state => state.auth)
     const [quantity, setQuantity] = useState(1)
+    const [quantityProduct, setQuantityProduct] = useState(id)
     const [rating, setRating] = useState(0)
     const [reviewOpen, setReviewOpen] = useState(false)
     const [comment, setComment] = useState('')
     const productReviews = useSelector(state => state.productReviews)
     const myReview = useSelector(state => state.myReview)
     const { loading: savingReview, error: reviewError } = useSelector(state => state.newReview)
-    let { id } = useParams()
     const dispatch = useDispatch()
+
+    // Opening another product starts from 1 again
+    if (quantityProduct !== id) {
+        setQuantityProduct(id)
+        setQuantity(1)
+    }
 
     const increaseQty = () => {
         if (quantity >= product.stock) return;
@@ -98,7 +104,6 @@ const ProductDetails = () => {
 
     useEffect(() => {
         dispatch(getProductDetails(id))
-        setQuantity(1)
     }, [dispatch, id]);
 
     useEffect(() => {
