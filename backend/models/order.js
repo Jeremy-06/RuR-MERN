@@ -1,5 +1,8 @@
 const mongoose = require('mongoose')
 
+// Pasulong lang ang status: Processing -> Shipped -> Delivered
+const ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered']
+
 const orderSchema = mongoose.Schema({
     shippingInfo: {
         address: {
@@ -87,6 +90,10 @@ const orderSchema = mongoose.Schema({
     orderStatus: {
         type: String,
         required: true,
+        enum: {
+            values: ORDER_STATUSES,
+            message: 'Invalid order status'
+        },
         default: 'Processing'
     },
     deliveredAt: {
@@ -99,3 +106,4 @@ const orderSchema = mongoose.Schema({
 })
 
 module.exports = mongoose.model('Order', orderSchema)
+module.exports.ORDER_STATUSES = ORDER_STATUSES

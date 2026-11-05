@@ -48,6 +48,9 @@ const ProcessOrder = () => {
 
     const selectedStatus = status || (order ? order.orderStatus : '')
     const isDelivered = order && order.orderStatus === 'Delivered'
+    // Mas huling status lang ang pwedeng piliin
+    const currentIndex = order ? ORDER_STATUSES.indexOf(order.orderStatus) : -1
+    const canUpdate = ORDER_STATUSES.indexOf(selectedStatus) > currentIndex
 
     const updateOrderHandler = () => {
         dispatch(updateOrder(id, { status: selectedStatus }))
@@ -90,14 +93,15 @@ const ProcessOrder = () => {
                                             value={selectedStatus}
                                             onChange={(e) => setStatus(e.target.value)}
                                             disabled={isDelivered}
+                                            helperText={isDelivered ? '' : 'Status can only move forward.'}
                                         >
-                                            {ORDER_STATUSES.map(option => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                                            {ORDER_STATUSES.map((option, index) => <MenuItem key={option} value={option} disabled={index <= currentIndex}>{option}</MenuItem>)}
                                         </TextField>
                                         <Button
                                             variant="contained"
                                             fullWidth
                                             onClick={updateOrderHandler}
-                                            disabled={isDelivered || updating || selectedStatus === order.orderStatus}
+                                            disabled={isDelivered || updating || !canUpdate}
                                             sx={{ mt: 2 }}
                                         >
                                             Update Status

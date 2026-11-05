@@ -1,4 +1,5 @@
 const Order = require('../models/order');
+const { ORDER_STATUSES } = Order;
 const Product = require('../models/product');
 const { orderEvents, ORDER_CREATED, ORDER_STATUS_UPDATED } = require('../events/orderEvents');
 const { parseSalesRange } = require('../utils/salesRange');
@@ -92,6 +93,13 @@ exports.deleteOrder = async (req, res, next) => {
 }
 
 exports.updateOrder = async (req, res, next) => {
+    const { status } = req.body || {}
+    if (!ORDER_STATUSES.includes(status)) {
+        return res.status(400).json({
+            message: `Please choose a valid order status: ${ORDER_STATUSES.join(', ')}`,
+        })
+    }
+
     const order = await Order.findById(req.params.id).populate('user', 'name email')
     if (!order) {
         return res.status(404).json({
@@ -103,9 +111,20 @@ exports.updateOrder = async (req, res, next) => {
             message: 'You have already delivered this order',
         })
     }
+    if (status === order.orderStatus) {
+        return res.status(400).json({
+            message: `Order is already ${status}`,
+        })
+    }
+    // Bawal bumalik; pwede ang Processing diretso sa Delivered
+    if (ORDER_STATUSES.indexOf(status) < ORDER_STATUSES.indexOf(order.orderStatus)) {
+        return res.status(400).json({
+            message: `Order status can't go back from ${order.orderStatus} to ${status}`,
+        })
+    }
 
     // Isang beses lang ang bawas ng stock, pag na-deliver
-    if (req.body.status === 'Delivered') {
+    if (status === 'Delivered') {
         for (const item of order.orderItems) {
             await updateStock(item.product, item.quantity)
         }
@@ -113,7 +132,7 @@ exports.updateOrder = async (req, res, next) => {
     }
 
     const previousStatus = order.orderStatus
-    order.orderStatus = req.body.status
+    order.orderStatus = status
     await order.save()
     res.status(200).json({
         success: true,

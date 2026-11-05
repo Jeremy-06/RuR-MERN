@@ -29,7 +29,6 @@ const PAGE_SKELETONS = 12
 const MORE_SKELETONS = 6
 const HERO_PRODUCTS = 3
 
-// Hindi umaabot ang rootMargin sa labas ng scroller, kaya siya ang root
 const scrollParent = (element) => {
     for (let node = element.parentElement; node && node !== document.documentElement; node = node.parentElement) {
         if (node.scrollHeight > node.clientHeight && /auto|scroll/.test(getComputedStyle(node).overflowY)) return node
